@@ -71,7 +71,7 @@ const tools: Array<{ label: string; icon: ComponentType<{ className?: string }>;
 ];
 
 function Index() {
-  const [view, setView] = useState<View>("resources");
+  const [view, setView] = useState<View>("home");
   const [hasVehicle, setHasVehicle] = useState(false);
   const [copied, setCopied] = useState<string | null>(null);
 
