@@ -13,6 +13,7 @@ import {
   Copy,
   CreditCard,
   FileText,
+  Filter,
   Gift,
   Headphones,
   Home,
@@ -30,6 +31,9 @@ import {
 } from "lucide-react";
 import { useState, type ComponentType } from "react";
 import cityMap from "@/assets/city-map.jpg";
+import evCompact from "@/assets/ev-compact.png";
+import evExecutive from "@/assets/ev-executive.png";
+import evSuv from "@/assets/ev-suv.png";
 import { Button } from "@/components/ui/button";
 
 type View = "home" | "resources" | "news" | "profile" | "invite" | "membership";
@@ -88,7 +92,7 @@ function Index() {
   ) : view === "news" ? (
     <SimplePage icon={FileText} title="Notícias" copy="As novidades da sua frota aparecerão aqui." />
   ) : (
-    <SimplePage icon={Home} title="Olá, motorista" copy="Tudo pronto para acompanhar sua jornada." />
+    <MarketplacePage />
   );
 
   return (
@@ -98,6 +102,75 @@ function Index() {
         {view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
       </div>
     </main>
+  );
+}
+
+type Vehicle = {
+  name: string;
+  region: string;
+  daily: string;
+  returnValue: string;
+  price: string;
+  cycle: string;
+  image: string;
+};
+
+const vehicles: Vehicle[] = [
+  { name: "EV Compacto", region: "New York", daily: "R$ 5,00/dia", returnValue: "R$ 125,00", price: "R$ 62,50", cycle: "25 dias úteis", image: evCompact },
+  { name: "EV Executivo", region: "New York", daily: "R$ 50,00/dia", returnValue: "R$ 1.250,00", price: "R$ 625,00", cycle: "25 dias úteis", image: evExecutive },
+  { name: "EV Urbano", region: "Israel", daily: "R$ 8,00/dia", returnValue: "R$ 200,00", price: "R$ 100,00", cycle: "25 dias úteis", image: evCompact },
+  { name: "EV Premium", region: "Alemanha", daily: "R$ 18,00/dia", returnValue: "R$ 450,00", price: "R$ 225,00", cycle: "25 dias úteis", image: evExecutive },
+  { name: "EV SUV", region: "Dubai", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 312,50", cycle: "25 dias úteis", image: evSuv },
+  { name: "EV Neo", region: "Tokyo", daily: "R$ 12,00/dia", returnValue: "R$ 300,00", price: "R$ 150,00", cycle: "25 dias úteis", image: evExecutive },
+  { name: "EV Citadino", region: "Paris", daily: "R$ 10,00/dia", returnValue: "R$ 250,00", price: "R$ 125,00", cycle: "25 dias úteis", image: evCompact },
+  { name: "EV Costa", region: "Los Angeles", daily: "R$ 20,00/dia", returnValue: "R$ 500,00", price: "R$ 250,00", cycle: "25 dias úteis", image: evSuv },
+  { name: "EV Connect", region: "Jerusalém", daily: "R$ 9,00/dia", returnValue: "R$ 225,00", price: "R$ 112,50", cycle: "25 dias úteis", image: evCompact },
+  { name: "EV Class", region: "Berlim", daily: "R$ 16,00/dia", returnValue: "R$ 400,00", price: "R$ 200,00", cycle: "25 dias úteis", image: evExecutive },
+];
+
+const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
+
+function MarketplacePage() {
+  const [region, setRegion] = useState("Todos");
+  const [period, setPeriod] = useState<"Diário" | "Ciclo">("Diário");
+  const [rented, setRented] = useState<string | null>(null);
+  const visible = region === "Todos" ? vehicles.filter((vehicle) => vehicle.region === "New York") : vehicles.filter((vehicle) => vehicle.region === region);
+
+  return (
+    <div className="min-h-screen bg-highlight pb-28 pt-3">
+      <div className="mx-3 grid grid-cols-2 rounded-full bg-card/70 p-1 shadow-card">
+        {(["Diário", "Ciclo"] as const).map((item) => (
+          <Button key={item} onClick={() => setPeriod(item)} variant={period === item ? "default" : "ghost"} className="h-10 rounded-full text-sm shadow-none">{item}</Button>
+        ))}
+      </div>
+      <div className="mt-3 flex items-center justify-between px-3 text-xs">
+        <span>Padrão</span><button type="button">Preço⌄</button><button type="button">Taxa de juros⌄</button><button type="button">Renda⌄</button><button type="button" className="flex items-center gap-1">Filtrar <Filter className="h-4 w-4" /></button>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-2 px-3">
+        {regions.map((item) => <Button key={item} onClick={() => setRegion(item)} variant={region === item ? "default" : "secondary"} size="sm" className="rounded-full px-4 shadow-none">{item}</Button>)}
+      </div>
+      <div className="mt-3 space-y-3 px-2">
+        {visible.length ? visible.map((vehicle) => <MarketVehicleCard key={`${vehicle.region}-${vehicle.name}`} vehicle={vehicle} period={period} rented={rented === vehicle.name} onRent={() => setRented(vehicle.name)} />) : <div className="rounded-2xl bg-card p-8 text-center text-sm text-muted-foreground">Novos veículos para {region} chegam em breve.</div>}
+      </div>
+      <div className="fixed bottom-24 left-[max(calc(50%-207px),12px)] z-10 rounded-full bg-primary px-4 py-2 text-sm font-bold shadow-card">▣ &nbsp; Baixar app<br/><span className="pl-6 text-[10px] font-normal">Android e iPhone</span></div>
+    </div>
+  );
+}
+
+function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehicle; period: "Diário" | "Ciclo"; rented: boolean; onRent: () => void }) {
+  return (
+    <article className="overflow-hidden rounded-2xl bg-card shadow-card">
+      <div className="grid grid-cols-[1fr_145px] gap-1 p-4 pb-2">
+        <div>
+          <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold">{vehicle.name}</h2><span className="rounded bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground">Operação</span></div>
+          <p className="mt-2 text-xs text-muted-foreground">Lucro <b className="text-foreground">{period === "Diário" ? vehicle.daily : vehicle.returnValue}</b></p>
+          <p className="mt-1 text-xs text-muted-foreground">Retorno <b className="text-accent-foreground">{vehicle.returnValue}</b></p>
+          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground"><span className="rounded bg-muted px-2 py-1">{vehicle.region}</span><span className="rounded bg-muted px-2 py-1">Rende seg–sex</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
+        </div>
+        <img src={vehicle.image} alt={`${vehicle.name} disponível em ${vehicle.region}`} loading="lazy" width={992} height={672} className="h-28 w-full self-center object-contain" />
+      </div>
+      <div className="flex items-center justify-between border-t border-border px-4 py-2"><b className="text-xl">{vehicle.price}</b><Button onClick={onRent} disabled={rented} className="h-10 rounded-full px-7 text-base shadow-none">{rented ? "Selecionado" : "Alugar"}</Button></div>
+    </article>
   );
 }
 
