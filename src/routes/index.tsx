@@ -29,7 +29,7 @@ import {
   Users,
   WalletCards,
 } from "lucide-react";
-import { useState, type ComponentType } from "react";
+import { useEffect, useState, type ComponentType } from "react";
 import cityMap from "@/assets/city-map.jpg";
 import evCompact from "@/assets/ev-compact.png";
 import evExecutive from "@/assets/ev-executive.png";
@@ -72,13 +72,18 @@ const tools: Array<{ label: string; icon: ComponentType<{ className?: string }>;
 
 function Index() {
   const [view, setView] = useState<View>("home");
-  const [hasVehicle, setHasVehicle] = useState(false);
+  const [owned, setOwned] = useState<OwnedVehicle[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
 
   const copyText = async (key: string, text: string) => {
     await navigator.clipboard?.writeText(text);
     setCopied(key);
     window.setTimeout(() => setCopied(null), 1500);
+  };
+
+  const rentVehicle = (vehicle: Vehicle) => {
+    setOwned((list) => [...list, { ...vehicle, plate: `VX${12178 + list.length}`, purchasedAt: Date.now() }]);
+    setView("resources");
   };
 
   const page = view === "invite" ? (
@@ -88,11 +93,11 @@ function Index() {
   ) : view === "profile" ? (
     <ProfilePage onNavigate={setView} />
   ) : view === "resources" ? (
-    <ResourcesPage hasVehicle={hasVehicle} onBuy={() => setHasVehicle(true)} />
+    <ResourcesPage owned={owned} onBuy={() => setView("home")} />
   ) : view === "news" ? (
     <SimplePage icon={FileText} title="Notícias" copy="As novidades da sua frota aparecerão aqui." />
   ) : (
-    <MarketplacePage />
+    <MarketplacePage onRent={rentVehicle} />
   );
 
   return (
@@ -103,6 +108,24 @@ function Index() {
       </div>
     </main>
   );
+}
+
+type OwnedVehicle = Vehicle & { plate: string; purchasedAt: number };
+
+const CYCLE_MS = 24 * 60 * 60 * 1000;
+
+function useCountdown(target: number) {
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  if (now === null) return "--:--:--";
+  const diff = Math.max(0, target - now);
+  const days = Math.floor(diff / 86400000);
+  const pad = (value: number) => String(value).padStart(2, "0");
+  return `${days}d ${pad(Math.floor(diff / 3600000) % 24)}:${pad(Math.floor(diff / 60000) % 60)}:${pad(Math.floor(diff / 1000) % 60)}`;
 }
 
 type Vehicle = {
@@ -130,7 +153,7 @@ const vehicles: Vehicle[] = [
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
 
-function MarketplacePage() {
+function MarketplacePage({ onRent }: { onRent: (vehicle: Vehicle) => void }) {
   const [region, setRegion] = useState("Todos");
   const [period, setPeriod] = useState<"Diário" | "Ciclo">("Diário");
   const [rented, setRented] = useState<string | null>(null);
@@ -150,7 +173,7 @@ function MarketplacePage() {
         {regions.map((item) => <Button key={item} onClick={() => setRegion(item)} variant={region === item ? "default" : "secondary"} size="sm" className="rounded-full px-4 shadow-none">{item}</Button>)}
       </div>
       <div className="mt-3 space-y-3 px-2">
-        {visible.length ? visible.map((vehicle) => <MarketVehicleCard key={`${vehicle.region}-${vehicle.name}`} vehicle={vehicle} period={period} rented={rented === vehicle.name} onRent={() => setRented(vehicle.name)} />) : <div className="rounded-2xl bg-card p-8 text-center text-sm text-muted-foreground">Novos veículos para {region} chegam em breve.</div>}
+        {visible.length ? visible.map((vehicle) => <MarketVehicleCard key={`${vehicle.region}-${vehicle.name}`} vehicle={vehicle} period={period} rented={rented === vehicle.name} onRent={() => { setRented(vehicle.name); onRent(vehicle); }} />) : <div className="rounded-2xl bg-card p-8 text-center text-sm text-muted-foreground">Novos veículos para {region} chegam em breve.</div>}
       </div>
       <div className="fixed bottom-24 left-[max(calc(50%-207px),12px)] z-10 rounded-full bg-primary px-4 py-2 text-sm font-bold shadow-card">▣ &nbsp; Baixar app<br/><span className="pl-6 text-[10px] font-normal">Android e iPhone</span></div>
     </div>
@@ -174,10 +197,21 @@ function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehic
   );
 }
 
-function ResourcesPage({ hasVehicle, onBuy }: { hasVehicle: boolean; onBuy: () => void }) {
+function ResourcesPage({ owned, onBuy }: { owned: OwnedVehicle[]; onBuy: () => void }) {
   return (
     <div className="min-h-screen pb-24">
-      <img src={cityMap} alt="Mapa da área de veículos" width={1200} height={700} className="h-72 w-full object-cover" />
+      <div className="relative h-72 w-full overflow-hidden">
+        <img src={cityMap} alt="Mapa da área de veículos" width={1200} height={700} className="h-72 w-full object-cover opacity-80" />
+        <div className="absolute inset-0 bg-gradient-to-b from-background/10 to-background" />
+        {owned.map((vehicle, index) => (
+          <span key={vehicle.plate} className="drive-marker" style={{ animationDelay: `${index * -3.5}s` }}>
+            <span className="relative grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-card">
+              <CarFront className="h-5 w-5" />
+              <span className="pulse-ring absolute inset-0 rounded-full border border-primary" />
+            </span>
+          </span>
+        ))}
+      </div>
       <section className="px-4 pt-4">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-xl font-bold">Meus veículos</h1>
@@ -189,7 +223,7 @@ function ResourcesPage({ hasVehicle, onBuy }: { hasVehicle: boolean; onBuy: () =
           <Button variant="outline" className="border-primary bg-transparent text-foreground shadow-none">Veículo</Button>
           <Button variant="secondary" className="font-normal text-muted-foreground shadow-none">Ponto de carregamento</Button>
         </div>
-        {hasVehicle ? <VehicleCard /> : <EmptyGarage onBuy={onBuy} />}
+        {owned.length ? <div className="space-y-4">{owned.map((vehicle) => <VehicleCard key={vehicle.plate} vehicle={vehicle} />)}</div> : <EmptyGarage onBuy={onBuy} />}
       </section>
     </div>
   );
@@ -209,17 +243,18 @@ function EmptyGarage({ onBuy }: { onBuy: () => void }) {
   );
 }
 
-function VehicleCard() {
+function VehicleCard({ vehicle }: { vehicle: OwnedVehicle }) {
+  const countdown = useCountdown(vehicle.purchasedAt + CYCLE_MS);
   return (
     <article className="mt-5 rounded-2xl bg-card p-4 shadow-card">
-      <div className="flex items-center gap-3"><span className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">Operação</span><b>EV Sedan • VX12178</b></div>
+      <div className="flex items-center gap-3"><span className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">Operação</span><b>{vehicle.name} • {vehicle.plate}</b></div>
       <div className="mt-5 grid grid-cols-2 gap-3 text-center">
-        <div><p className="text-xs text-muted-foreground">Validade</p><p className="mt-1 font-medium">20D</p></div>
+        <div><p className="text-xs text-muted-foreground">Validade</p><p className="mt-1 font-medium">{vehicle.cycle}</p></div>
         <div><p className="text-xs text-muted-foreground">Quilometragem de hoje</p><p className="mt-1 font-medium">0.01KM</p></div>
-        <div className="flex items-center justify-center"><CarFront className="h-12 w-12 text-foreground" /></div>
-        <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>1</b><p className="text-xs text-muted-foreground">Pedidos</p></div><div className="rounded-lg bg-muted p-2"><b>R$ 10,00</b><p className="text-xs text-muted-foreground">Lucro</p></div></div>
+        <div className="flex items-center justify-center"><img src={vehicle.image} alt={vehicle.name} width={992} height={672} className="h-16 w-full object-contain" /></div>
+        <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>1</b><p className="text-xs text-muted-foreground">Pedidos</p></div><div className="rounded-lg bg-muted p-2"><b>{vehicle.daily.replace("/dia", "")}</b><p className="text-xs text-muted-foreground">Lucro</p></div></div>
       </div>
-      <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ 1º rendimento em</span><b>2d 23:59:12</b></div><p className="mt-2 text-xs text-muted-foreground">Rende R$ 10,00 a cada 24h da compra, em dias úteis.</p></div>
+      <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ 1º rendimento em</span><b className="tabular-nums text-primary">{countdown}</b></div><p className="mt-2 text-xs text-muted-foreground">Rende {vehicle.daily} a cada 24h da compra, em dias úteis.</p></div>
     </article>
   );
 }
