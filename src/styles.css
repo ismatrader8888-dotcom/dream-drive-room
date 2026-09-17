@@ -33,34 +33,34 @@
   --color-highlight: var(--highlight);
   --color-shell: var(--shell);
   --color-success: var(--success);
-  --shadow-card: 0 3px 12px color-mix(in oklab, var(--foreground) 9%, transparent);
-  --shadow-phone: 0 0 32px color-mix(in oklab, var(--foreground) 12%, transparent);
+  --shadow-card: 0 4px 24px color-mix(in oklab, var(--primary) 12%, transparent);
+  --shadow-phone: 0 0 60px color-mix(in oklab, var(--primary) 18%, transparent);
 }
 
 :root {
-  --radius: 0.75rem;
-  --background: oklch(0.985 0.018 93);
-  --foreground: oklch(0.18 0.03 253);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.18 0.03 253);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.18 0.03 253);
-  --primary: oklch(0.79 0.17 81);
-  --primary-foreground: oklch(0.99 0.005 90);
-  --secondary: oklch(0.96 0.014 250);
-  --secondary-foreground: oklch(0.32 0.04 254);
-  --muted: oklch(0.96 0.008 250);
-  --muted-foreground: oklch(0.5 0.045 254);
-  --accent: oklch(0.72 0.17 49);
-  --accent-foreground: oklch(0.58 0.19 45);
-  --destructive: oklch(0.58 0.23 25);
-  --destructive-foreground: oklch(1 0 0);
-  --border: oklch(0.9 0.018 252);
-  --input: oklch(0.9 0.018 252);
-  --ring: oklch(0.79 0.17 81);
-  --highlight: oklch(0.96 0.09 94);
-  --shell: oklch(0.93 0.012 245);
-  --success: oklch(0.61 0.17 149);
+  --radius: 0.9rem;
+  --background: oklch(0.19 0.035 254);
+  --foreground: oklch(0.97 0.01 240);
+  --card: oklch(0.24 0.04 254);
+  --card-foreground: oklch(0.97 0.01 240);
+  --popover: oklch(0.24 0.04 254);
+  --popover-foreground: oklch(0.97 0.01 240);
+  --primary: oklch(0.74 0.16 213);
+  --primary-foreground: oklch(0.17 0.04 254);
+  --secondary: oklch(0.29 0.04 254);
+  --secondary-foreground: oklch(0.93 0.015 240);
+  --muted: oklch(0.29 0.035 254);
+  --muted-foreground: oklch(0.73 0.03 244);
+  --accent: oklch(0.72 0.17 165);
+  --accent-foreground: oklch(0.82 0.16 168);
+  --destructive: oklch(0.6 0.22 20);
+  --destructive-foreground: oklch(0.98 0.01 240);
+  --border: oklch(0.33 0.04 254);
+  --input: oklch(0.33 0.04 254);
+  --ring: oklch(0.74 0.16 213);
+  --highlight: oklch(0.22 0.04 254);
+  --shell: oklch(0.14 0.03 254);
+  --success: oklch(0.75 0.18 160);
 }
 
 @layer base {
@@ -68,4 +68,26 @@
   html { background-color: var(--color-shell); }
   body { margin: 0; background-color: var(--color-shell); color: var(--color-foreground); }
   button { cursor: pointer; }
+}
+
+@keyframes voltiva-drive {
+  0% { offset-distance: 0%; left: 6%; top: 74%; }
+  25% { left: 34%; top: 30%; }
+  50% { left: 62%; top: 62%; }
+  75% { left: 86%; top: 22%; }
+  100% { left: 6%; top: 74%; }
+}
+
+@utility drive-marker {
+  position: absolute;
+  animation: voltiva-drive 16s linear infinite;
+}
+
+@keyframes voltiva-pulse-ring {
+  0% { transform: scale(0.8); opacity: 0.8; }
+  100% { transform: scale(2.2); opacity: 0; }
+}
+
+@utility pulse-ring {
+  animation: voltiva-pulse-ring 2s ease-out infinite;
 }
