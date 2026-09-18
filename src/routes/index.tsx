@@ -78,10 +78,57 @@ const tools: Array<{ label: string; icon: ComponentType<{ className?: string }>;
   { label: "Configurações", icon: Settings, view: "settings" },
 ];
 
+type Account = { phone: string | null; invite_code: string; email: string | null };
+
 function Index() {
   const [view, setView] = useState<View>("home");
   const [owned, setOwned] = useState<OwnedVehicle[]>([]);
   const [copied, setCopied] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
+  const [ready, setReady] = useState(false);
+  const [booting, setBooting] = useState(false);
+  const [account, setAccount] = useState<Account | null>(null);
+
+  useEffect(() => {
+    void supabase.auth.getSession().then(({ data }) => {
+      setUserId(data.session?.user.id ?? null);
+      setReady(true);
+    });
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
+      setUserId(next?.user.id ?? null);
+      if (event === "SIGNED_IN") {
+        setBooting(true);
+        window.setTimeout(() => setBooting(false), 2400);
+      }
+      if (event === "SIGNED_OUT") {
+        setOwned([]);
+        setAccount(null);
+        setView("home");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, []);
+
+  useEffect(() => {
+    if (!userId) return;
+    void supabase.from("profiles").select("phone, invite_code, email").eq("id", userId).maybeSingle()
+      .then(({ data }) => { if (data) setAccount(data as Account); });
+    void supabase.from("user_vehicles").select("*").eq("user_id", userId).order("purchased_at")
+      .then(({ data }) => {
+        if (!data) return;
+        setOwned(data.map((row) => ({
+          name: row.name,
+          region: row.region,
+          daily: row.daily,
+          returnValue: row.return_value,
+          price: row.price,
+          cycle: row.cycle,
+          imageKey: row.image_key as ImageKey,
+          plate: row.plate,
+          purchasedAt: new Date(row.purchased_at).getTime(),
+        })));
+      });
+  }, [userId]);
 
   const copyText = async (key: string, text: string) => {
     await navigator.clipboard?.writeText(text);
@@ -89,21 +136,43 @@ function Index() {
     window.setTimeout(() => setCopied(null), 1500);
   };
 
-  const rentVehicle = (vehicle: Vehicle) => {
-    setOwned((list) => [...list, { ...vehicle, plate: `VX${12178 + list.length}`, purchasedAt: Date.now() }]);
+  const rentVehicle = async (vehicle: Vehicle) => {
+    if (!userId) return;
+    const plate = `VX${12178 + owned.length}`;
+    const purchasedAt = Date.now();
+    setOwned((list) => [...list, { ...vehicle, plate, purchasedAt }]);
     setView("resources");
+    await supabase.from("user_vehicles").insert({
+      user_id: userId,
+      name: vehicle.name,
+      region: vehicle.region,
+      daily: vehicle.daily,
+      return_value: vehicle.returnValue,
+      price: vehicle.price,
+      cycle: vehicle.cycle,
+      image_key: vehicle.imageKey,
+      plate,
+      purchased_at: new Date(purchasedAt).toISOString(),
+    });
   };
+
+  if (!ready) return <BydSplash />;
+  if (!userId) return <AuthScreen />;
+  if (booting) return <BydSplash />;
+
+  const displayName = account?.phone || account?.email || "Minha conta";
+  const inviteCode = account?.invite_code ?? "--------";
 
   const isTool = toolViews.includes(view as ToolView);
 
   const page = isTool ? (
     <ToolPage view={view as ToolView} onBack={() => setView("profile")} />
   ) : view === "invite" ? (
-    <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} />
+    <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "membership" ? (
-    <MembershipPage onBack={() => setView("profile")} />
+    <MembershipPage onBack={() => setView("profile")} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "profile" ? (
-    <ProfilePage onNavigate={setView} />
+    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "resources" ? (
     <ResourcesPage owned={owned} onBuy={() => setView("home")} />
   ) : view === "news" ? (
