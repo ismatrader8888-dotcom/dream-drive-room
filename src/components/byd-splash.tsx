@@ -8,7 +8,7 @@ export function BydSplash() {
       <h1 className="relative mt-6 text-2xl font-extrabold tracking-[0.2em] text-primary">BUILD YOUR DREAMS</h1>
       <p className="relative mt-2 text-sm text-muted-foreground">Preparando sua frota...</p>
       <div className="relative mt-6 h-1 w-48 overflow-hidden rounded-full bg-muted">
-        <div className="h-full w-1/3 animate-[voltiva-drive_1.2s_linear_infinite] rounded-full bg-primary" />
+        <div className="h-full w-full animate-pulse rounded-full bg-primary" />
       </div>
     </div>
   );
