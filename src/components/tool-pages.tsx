@@ -1,0 +1,372 @@
+import { ArrowLeft, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins } from "lucide-react";
+import { useState, type ReactNode } from "react";
+import { Button } from "@/components/ui/button";
+
+export type ToolView =
+  | "pix"
+  | "team"
+  | "contract"
+  | "salary"
+  | "vehicleIncome"
+  | "coupon"
+  | "inviteReward"
+  | "tasks"
+  | "orders"
+  | "exchange"
+  | "privacy"
+  | "about"
+  | "support"
+  | "settings"
+  | "recharge"
+  | "withdraw"
+  | "incomeDetails"
+  | "luckyDetails"
+  | "transfer";
+
+export function ToolHeader({ title, onBack }: { title: string; onBack: () => void }) {
+  return (
+    <header className="relative flex h-16 items-center justify-center border-b border-border">
+      <Button variant="ghost" size="icon" onClick={onBack} aria-label="Voltar" className="absolute left-1"><ArrowLeft /></Button>
+      <h1 className="text-lg font-bold">{title}</h1>
+    </header>
+  );
+}
+
+function EmptyState({ label = "Ainda não há dados" }: { label?: string }) {
+  return (
+    <div className="flex min-h-[46vh] flex-col items-center justify-center gap-3 text-muted-foreground">
+      <FileX2 className="h-16 w-16 opacity-50" />
+      <p className="text-sm">{label}</p>
+    </div>
+  );
+}
+
+function Shell({ title, onBack, children }: { title: string; onBack: () => void; children: ReactNode }) {
+  return (
+    <div className="min-h-screen bg-background pb-28">
+      <ToolHeader title={title} onBack={onBack} />
+      {children}
+    </div>
+  );
+}
+
+function Tabs({ items, value, onChange }: { items: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <div className="m-4 grid gap-2 rounded-xl bg-muted p-1" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
+      {items.map((item) => (
+        <button
+          key={item}
+          type="button"
+          onClick={() => onChange(item)}
+          className={`rounded-lg px-2 py-2 text-sm font-medium transition ${value === item ? "bg-primary text-primary-foreground" : "text-muted-foreground"}`}
+        >
+          {item}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+function PixPage({ onBack }: { onBack: () => void }) {
+  const [keys, setKeys] = useState<string[]>([]);
+  const [draft, setDraft] = useState("");
+  const [open, setOpen] = useState(false);
+  return (
+    <Shell title="Gerenciamento de chaves" onBack={onBack}>
+      {keys.length ? (
+        <ul className="space-y-3 p-4">
+          {keys.map((key) => (
+            <li key={key} className="flex items-center justify-between rounded-xl bg-card p-4 shadow-card">
+              <span className="min-w-0 break-all text-sm">{key}</span>
+              <Button variant="ghost" size="sm" onClick={() => setKeys((list) => list.filter((item) => item !== key))}>Remover</Button>
+            </li>
+          ))}
+        </ul>
+      ) : <EmptyState />}
+      {open && (
+        <div className="mx-4 rounded-xl bg-card p-4 shadow-card">
+          <label className="text-sm text-muted-foreground" htmlFor="pix-key">Nova chave PIX</label>
+          <input id="pix-key" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="CPF, e-mail ou telefone" className="mt-2 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary" />
+          <div className="mt-3 flex gap-2">
+            <Button className="flex-1" onClick={() => { if (draft.trim()) { setKeys((list) => [...list, draft.trim()]); setDraft(""); setOpen(false); } }}>Salvar</Button>
+            <Button variant="secondary" onClick={() => setOpen(false)}>Cancelar</Button>
+          </div>
+        </div>
+      )}
+      <div className="fixed bottom-4 left-1/2 w-full max-w-[430px] -translate-x-1/2 px-4">
+        <Button className="h-14 w-full rounded-xl text-base" onClick={() => setOpen(true)}><Plus /> Chave PIX</Button>
+      </div>
+    </Shell>
+  );
+}
+
+function TeamPage({ onBack }: { onBack: () => void }) {
+  const [tab, setTab] = useState("Eficiente");
+  return (
+    <Shell title="Minha Equipe" onBack={onBack}>
+      <section className="m-4 grid grid-cols-2 gap-4 rounded-2xl bg-card p-5 text-center shadow-card">
+        <div><p className="text-sm text-muted-foreground">Benefícios da Equipe</p><b className="mt-2 block text-xl">R$ 0,00</b></div>
+        <div><p className="text-sm text-muted-foreground">Membros Eficazes da Equipe</p><b className="mt-2 block text-xl">0 / 0</b></div>
+      </section>
+      <section className="m-4 grid grid-cols-2 gap-4 rounded-2xl bg-card p-5 text-center shadow-card">
+        <div><p className="text-sm text-muted-foreground">Lucro da equipe hoje</p><b className="mt-2 block text-xl">R$ 0,00</b></div>
+        <div><p className="text-sm text-muted-foreground">Recargas de Hoje</p><b className="mt-2 block text-xl">R$ 0,00</b></div>
+      </section>
+      <Tabs items={["Eficiente", "Inválido"]} value={tab} onChange={setTab} />
+      <EmptyState />
+    </Shell>
+  );
+}
+
+function ContractPage({ onBack }: { onBack: () => void }) {
+  return (
+    <Shell title="Contrato semanal" onBack={onBack}>
+      <article className="m-4 space-y-4 rounded-2xl bg-card p-5 text-sm leading-relaxed shadow-card">
+        <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">voltiva</span><b>VOLTIVA COMPANHIA DE INTELIGÊNCIA AUTOMOTIVA LTDA</b></div>
+        <h2 className="text-center font-bold">CONTRATO DE TRABALHO EM REGIME DE TEMPO PARCIAL</h2>
+        <p><b>EMPREGADOR:</b> VOLTIVA<br />Endereço: a definir<br />CNPJ: a definir</p>
+        <p><b>EMPREGADO:</b><br />Nome do Empregado: ______________<br />Endereço residencial: ______________<br />C.P.F.: ______________</p>
+        {[
+          ["1. Natureza do Contrato", "Este contrato é regido pela legislação brasileira (CLT), caracterizando vínculo de trabalho parcial, sem subordinação do empregador."],
+          ["2. Atividades", "O(a) contratado(a) exercerá a função de: auxiliar a empresa na promoção do conceito de carros autônomos, cumprir as diretrizes da gestão da empresa e ajudar os membros da equipe."],
+          ["3. Local de Trabalho", "Sem local fixo, podendo atuar remotamente ou em locais designados."],
+          ["4. Jornada de Trabalho", "Trabalhar no mínimo 30 horas por semana. Funcionários com excelente desempenho podem solicitar um aumento salarial ao seu gerente."],
+          ["5. Remuneração", "5.1 Salário semanal: R$ ______\n5.2 O pagamento semanal é recebido aos domingos, com atraso máximo de 5 dias úteis. O pagamento pode ser feito por transferência bancária ou pagamento online."],
+          ["6. Direitos e Obrigações", "6.1 O empregador deverá pagar corretamente e garantir condições de trabalho.\n6.2 O empregado deverá cumprir suas funções, respeitar regras internas e manter sigilo.\n6.3 Ambas as partes devem cumprir a legislação trabalhista e fiscal brasileira."],
+          ["7. Rescisão", "7.1 Este contrato pode ser encerrado por acordo entre as partes.\n7.2 Qualquer parte pode rescindir com aviso prévio de 7 dias.\n7.3 Valores pendentes devem ser quitados na rescisão."],
+          ["8. Legislação e Foro", "Este contrato segue a legislação brasileira (CLT). Em caso de disputa, será competente a Justiça do Trabalho."],
+        ].map(([title, body]) => (
+          <div key={title}><b>{title}</b><p className="mt-1 whitespace-pre-line text-muted-foreground">{body}</p></div>
+        ))}
+        <p className="pt-2"><b>Assinaturas:</b><br />EMPREGADOR: ______________<br />EMPREGADO: ______________<br />Data: ______________</p>
+      </article>
+    </Shell>
+  );
+}
+
+function SalaryPage({ onBack }: { onBack: () => void }) {
+  return (
+    <Shell title="Recompensa de salário" onBack={onBack}>
+      <div className="bg-primary px-4 py-6 text-center text-primary-foreground">
+        <p className="text-sm">Total recebido de salário</p>
+        <b className="mt-1 block text-3xl">R$ 0,00</b>
+      </div>
+      <EmptyState />
+    </Shell>
+  );
+}
+
+function VehicleIncomePage({ onBack }: { onBack: () => void }) {
+  const [range, setRange] = useState("Hoje");
+  return (
+    <Shell title="Receita de Veículos" onBack={onBack}>
+      <div className="flex justify-end p-4 pb-0">
+        <Button className="rounded-lg" onClick={() => setRange((current) => (current === "Hoje" ? "Total" : "Hoje"))}>{range}</Button>
+      </div>
+      <section className="grid grid-cols-2 divide-x divide-border p-4 text-center">
+        <div><p className="text-sm text-muted-foreground">Pedidos</p><b className="mt-1 block text-xl">0</b></div>
+        <div><p className="text-sm text-muted-foreground">Renda de comissão</p><b className="mt-1 block text-xl">R$ 0,00</b></div>
+      </section>
+      <EmptyState />
+    </Shell>
+  );
+}
+
+function CouponPage({ onBack }: { onBack: () => void }) {
+  const [tab, setTab] = useState("Recebido");
+  return (
+    <Shell title="Meu cupom" onBack={onBack}>
+      <Tabs items={["Recebido", "Usado", "Expirado"]} value={tab} onChange={setTab} />
+      <div className="flex min-h-[46vh] flex-col items-center justify-center gap-3 text-muted-foreground"><Ticket className="h-16 w-16 opacity-50" /><p className="text-sm">Ainda não há dados</p></div>
+    </Shell>
+  );
+}
+
+function InviteRewardPage({ onBack }: { onBack: () => void }) {
+  return (
+    <Shell title="Recompensa(R$)" onBack={onBack}>
+      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-muted-foreground"><FileMinus2 className="h-16 w-16 opacity-50" /><p className="text-sm">Ainda não há dados</p></div>
+    </Shell>
+  );
+}
+
+function TasksPage({ onBack }: { onBack: () => void }) {
+  const [tab, setTab] = useState("Tarefa pessoal");
+  return (
+    <Shell title="Central de Tarefas" onBack={onBack}>
+      <Tabs items={["Tarefa pessoal", "Tarefas da equipe"]} value={tab} onChange={setTab} />
+      {tab === "Tarefa pessoal" ? (
+        <div className="space-y-4 px-4">
+          <section className="rounded-2xl border-l-4 border-primary bg-card p-4 shadow-card">
+            <p className="text-sm text-muted-foreground">Prêmio da rodada</p>
+            <div className="mt-3 grid grid-cols-2 divide-x divide-border text-sm">
+              <div><p className="text-muted-foreground">Bola da Sorte</p><b>+3</b></div>
+              <div className="pl-4"><p className="text-muted-foreground">Saldo em dinheiro</p><b>+R$ 5,00</b></div>
+            </div>
+          </section>
+          <section className="rounded-2xl bg-card p-4 shadow-card">
+            <div className="flex items-start justify-between gap-3">
+              <b>1. Progresso da tarefa</b>
+              <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">● Aguardando o primeiro convite</span>
+            </div>
+            <div className="mt-4 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-muted"><User className="h-5 w-5" /></span><b className="text-lg">Convide 3 amigos</b></div>
+            <p className="mt-4 text-center"><b>0</b><span className="text-muted-foreground">/ 3 Concluído</span></p>
+            <div className="mt-3 flex justify-around">{[0, 1, 2].map((index) => <span key={index} className="h-6 w-6 rounded-full border border-border" />)}</div>
+            <Button variant="secondary" className="mt-4 h-12 w-full rounded-xl">Convide mais 3 para resgatar</Button>
+          </section>
+          <section className="rounded-2xl bg-card p-4 shadow-card">
+            <b>2. Descrição da recompensa</b>
+            <p className="mt-3 font-semibold">Como funciona esta tarefa</p>
+            <p className="mt-2 text-sm text-muted-foreground">Convide novos usuários através do seu link de convite e alcance a meta dentro do prazo para receber sua recompensa.</p>
+            <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+              <li>O primeiro convite válido inicia a contagem.</li>
+              <li>Cada amigo deve completar o cadastro e ativar sua conta.</li>
+              <li>A recompensa é creditada automaticamente após a meta.</li>
+            </ul>
+          </section>
+        </div>
+      ) : (
+        <section className="mx-4 flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-2xl bg-card p-6 text-muted-foreground shadow-card">
+          <span className="grid h-14 w-14 place-items-center rounded-full bg-muted"><ClipboardList className="h-6 w-6" /></span>
+          <p className="text-sm">Nenhuma tarefa da equipe disponível</p>
+        </section>
+      )}
+    </Shell>
+  );
+}
+
+function OrdersPage({ onBack }: { onBack: () => void }) {
+  const [tab, setTab] = useState("veículo");
+  const [lucky, setLucky] = useState(false);
+  return (
+    <Shell title="Meu pedido" onBack={onBack}>
+      <Tabs items={["veículo", "Ponto de carregamento"]} value={tab} onChange={setTab} />
+      <label className="mx-4 flex items-center gap-3 rounded-xl bg-card p-4 text-sm shadow-card">
+        <input type="checkbox" checked={lucky} onChange={(event) => setLucky(event.target.checked)} className="h-4 w-4 accent-[hsl(var(--primary))]" />
+        Ver apenas pedidos de Valor da sorte
+      </label>
+      <EmptyState />
+    </Shell>
+  );
+}
+
+function BalancePage({ title, onBack, mode }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer" }) {
+  const [amount, setAmount] = useState("");
+  const [done, setDone] = useState(false);
+  return (
+    <Shell title={title} onBack={onBack}>
+      <section className="m-4 rounded-2xl bg-card p-5 shadow-card">
+        <p className="text-sm text-muted-foreground">Saldo disponível</p>
+        <b className="mt-1 block text-3xl">R$ 0,00</b>
+        <label className="mt-5 block text-sm text-muted-foreground" htmlFor="amount">Valor</label>
+        <input id="amount" inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setDone(false); }} placeholder="0,00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 text-lg outline-none focus:border-primary" />
+        <div className="mt-3 flex flex-wrap gap-2">{["10", "50", "100", "500"].map((value) => <Button key={value} variant="secondary" size="sm" className="rounded-full" onClick={() => setAmount(value)}>R$ {value}</Button>)}</div>
+        <Button className="mt-5 h-12 w-full rounded-full text-base" disabled={!amount} onClick={() => setDone(true)}>
+          {mode === "recharge" ? "Recarregar agora" : mode === "withdraw" ? "Solicitar saque" : "Transferir"}
+        </Button>
+        {done && <p className="mt-3 text-center text-sm text-success">Solicitação de R$ {amount} registrada. Processamento em até 24h.</p>}
+      </section>
+      {mode === "withdraw" && <p className="px-6 text-center text-xs text-muted-foreground">Saques exigem uma chave PIX cadastrada.</p>}
+    </Shell>
+  );
+}
+
+function DetailsPage({ title, onBack }: { title: string; onBack: () => void }) {
+  return <Shell title={title} onBack={onBack}><EmptyState /></Shell>;
+}
+
+function TextPage({ title, onBack, paragraphs }: { title: string; onBack: () => void; paragraphs: string[] }) {
+  return (
+    <Shell title={title} onBack={onBack}>
+      <article className="m-4 space-y-3 rounded-2xl bg-card p-5 text-sm leading-relaxed text-muted-foreground shadow-card">
+        {paragraphs.map((text) => <p key={text}>{text}</p>)}
+      </article>
+    </Shell>
+  );
+}
+
+function SettingsPage({ onBack }: { onBack: () => void }) {
+  const [notifications, setNotifications] = useState(true);
+  const [sounds, setSounds] = useState(false);
+  const rows: Array<[string, boolean, (value: boolean) => void]> = [
+    ["Notificações push", notifications, setNotifications],
+    ["Sons do aplicativo", sounds, setSounds],
+  ];
+  return (
+    <Shell title="Configurações" onBack={onBack}>
+      <section className="m-4 divide-y divide-border rounded-2xl bg-card shadow-card">
+        {rows.map(([label, value, set]) => (
+          <button key={label} type="button" onClick={() => set(!value)} className="flex w-full items-center justify-between p-4 text-left text-sm">
+            <span>{label}</span>
+            <span className={`h-6 w-11 rounded-full p-1 transition ${value ? "bg-primary" : "bg-muted"}`}><span className={`block h-4 w-4 rounded-full bg-card transition ${value ? "translate-x-5" : ""}`} /></span>
+          </button>
+        ))}
+        <div className="flex items-center justify-between p-4 text-sm"><span>Idioma</span><span className="text-muted-foreground">Português (BR)</span></div>
+        <div className="flex items-center justify-between p-4 text-sm"><span>Versão</span><span className="text-muted-foreground">1.0.4</span></div>
+      </section>
+      <div className="px-4"><Button variant="outline" className="h-12 w-full rounded-full">Sair da conta</Button></div>
+    </Shell>
+  );
+}
+
+function ExchangePage({ onBack }: { onBack: () => void }) {
+  const [code, setCode] = useState("");
+  const [message, setMessage] = useState("");
+  return (
+    <Shell title="Intercâmbio" onBack={onBack}>
+      <section className="m-4 rounded-2xl bg-card p-5 shadow-card">
+        <p className="text-sm text-muted-foreground">Insira o código de resgate</p>
+        <input value={code} onChange={(event) => { setCode(event.target.value); setMessage(""); }} placeholder="Ex.: VOLT-2026" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 uppercase outline-none focus:border-primary" />
+        <Button className="mt-4 h-12 w-full rounded-full" disabled={!code} onClick={() => setMessage("Código inválido ou já utilizado.")}>Resgatar</Button>
+        {message && <p className="mt-3 text-center text-sm text-destructive">{message}</p>}
+      </section>
+    </Shell>
+  );
+}
+
+function SupportPage({ onBack }: { onBack: () => void }) {
+  return (
+    <Shell title="Atendimento ao Cliente" onBack={onBack}>
+      <section className="m-4 space-y-3 rounded-2xl bg-card p-5 shadow-card text-sm">
+        <p className="text-muted-foreground">Nossa equipe responde de segunda a sábado, das 8h às 20h.</p>
+        <div className="flex items-center justify-between rounded-xl bg-muted p-4"><span>Suporte no WhatsApp</span><Coins className="h-5 w-5 text-primary" /></div>
+        <div className="flex items-center justify-between rounded-xl bg-muted p-4"><span>suporte@voltiva.app</span></div>
+        <Button className="h-12 w-full rounded-full">Iniciar conversa</Button>
+      </section>
+    </Shell>
+  );
+}
+
+export function ToolPage({ view, onBack }: { view: ToolView; onBack: () => void }) {
+  switch (view) {
+    case "pix": return <PixPage onBack={onBack} />;
+    case "team": return <TeamPage onBack={onBack} />;
+    case "contract": return <ContractPage onBack={onBack} />;
+    case "salary": return <SalaryPage onBack={onBack} />;
+    case "vehicleIncome": return <VehicleIncomePage onBack={onBack} />;
+    case "coupon": return <CouponPage onBack={onBack} />;
+    case "inviteReward": return <InviteRewardPage onBack={onBack} />;
+    case "tasks": return <TasksPage onBack={onBack} />;
+    case "orders": return <OrdersPage onBack={onBack} />;
+    case "exchange": return <ExchangePage onBack={onBack} />;
+    case "settings": return <SettingsPage onBack={onBack} />;
+    case "support": return <SupportPage onBack={onBack} />;
+    case "recharge": return <BalancePage title="Recarregar" onBack={onBack} mode="recharge" />;
+    case "withdraw": return <BalancePage title="Sacar dinheiro" onBack={onBack} mode="withdraw" />;
+    case "transfer": return <BalancePage title="Transferir renda" onBack={onBack} mode="transfer" />;
+    case "incomeDetails": return <DetailsPage title="Detalhes da renda" onBack={onBack} />;
+    case "luckyDetails": return <DetailsPage title="Registro da Sorte" onBack={onBack} />;
+    case "privacy": return <TextPage title="Política de privacidade" onBack={onBack} paragraphs={[
+      "A Voltiva coleta apenas os dados necessários para criar e manter sua conta: telefone, código de convite e histórico de operações dos veículos.",
+      "Não vendemos nem compartilhamos seus dados com terceiros para fins publicitários.",
+      "Você pode solicitar a exclusão da sua conta e dos dados relacionados a qualquer momento pelo atendimento ao cliente.",
+      "Utilizamos criptografia em trânsito para proteger as informações trocadas entre o aplicativo e nossos servidores.",
+    ]} />;
+    case "about": return <TextPage title="Sobre nós" onBack={onBack} paragraphs={[
+      "A Voltiva é uma plataforma de mobilidade elétrica que conecta pessoas a frotas de veículos autônomos em grandes centros urbanos.",
+      "Cada veículo alugado opera em uma região e gera rendimento diário durante o ciclo contratado.",
+      "Nossa missão é tornar a economia da mobilidade elétrica acessível a qualquer pessoa, com transparência nos rendimentos e nos prazos.",
+    ]} />;
+    default: return <DetailsPage title="Em breve" onBack={onBack} />;
+  }
+}
