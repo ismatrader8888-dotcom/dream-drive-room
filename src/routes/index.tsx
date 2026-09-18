@@ -35,8 +35,12 @@ import bydEntry from "@/assets/byd-entry.png";
 import bydMid from "@/assets/byd-mid.png";
 import bydPremium from "@/assets/byd-premium.png";
 import bydTop from "@/assets/byd-top.png";
+import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { ToolPage, type ToolView } from "@/components/tool-pages";
+import { AuthScreen } from "@/components/auth-screen";
+import { BydSplash } from "@/components/byd-splash";
+import { supabase } from "@/integrations/supabase/client";
 
 type View = "home" | "resources" | "news" | "profile" | "invite" | "membership" | ToolView;
 
