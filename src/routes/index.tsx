@@ -57,21 +57,21 @@ export const Route = createFileRoute("/")({
 });
 
 const tools: Array<{ label: string; icon: ComponentType<{ className?: string }>; view?: View; badge?: string }> = [
-  { label: "Intercâmbio", icon: RefreshCcw },
+  { label: "Intercâmbio", icon: RefreshCcw, view: "exchange" },
   { label: "Convidar", icon: Gift, view: "invite" },
-  { label: "PIX", icon: CreditCard },
-  { label: "Equipe", icon: Users },
-  { label: "Salário semanal", icon: CalendarDays },
-  { label: "Receber salário", icon: ClipboardCheck },
-  { label: "Rendimento do veículo", icon: CarFront },
-  { label: "Cupom", icon: TicketPercent },
-  { label: "Recompensas por convite", icon: BadgeDollarSign },
-  { label: "Central de tarefas", icon: CheckCircle2 },
-  { label: "Registros de pedidos", icon: ListChecks },
-  { label: "Política de privacidade", icon: ShieldCheck },
-  { label: "Sobre nós", icon: Building2 },
-  { label: "Atendimento ao Cliente", icon: Headphones, badge: "4" },
-  { label: "Configurações", icon: Settings },
+  { label: "PIX", icon: CreditCard, view: "pix" },
+  { label: "Equipe", icon: Users, view: "team" },
+  { label: "Salário semanal", icon: CalendarDays, view: "contract" },
+  { label: "Receber salário", icon: ClipboardCheck, view: "salary" },
+  { label: "Rendimento do veículo", icon: CarFront, view: "vehicleIncome" },
+  { label: "Cupom", icon: TicketPercent, view: "coupon" },
+  { label: "Recompensas por convite", icon: BadgeDollarSign, view: "inviteReward" },
+  { label: "Central de tarefas", icon: CheckCircle2, view: "tasks" },
+  { label: "Registros de pedidos", icon: ListChecks, view: "orders" },
+  { label: "Política de privacidade", icon: ShieldCheck, view: "privacy" },
+  { label: "Sobre nós", icon: Building2, view: "about" },
+  { label: "Atendimento ao Cliente", icon: Headphones, badge: "4", view: "support" },
+  { label: "Configurações", icon: Settings, view: "settings" },
 ];
 
 function Index() {
