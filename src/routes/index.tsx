@@ -175,7 +175,6 @@ function MarketplacePage({ onRent }: { onRent: (vehicle: Vehicle) => void }) {
       <div className="mt-3 space-y-3 px-2">
         {visible.length ? visible.map((vehicle) => <MarketVehicleCard key={`${vehicle.region}-${vehicle.name}`} vehicle={vehicle} period={period} rented={rented === vehicle.name} onRent={() => { setRented(vehicle.name); onRent(vehicle); }} />) : <div className="rounded-2xl bg-card p-8 text-center text-sm text-muted-foreground">Novos veículos para {region} chegam em breve.</div>}
       </div>
-      <div className="fixed bottom-24 left-[max(calc(50%-207px),12px)] z-10 rounded-full bg-primary px-4 py-2 text-sm font-bold shadow-card">▣ &nbsp; Baixar app<br/><span className="pl-6 text-[10px] font-normal">Android e iPhone</span></div>
     </div>
   );
 }
