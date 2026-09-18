@@ -90,7 +90,11 @@ function Index() {
     setView("resources");
   };
 
-  const page = view === "invite" ? (
+  const isTool = toolViews.includes(view as ToolView);
+
+  const page = isTool ? (
+    <ToolPage view={view as ToolView} onBack={() => setView("profile")} />
+  ) : view === "invite" ? (
     <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} />
   ) : view === "membership" ? (
     <MembershipPage onBack={() => setView("profile")} />
