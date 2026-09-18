@@ -36,8 +36,11 @@ import bydMid from "@/assets/byd-mid.png";
 import bydPremium from "@/assets/byd-premium.png";
 import bydTop from "@/assets/byd-top.png";
 import { Button } from "@/components/ui/button";
+import { ToolPage, type ToolView } from "@/components/tool-pages";
 
-type View = "home" | "resources" | "news" | "profile" | "invite" | "membership";
+type View = "home" | "resources" | "news" | "profile" | "invite" | "membership" | ToolView;
+
+const toolViews: ToolView[] = ["pix", "team", "contract", "salary", "vehicleIncome", "coupon", "inviteReward", "tasks", "orders", "exchange", "privacy", "about", "support", "settings", "recharge", "withdraw", "incomeDetails", "luckyDetails", "transfer"];
 
 export const Route = createFileRoute("/")({
   head: () => ({
