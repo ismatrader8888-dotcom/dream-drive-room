@@ -161,11 +161,33 @@ const vehicles: Vehicle[] = [
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
 
+const toNumber = (value: string) => Number(value.replace(/[^\d,]/g, "").replace(",", "."));
+const rateOf = (vehicle: Vehicle) => toNumber(vehicle.returnValue) / toNumber(vehicle.price);
+type SortKey = "Padrão" | "Preço" | "Taxa de juros" | "Renda";
+
 function MarketplacePage({ onRent }: { onRent: (vehicle: Vehicle) => void }) {
   const [region, setRegion] = useState("Todos");
   const [period, setPeriod] = useState<"Diário" | "Ciclo">("Diário");
   const [rented, setRented] = useState<string | null>(null);
-  const visible = region === "Todos" ? vehicles.filter((vehicle) => vehicle.region === "New York") : vehicles.filter((vehicle) => vehicle.region === region);
+  const [sort, setSort] = useState<SortKey>("Padrão");
+  const [desc, setDesc] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+
+  const toggleSort = (key: SortKey) => {
+    if (key === "Padrão") { setSort("Padrão"); setDesc(true); setMaxPrice(null); setRegion("Todos"); return; }
+    if (sort === key) setDesc((value) => !value);
+    else { setSort(key); setDesc(true); }
+  };
+
+  let visible = region === "Todos" ? vehicles : vehicles.filter((vehicle) => vehicle.region === region);
+  if (maxPrice !== null) visible = visible.filter((vehicle) => toNumber(vehicle.price) <= maxPrice);
+  if (sort !== "Padrão") {
+    const value = (vehicle: Vehicle) => (sort === "Preço" ? toNumber(vehicle.price) : sort === "Renda" ? toNumber(vehicle.daily) : rateOf(vehicle));
+    visible = [...visible].sort((a, b) => (desc ? value(b) - value(a) : value(a) - value(b)));
+  }
+
+  const arrow = (key: SortKey) => (sort === key ? (desc ? "↓" : "↑") : "⌄");
 
   return (
     <div className="min-h-screen bg-highlight pb-28 pt-3">
@@ -175,8 +197,24 @@ function MarketplacePage({ onRent }: { onRent: (vehicle: Vehicle) => void }) {
         ))}
       </div>
       <div className="mt-3 flex items-center justify-between px-3 text-xs">
-        <span>Padrão</span><button type="button">Preço⌄</button><button type="button">Taxa de juros⌄</button><button type="button">Renda⌄</button><button type="button" className="flex items-center gap-1">Filtrar <Filter className="h-4 w-4" /></button>
+        {(["Padrão", "Preço", "Taxa de juros", "Renda"] as const).map((key) => (
+          <button key={key} type="button" onClick={() => toggleSort(key)} className={sort === key ? "font-semibold text-primary" : ""}>
+            {key}{key === "Padrão" ? "" : arrow(key)}
+          </button>
+        ))}
+        <button type="button" onClick={() => setShowFilters((value) => !value)} className={`flex items-center gap-1 ${showFilters || maxPrice !== null ? "font-semibold text-primary" : ""}`}>Filtrar <Filter className="h-4 w-4" /></button>
       </div>
+      {showFilters && (
+        <div className="mx-3 mt-3 rounded-2xl bg-card p-4 shadow-card">
+          <p className="text-xs text-muted-foreground">Preço máximo</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {[100, 200, 350, 700].map((limit) => (
+              <Button key={limit} size="sm" variant={maxPrice === limit ? "default" : "secondary"} className="rounded-full shadow-none" onClick={() => setMaxPrice(maxPrice === limit ? null : limit)}>até R$ {limit}</Button>
+            ))}
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => { setMaxPrice(null); setRegion("Todos"); }}>Limpar</Button>
+          </div>
+        </div>
+      )}
       <div className="mt-3 flex flex-wrap gap-2 px-3">
         {regions.map((item) => <Button key={item} onClick={() => setRegion(item)} variant={region === item ? "default" : "secondary"} size="sm" className="rounded-full px-4 shadow-none">{item}</Button>)}
       </div>
