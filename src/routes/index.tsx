@@ -49,10 +49,10 @@ const toolViews: ToolView[] = ["pix", "team", "contract", "salary", "vehicleInco
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Voltiva — Mobilidade que gera valor" },
-      { name: "description", content: "Acompanhe seus veículos, rendimentos e benefícios Voltiva." },
-      { property: "og:title", content: "Voltiva — Mobilidade que gera valor" },
-      { property: "og:description", content: "Acompanhe seus veículos, rendimentos e benefícios Voltiva." },
+      { title: "BYD Driving — Build Your Dreams" },
+      { name: "description", content: "Acompanhe seus veículos, rendimentos e benefícios BYD Driving." },
+      { property: "og:title", content: "BYD Driving — Build Your Dreams" },
+      { property: "og:description", content: "Acompanhe seus veículos, rendimentos e benefícios BYD Driving." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
