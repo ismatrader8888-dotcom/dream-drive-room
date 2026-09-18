@@ -266,7 +266,6 @@ function ResourcesPage({ owned, onBuy }: { owned: OwnedVehicle[]; onBuy: () => v
         </div>
         <div className="mt-3 flex gap-3">
           <Button variant="outline" className="border-primary bg-transparent text-foreground shadow-none">Veículo</Button>
-          <Button variant="secondary" className="font-normal text-muted-foreground shadow-none">Ponto de carregamento</Button>
         </div>
         {owned.length ? <div className="space-y-4">{owned.map((vehicle) => <VehicleCard key={vehicle.plate} vehicle={vehicle} />)}</div> : <EmptyGarage onBuy={onBuy} />}
       </section>
