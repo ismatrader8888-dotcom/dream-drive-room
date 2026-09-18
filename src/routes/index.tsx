@@ -112,7 +112,7 @@ function Index() {
     <main className="min-h-screen bg-shell font-sans text-foreground">
       <div className="mx-auto min-h-screen w-full max-w-[430px] overflow-hidden bg-background shadow-phone">
         {page}
-        {view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
+        {!isTool && view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
       </div>
     </main>
   );
