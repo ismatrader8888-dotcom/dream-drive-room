@@ -31,9 +31,10 @@ import {
 } from "lucide-react";
 import { useEffect, useState, type ComponentType } from "react";
 import cityMap from "@/assets/city-map.jpg";
-import evCompact from "@/assets/ev-compact.png";
-import evExecutive from "@/assets/ev-executive.png";
-import evSuv from "@/assets/ev-suv.png";
+import bydEntry from "@/assets/byd-entry.png";
+import bydMid from "@/assets/byd-mid.png";
+import bydPremium from "@/assets/byd-premium.png";
+import bydTop from "@/assets/byd-top.png";
 import { Button } from "@/components/ui/button";
 
 type View = "home" | "resources" | "news" | "profile" | "invite" | "membership";
@@ -139,16 +140,16 @@ type Vehicle = {
 };
 
 const vehicles: Vehicle[] = [
-  { name: "EV Compacto", region: "New York", daily: "R$ 5,00/dia", returnValue: "R$ 125,00", price: "R$ 62,50", cycle: "25 dias úteis", image: evCompact },
-  { name: "EV Executivo", region: "New York", daily: "R$ 50,00/dia", returnValue: "R$ 1.250,00", price: "R$ 625,00", cycle: "25 dias úteis", image: evExecutive },
-  { name: "EV Urbano", region: "Israel", daily: "R$ 8,00/dia", returnValue: "R$ 200,00", price: "R$ 100,00", cycle: "25 dias úteis", image: evCompact },
-  { name: "EV Premium", region: "Alemanha", daily: "R$ 18,00/dia", returnValue: "R$ 450,00", price: "R$ 225,00", cycle: "25 dias úteis", image: evExecutive },
-  { name: "EV SUV", region: "Dubai", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 312,50", cycle: "25 dias úteis", image: evSuv },
-  { name: "EV Neo", region: "Tokyo", daily: "R$ 12,00/dia", returnValue: "R$ 300,00", price: "R$ 150,00", cycle: "25 dias úteis", image: evExecutive },
-  { name: "EV Citadino", region: "Paris", daily: "R$ 10,00/dia", returnValue: "R$ 250,00", price: "R$ 125,00", cycle: "25 dias úteis", image: evCompact },
-  { name: "EV Costa", region: "Los Angeles", daily: "R$ 20,00/dia", returnValue: "R$ 500,00", price: "R$ 250,00", cycle: "25 dias úteis", image: evSuv },
-  { name: "EV Connect", region: "Jerusalém", daily: "R$ 9,00/dia", returnValue: "R$ 225,00", price: "R$ 112,50", cycle: "25 dias úteis", image: evCompact },
-  { name: "EV Class", region: "Berlim", daily: "R$ 16,00/dia", returnValue: "R$ 400,00", price: "R$ 200,00", cycle: "25 dias úteis", image: evExecutive },
+  { name: "BYD Dolphin Mini", region: "New York", daily: "R$ 5,00/dia", returnValue: "R$ 125,00", price: "R$ 62,50", cycle: "25 dias úteis", image: bydEntry },
+  { name: "Yangwang U8", region: "New York", daily: "R$ 50,00/dia", returnValue: "R$ 1.250,00", price: "R$ 625,00", cycle: "25 dias úteis", image: bydTop },
+  { name: "BYD Dolphin", region: "Israel", daily: "R$ 8,00/dia", returnValue: "R$ 200,00", price: "R$ 100,00", cycle: "25 dias úteis", image: bydMid },
+  { name: "BYD Han", region: "Alemanha", daily: "R$ 18,00/dia", returnValue: "R$ 450,00", price: "R$ 225,00", cycle: "25 dias úteis", image: bydPremium },
+  { name: "BYD Han EV", region: "Dubai", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 312,50", cycle: "25 dias úteis", image: bydPremium },
+  { name: "BYD Seal", region: "Tokyo", daily: "R$ 12,00/dia", returnValue: "R$ 300,00", price: "R$ 150,00", cycle: "25 dias úteis", image: bydMid },
+  { name: "BYD Dolphin", region: "Paris", daily: "R$ 10,00/dia", returnValue: "R$ 250,00", price: "R$ 125,00", cycle: "25 dias úteis", image: bydMid },
+  { name: "BYD Han", region: "Los Angeles", daily: "R$ 20,00/dia", returnValue: "R$ 500,00", price: "R$ 250,00", cycle: "25 dias úteis", image: bydPremium },
+  { name: "BYD Seal", region: "Jerusalém", daily: "R$ 9,00/dia", returnValue: "R$ 225,00", price: "R$ 112,50", cycle: "25 dias úteis", image: bydMid },
+  { name: "BYD Han", region: "Berlim", daily: "R$ 16,00/dia", returnValue: "R$ 400,00", price: "R$ 200,00", cycle: "25 dias úteis", image: bydPremium },
 ];
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
