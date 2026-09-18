@@ -36,8 +36,11 @@ import bydMid from "@/assets/byd-mid.png";
 import bydPremium from "@/assets/byd-premium.png";
 import bydTop from "@/assets/byd-top.png";
 import { Button } from "@/components/ui/button";
+import { ToolPage, type ToolView } from "@/components/tool-pages";
 
-type View = "home" | "resources" | "news" | "profile" | "invite" | "membership";
+type View = "home" | "resources" | "news" | "profile" | "invite" | "membership" | ToolView;
+
+const toolViews: ToolView[] = ["pix", "team", "contract", "salary", "vehicleIncome", "coupon", "inviteReward", "tasks", "orders", "exchange", "privacy", "about", "support", "settings", "recharge", "withdraw", "incomeDetails", "luckyDetails", "transfer"];
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -54,21 +57,21 @@ export const Route = createFileRoute("/")({
 });
 
 const tools: Array<{ label: string; icon: ComponentType<{ className?: string }>; view?: View; badge?: string }> = [
-  { label: "Intercâmbio", icon: RefreshCcw },
+  { label: "Intercâmbio", icon: RefreshCcw, view: "exchange" },
   { label: "Convidar", icon: Gift, view: "invite" },
-  { label: "PIX", icon: CreditCard },
-  { label: "Equipe", icon: Users },
-  { label: "Salário semanal", icon: CalendarDays },
-  { label: "Receber salário", icon: ClipboardCheck },
-  { label: "Rendimento do veículo", icon: CarFront },
-  { label: "Cupom", icon: TicketPercent },
-  { label: "Recompensas por convite", icon: BadgeDollarSign },
-  { label: "Central de tarefas", icon: CheckCircle2 },
-  { label: "Registros de pedidos", icon: ListChecks },
-  { label: "Política de privacidade", icon: ShieldCheck },
-  { label: "Sobre nós", icon: Building2 },
-  { label: "Atendimento ao Cliente", icon: Headphones, badge: "4" },
-  { label: "Configurações", icon: Settings },
+  { label: "PIX", icon: CreditCard, view: "pix" },
+  { label: "Equipe", icon: Users, view: "team" },
+  { label: "Salário semanal", icon: CalendarDays, view: "contract" },
+  { label: "Receber salário", icon: ClipboardCheck, view: "salary" },
+  { label: "Rendimento do veículo", icon: CarFront, view: "vehicleIncome" },
+  { label: "Cupom", icon: TicketPercent, view: "coupon" },
+  { label: "Recompensas por convite", icon: BadgeDollarSign, view: "inviteReward" },
+  { label: "Central de tarefas", icon: CheckCircle2, view: "tasks" },
+  { label: "Registros de pedidos", icon: ListChecks, view: "orders" },
+  { label: "Política de privacidade", icon: ShieldCheck, view: "privacy" },
+  { label: "Sobre nós", icon: Building2, view: "about" },
+  { label: "Atendimento ao Cliente", icon: Headphones, badge: "4", view: "support" },
+  { label: "Configurações", icon: Settings, view: "settings" },
 ];
 
 function Index() {
@@ -87,7 +90,11 @@ function Index() {
     setView("resources");
   };
 
-  const page = view === "invite" ? (
+  const isTool = toolViews.includes(view as ToolView);
+
+  const page = isTool ? (
+    <ToolPage view={view as ToolView} onBack={() => setView("profile")} />
+  ) : view === "invite" ? (
     <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} />
   ) : view === "membership" ? (
     <MembershipPage onBack={() => setView("profile")} />
@@ -105,7 +112,7 @@ function Index() {
     <main className="min-h-screen bg-shell font-sans text-foreground">
       <div className="mx-auto min-h-screen w-full max-w-[430px] overflow-hidden bg-background shadow-phone">
         {page}
-        {view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
+        {!isTool && view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
       </div>
     </main>
   );
@@ -154,11 +161,33 @@ const vehicles: Vehicle[] = [
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
 
+const toNumber = (value: string) => Number(value.replace(/[^\d,]/g, "").replace(",", "."));
+const rateOf = (vehicle: Vehicle) => toNumber(vehicle.returnValue) / toNumber(vehicle.price);
+type SortKey = "Padrão" | "Preço" | "Taxa de juros" | "Renda";
+
 function MarketplacePage({ onRent }: { onRent: (vehicle: Vehicle) => void }) {
   const [region, setRegion] = useState("Todos");
   const [period, setPeriod] = useState<"Diário" | "Ciclo">("Diário");
   const [rented, setRented] = useState<string | null>(null);
-  const visible = region === "Todos" ? vehicles.filter((vehicle) => vehicle.region === "New York") : vehicles.filter((vehicle) => vehicle.region === region);
+  const [sort, setSort] = useState<SortKey>("Padrão");
+  const [desc, setDesc] = useState(true);
+  const [showFilters, setShowFilters] = useState(false);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+
+  const toggleSort = (key: SortKey) => {
+    if (key === "Padrão") { setSort("Padrão"); setDesc(true); setMaxPrice(null); setRegion("Todos"); return; }
+    if (sort === key) setDesc((value) => !value);
+    else { setSort(key); setDesc(true); }
+  };
+
+  let visible = region === "Todos" ? vehicles : vehicles.filter((vehicle) => vehicle.region === region);
+  if (maxPrice !== null) visible = visible.filter((vehicle) => toNumber(vehicle.price) <= maxPrice);
+  if (sort !== "Padrão") {
+    const value = (vehicle: Vehicle) => (sort === "Preço" ? toNumber(vehicle.price) : sort === "Renda" ? toNumber(vehicle.daily) : rateOf(vehicle));
+    visible = [...visible].sort((a, b) => (desc ? value(b) - value(a) : value(a) - value(b)));
+  }
+
+  const arrow = (key: SortKey) => (sort === key ? (desc ? "↓" : "↑") : "⌄");
 
   return (
     <div className="min-h-screen bg-highlight pb-28 pt-3">
@@ -168,8 +197,24 @@ function MarketplacePage({ onRent }: { onRent: (vehicle: Vehicle) => void }) {
         ))}
       </div>
       <div className="mt-3 flex items-center justify-between px-3 text-xs">
-        <span>Padrão</span><button type="button">Preço⌄</button><button type="button">Taxa de juros⌄</button><button type="button">Renda⌄</button><button type="button" className="flex items-center gap-1">Filtrar <Filter className="h-4 w-4" /></button>
+        {(["Padrão", "Preço", "Taxa de juros", "Renda"] as const).map((key) => (
+          <button key={key} type="button" onClick={() => toggleSort(key)} className={sort === key ? "font-semibold text-primary" : ""}>
+            {key}{key === "Padrão" ? "" : arrow(key)}
+          </button>
+        ))}
+        <button type="button" onClick={() => setShowFilters((value) => !value)} className={`flex items-center gap-1 ${showFilters || maxPrice !== null ? "font-semibold text-primary" : ""}`}>Filtrar <Filter className="h-4 w-4" /></button>
       </div>
+      {showFilters && (
+        <div className="mx-3 mt-3 rounded-2xl bg-card p-4 shadow-card">
+          <p className="text-xs text-muted-foreground">Preço máximo</p>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {[100, 200, 350, 700].map((limit) => (
+              <Button key={limit} size="sm" variant={maxPrice === limit ? "default" : "secondary"} className="rounded-full shadow-none" onClick={() => setMaxPrice(maxPrice === limit ? null : limit)}>até R$ {limit}</Button>
+            ))}
+            <Button size="sm" variant="ghost" className="rounded-full" onClick={() => { setMaxPrice(null); setRegion("Todos"); }}>Limpar</Button>
+          </div>
+        </div>
+      )}
       <div className="mt-3 flex flex-wrap gap-2 px-3">
         {regions.map((item) => <Button key={item} onClick={() => setRegion(item)} variant={region === item ? "default" : "secondary"} size="sm" className="rounded-full px-4 shadow-none">{item}</Button>)}
       </div>
@@ -221,7 +266,6 @@ function ResourcesPage({ owned, onBuy }: { owned: OwnedVehicle[]; onBuy: () => v
         </div>
         <div className="mt-3 flex gap-3">
           <Button variant="outline" className="border-primary bg-transparent text-foreground shadow-none">Veículo</Button>
-          <Button variant="secondary" className="font-normal text-muted-foreground shadow-none">Ponto de carregamento</Button>
         </div>
         {owned.length ? <div className="space-y-4">{owned.map((vehicle) => <VehicleCard key={vehicle.plate} vehicle={vehicle} />)}</div> : <EmptyGarage onBuy={onBuy} />}
       </section>
@@ -269,10 +313,10 @@ function ProfilePage({ onNavigate }: { onNavigate: (view: View) => void }) {
       </header>
       <section className="mx-4 mt-5 overflow-hidden rounded-2xl bg-card shadow-card">
         <button type="button" onClick={() => onNavigate("membership")} className="flex w-full items-center justify-between bg-primary px-4 py-3 text-left text-primary-foreground"><b>◉ Vip1</b><span>Direitos de membro &gt;</span></button>
-        <div className="grid grid-cols-2 divide-x divide-border p-4 text-center"><div><p>▣ Saldo de Recarga</p><b className="mt-3 block text-xl">0,00</b><Button className="mt-2 rounded-full">Recarregar</Button></div><div><p>◎ Registro da Sorte</p><b className="mt-3 block text-xl">0,00</b><p className="mt-4 text-sm text-muted-foreground">Detalhes &gt;</p></div></div>
+        <div className="grid grid-cols-2 divide-x divide-border p-4 text-center"><div><p>▣ Saldo de Recarga</p><b className="mt-3 block text-xl">0,00</b><Button className="mt-2 rounded-full" onClick={() => onNavigate("recharge")}>Recarregar</Button></div><div><p>◎ Registro da Sorte</p><b className="mt-3 block text-xl">0,00</b><button type="button" onClick={() => onNavigate("luckyDetails")} className="mt-4 text-sm text-muted-foreground">Detalhes &gt;</button></div></div>
       </section>
-      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda da conta</h2><span className="text-sm text-muted-foreground">Detalhes &gt;</span></div><Row label="Saldo Ganhos" value="1,00"/><Row label="Ganhos de hoje" value="1,00"/><Row label="Ganhos totais" value="1,00"/><Button variant="outline" className="mt-3 h-12 w-full rounded-full border-primary text-base shadow-none">Sacar dinheiro</Button></section>
-      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda de contrato</h2><span className="text-sm text-muted-foreground"><CircleHelp className="mr-1 inline h-4 w-4"/>Dica</span></div><div className="mt-5 grid grid-cols-4 items-center text-center text-xs"><div><b className="text-lg">0,00</b><p>Valor da renda</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">A transferir</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">Transferido</p></div><Button variant="outline" className="rounded-full border-primary px-2 text-muted-foreground shadow-none">Transferir</Button></div></section>
+      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda da conta</h2><button type="button" onClick={() => onNavigate("incomeDetails")} className="text-sm text-muted-foreground">Detalhes &gt;</button></div><Row label="Saldo Ganhos" value="1,00"/><Row label="Ganhos de hoje" value="1,00"/><Row label="Ganhos totais" value="1,00"/><Button variant="outline" onClick={() => onNavigate("withdraw")} className="mt-3 h-12 w-full rounded-full border-primary text-base shadow-none">Sacar dinheiro</Button></section>
+      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda de contrato</h2><span className="text-sm text-muted-foreground"><CircleHelp className="mr-1 inline h-4 w-4"/>Dica</span></div><div className="mt-5 grid grid-cols-4 items-center text-center text-xs"><div><b className="text-lg">0,00</b><p>Valor da renda</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">A transferir</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">Transferido</p></div><Button variant="outline" onClick={() => onNavigate("transfer")} className="rounded-full border-primary px-2 text-muted-foreground shadow-none">Transferir</Button></div></section>
       <section className="mx-4 mt-4 grid grid-cols-4 gap-x-3 gap-y-5 rounded-2xl bg-card p-4 shadow-card">{tools.map(({ label, icon: Icon, view, badge }) => <button type="button" key={label} onClick={() => view && onNavigate(view)} className="relative flex min-w-0 flex-col items-center gap-2 text-center text-xs text-muted-foreground"><span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></span>{badge && <span className="absolute right-1 top-0 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">{badge}</span>}<span>{label}</span></button>)}</section>
     </div>
   );
