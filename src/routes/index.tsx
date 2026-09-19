@@ -209,6 +209,10 @@ function useCountdown(target: number) {
   return `${days}d ${pad(Math.floor(diff / 3600000) % 24)}:${pad(Math.floor(diff / 60000) % 60)}:${pad(Math.floor(diff / 1000) % 60)}`;
 }
 
+type ImageKey = "entry" | "mid" | "premium" | "top";
+
+const vehicleImages: Record<ImageKey, string> = { entry: bydEntry, mid: bydMid, premium: bydPremium, top: bydTop };
+
 type Vehicle = {
   name: string;
   region: string;
@@ -216,20 +220,20 @@ type Vehicle = {
   returnValue: string;
   price: string;
   cycle: string;
-  image: string;
+  imageKey: ImageKey;
 };
 
 const vehicles: Vehicle[] = [
-  { name: "BYD Dolphin Mini", region: "New York", daily: "R$ 5,00/dia", returnValue: "R$ 125,00", price: "R$ 62,50", cycle: "25 dias úteis", image: bydEntry },
-  { name: "Yangwang U8", region: "New York", daily: "R$ 50,00/dia", returnValue: "R$ 1.250,00", price: "R$ 625,00", cycle: "25 dias úteis", image: bydTop },
-  { name: "BYD Dolphin", region: "Israel", daily: "R$ 8,00/dia", returnValue: "R$ 200,00", price: "R$ 100,00", cycle: "25 dias úteis", image: bydMid },
-  { name: "BYD Han", region: "Alemanha", daily: "R$ 18,00/dia", returnValue: "R$ 450,00", price: "R$ 225,00", cycle: "25 dias úteis", image: bydPremium },
-  { name: "BYD Han EV", region: "Dubai", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 312,50", cycle: "25 dias úteis", image: bydPremium },
-  { name: "BYD Seal", region: "Tokyo", daily: "R$ 12,00/dia", returnValue: "R$ 300,00", price: "R$ 150,00", cycle: "25 dias úteis", image: bydMid },
-  { name: "BYD Dolphin", region: "Paris", daily: "R$ 10,00/dia", returnValue: "R$ 250,00", price: "R$ 125,00", cycle: "25 dias úteis", image: bydMid },
-  { name: "BYD Han", region: "Los Angeles", daily: "R$ 20,00/dia", returnValue: "R$ 500,00", price: "R$ 250,00", cycle: "25 dias úteis", image: bydPremium },
-  { name: "BYD Seal", region: "Jerusalém", daily: "R$ 9,00/dia", returnValue: "R$ 225,00", price: "R$ 112,50", cycle: "25 dias úteis", image: bydMid },
-  { name: "BYD Han", region: "Berlim", daily: "R$ 16,00/dia", returnValue: "R$ 400,00", price: "R$ 200,00", cycle: "25 dias úteis", image: bydPremium },
+  { name: "BYD Dolphin Mini", region: "New York", daily: "R$ 5,00/dia", returnValue: "R$ 125,00", price: "R$ 62,50", cycle: "25 dias úteis", imageKey: "entry" },
+  { name: "Yangwang U8", region: "New York", daily: "R$ 50,00/dia", returnValue: "R$ 1.250,00", price: "R$ 625,00", cycle: "25 dias úteis", imageKey: "top" },
+  { name: "BYD Dolphin", region: "Israel", daily: "R$ 8,00/dia", returnValue: "R$ 200,00", price: "R$ 100,00", cycle: "25 dias úteis", imageKey: "mid" },
+  { name: "BYD Han", region: "Alemanha", daily: "R$ 18,00/dia", returnValue: "R$ 450,00", price: "R$ 225,00", cycle: "25 dias úteis", imageKey: "premium" },
+  { name: "BYD Han EV", region: "Dubai", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 312,50", cycle: "25 dias úteis", imageKey: "premium" },
+  { name: "BYD Seal", region: "Tokyo", daily: "R$ 12,00/dia", returnValue: "R$ 300,00", price: "R$ 150,00", cycle: "25 dias úteis", imageKey: "mid" },
+  { name: "BYD Dolphin", region: "Paris", daily: "R$ 10,00/dia", returnValue: "R$ 250,00", price: "R$ 125,00", cycle: "25 dias úteis", imageKey: "mid" },
+  { name: "BYD Han", region: "Los Angeles", daily: "R$ 20,00/dia", returnValue: "R$ 500,00", price: "R$ 250,00", cycle: "25 dias úteis", imageKey: "premium" },
+  { name: "BYD Seal", region: "Jerusalém", daily: "R$ 9,00/dia", returnValue: "R$ 225,00", price: "R$ 112,50", cycle: "25 dias úteis", imageKey: "mid" },
+  { name: "BYD Han", region: "Berlim", daily: "R$ 16,00/dia", returnValue: "R$ 400,00", price: "R$ 200,00", cycle: "25 dias úteis", imageKey: "premium" },
 ];
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
