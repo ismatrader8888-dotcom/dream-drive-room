@@ -306,7 +306,7 @@ function SettingsPage({ onBack }: { onBack: () => void }) {
         <div className="flex items-center justify-between p-4 text-sm"><span>Idioma</span><span className="text-muted-foreground">Português (BR)</span></div>
         <div className="flex items-center justify-between p-4 text-sm"><span>Versão</span><span className="text-muted-foreground">1.0.4</span></div>
       </section>
-      <div className="px-4"><Button variant="outline" className="h-12 w-full rounded-full">Sair da conta</Button></div>
+      <div className="px-4"><Button variant="outline" className="h-12 w-full rounded-full" onClick={() => { void supabase.auth.signOut(); }}>Sair da conta</Button></div>
     </Shell>
   );
 }
@@ -318,7 +318,7 @@ function ExchangePage({ onBack }: { onBack: () => void }) {
     <Shell title="Intercâmbio" onBack={onBack}>
       <section className="m-4 rounded-2xl bg-card p-5 shadow-card">
         <p className="text-sm text-muted-foreground">Insira o código de resgate</p>
-        <input value={code} onChange={(event) => { setCode(event.target.value); setMessage(""); }} placeholder="Ex.: VOLT-2026" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 uppercase outline-none focus:border-primary" />
+        <input value={code} onChange={(event) => { setCode(event.target.value); setMessage(""); }} placeholder="Ex.: BYD-2026" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 uppercase outline-none focus:border-primary" />
         <Button className="mt-4 h-12 w-full rounded-full" disabled={!code} onClick={() => setMessage("Código inválido ou já utilizado.")}>Resgatar</Button>
         {message && <p className="mt-3 text-center text-sm text-destructive">{message}</p>}
       </section>
@@ -332,7 +332,7 @@ function SupportPage({ onBack }: { onBack: () => void }) {
       <section className="m-4 space-y-3 rounded-2xl bg-card p-5 shadow-card text-sm">
         <p className="text-muted-foreground">Nossa equipe responde de segunda a sábado, das 8h às 20h.</p>
         <div className="flex items-center justify-between rounded-xl bg-muted p-4"><span>Suporte no WhatsApp</span><Coins className="h-5 w-5 text-primary" /></div>
-        <div className="flex items-center justify-between rounded-xl bg-muted p-4"><span>suporte@voltiva.app</span></div>
+        <div className="flex items-center justify-between rounded-xl bg-muted p-4"><span>suporte@byddriving.app</span></div>
         <Button className="h-12 w-full rounded-full">Iniciar conversa</Button>
       </section>
     </Shell>
@@ -359,13 +359,13 @@ export function ToolPage({ view, onBack }: { view: ToolView; onBack: () => void 
     case "incomeDetails": return <DetailsPage title="Detalhes da renda" onBack={onBack} />;
     case "luckyDetails": return <DetailsPage title="Registro da Sorte" onBack={onBack} />;
     case "privacy": return <TextPage title="Política de privacidade" onBack={onBack} paragraphs={[
-      "A Voltiva coleta apenas os dados necessários para criar e manter sua conta: telefone, código de convite e histórico de operações dos veículos.",
+      "A BYD Driving coleta apenas os dados necessários para criar e manter sua conta: e-mail, telefone, código de convite e histórico de operações dos veículos.",
       "Não vendemos nem compartilhamos seus dados com terceiros para fins publicitários.",
       "Você pode solicitar a exclusão da sua conta e dos dados relacionados a qualquer momento pelo atendimento ao cliente.",
       "Utilizamos criptografia em trânsito para proteger as informações trocadas entre o aplicativo e nossos servidores.",
     ]} />;
     case "about": return <TextPage title="Sobre nós" onBack={onBack} paragraphs={[
-      "A Voltiva é uma plataforma de mobilidade elétrica que conecta pessoas a frotas de veículos autônomos em grandes centros urbanos.",
+      "A BYD Driving é uma plataforma de mobilidade elétrica que conecta pessoas a frotas de veículos autônomos em grandes centros urbanos.",
       "Cada veículo alugado opera em uma região e gera rendimento diário durante o ciclo contratado.",
       "Nossa missão é tornar a economia da mobilidade elétrica acessível a qualquer pessoa, com transparência nos rendimentos e nos prazos.",
     ]} />;
