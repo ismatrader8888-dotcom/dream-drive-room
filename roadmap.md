@@ -1,10 +1,8 @@
 # Roadmap
 
-- [x] Recreate the mobile vehicle and earnings experience from the references
-- [x] Replace the original identity with the Voltiva pseudonym
-- [x] Add working navigation, vehicle purchase state, invitation copy actions, and member view
-- [x] Verify desktop and mobile rendering in the live preview
-- [x] Add the regional vehicle marketplace to the Lar tab
-- [x] Verify filters, rental actions, and mobile layout- [x] Tela de login/registro com contas salvas no banco
-- [x] Splash "Build Your Dreams" após entrar
-- [x] Renomear a plataforma para BYD Driving
+- [ ] Impedir aluguel sem saldo e encaminhar para recarga via PIX
+- [ ] Debitar saldo e registrar compra de forma segura e transacional
+- [ ] Persistir solicitações de recarga e saque
+- [ ] Criar painel administrativo protegido por papel de administrador
+- [ ] Permitir gerir saldos, acompanhar compras, veículos populares, saques e indicações
+- [ ] Validar fluxos de usuário e administrador
