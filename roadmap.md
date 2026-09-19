@@ -5,4 +5,6 @@
 - [x] Add working navigation, vehicle purchase state, invitation copy actions, and member view
 - [x] Verify desktop and mobile rendering in the live preview
 - [x] Add the regional vehicle marketplace to the Lar tab
-- [x] Verify filters, rental actions, and mobile layout
+- [x] Verify filters, rental actions, and mobile layout- [x] Tela de login/registro com contas salvas no banco
+- [x] Splash "Build Your Dreams" após entrar
+- [x] Renomear a plataforma para BYD Driving
