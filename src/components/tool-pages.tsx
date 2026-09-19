@@ -1,6 +1,8 @@
 import { ArrowLeft, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins } from "lucide-react";
 import { useState, type ReactNode } from "react";
+import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
 
 export type ToolView =
   | "pix"
@@ -122,9 +124,9 @@ function ContractPage({ onBack }: { onBack: () => void }) {
   return (
     <Shell title="Contrato semanal" onBack={onBack}>
       <article className="m-4 space-y-4 rounded-2xl bg-card p-5 text-sm leading-relaxed shadow-card">
-        <div className="flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">voltiva</span><b>VOLTIVA COMPANHIA DE INTELIGÊNCIA AUTOMOTIVA LTDA</b></div>
+        <div className="flex items-center gap-3"><img src={bydLogo} alt="BYD Driving" width={816} height={816} className="h-10 w-10 object-contain" /><b>BYD DRIVING COMPANHIA DE INTELIGÊNCIA AUTOMOTIVA LTDA</b></div>
         <h2 className="text-center font-bold">CONTRATO DE TRABALHO EM REGIME DE TEMPO PARCIAL</h2>
-        <p><b>EMPREGADOR:</b> VOLTIVA<br />Endereço: a definir<br />CNPJ: a definir</p>
+        <p><b>EMPREGADOR:</b> BYD DRIVING<br />Endereço: a definir<br />CNPJ: a definir</p>
         <p><b>EMPREGADO:</b><br />Nome do Empregado: ______________<br />Endereço residencial: ______________<br />C.P.F.: ______________</p>
         {[
           ["1. Natureza do Contrato", "Este contrato é regido pela legislação brasileira (CLT), caracterizando vínculo de trabalho parcial, sem subordinação do empregador."],
