@@ -5,4 +5,4 @@
 - [x] Persistir solicitações de recarga e saque
 - [x] Criar painel administrativo protegido por papel de administrador
 - [x] Permitir gerir saldos, acompanhar compras, veículos populares, saques e indicações
-- [ ] Validar fluxos de usuário e administrador
+- [x] Validar fluxos de usuário e administrador

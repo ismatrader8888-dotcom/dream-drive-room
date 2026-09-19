@@ -117,6 +117,7 @@ function Index() {
       if (event === "SIGNED_OUT") {
         setOwned([]);
         setAccount(null);
+        setIsAdmin(false);
         setView("home");
       }
     });
