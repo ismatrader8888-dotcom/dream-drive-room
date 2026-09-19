@@ -130,11 +130,13 @@ function Index() {
       .then(({ data }) => {
         if (!data) return;
         setOwned(data.map((row) => ({
+          id: row.catalog_id ?? row.id,
           name: row.name,
           region: row.region,
           daily: row.daily,
           returnValue: row.return_value,
           price: row.price,
+          priceAmount: row.purchase_price ?? 0,
           cycle: row.cycle,
           imageKey: row.image_key as ImageKey,
           plate: row.plate,
@@ -196,7 +198,7 @@ function Index() {
     <main className="min-h-screen bg-shell font-sans text-foreground">
       <div className="mx-auto min-h-screen w-full max-w-[430px] overflow-hidden bg-background shadow-phone">
         {page}
-        {!isTool && view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
+        {!isTool && view !== "invite" && view !== "membership" && view !== "admin" && <BottomNav view={view} onNavigate={setView} />}
         <Dialog open={Boolean(insufficient)} onOpenChange={(open) => { if (!open) setInsufficient(null); }}>
           <DialogContent className="max-w-[calc(100%-2rem)] rounded-xl">
             <DialogHeader><DialogTitle>Saldo insuficiente</DialogTitle><DialogDescription>Você precisa de {insufficient?.price} em créditos demonstrativos para alugar este veículo. Solicite uma recarga para continuar.</DialogDescription></DialogHeader>
