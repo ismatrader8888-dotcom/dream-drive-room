@@ -14,10 +14,68 @@ export type Database = {
   }
   public: {
     Tables: {
+      balance_transactions: {
+        Row: {
+          amount: number
+          balance_after: number
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          reference_id: string | null
+          type: Database["public"]["Enums"]["ledger_type"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          balance_after: number
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          reference_id?: string | null
+          type: Database["public"]["Enums"]["ledger_type"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          balance_after?: number
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          reference_id?: string | null
+          type?: Database["public"]["Enums"]["ledger_type"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      pix_keys: {
+        Row: {
+          created_at: string
+          id: string
+          key_value: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key_value: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key_value?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           balance: number
           created_at: string
+          demo_balance: number
           email: string | null
           id: string
           invite_code: string
@@ -28,6 +86,7 @@ export type Database = {
         Insert: {
           balance?: number
           created_at?: string
+          demo_balance?: number
           email?: string | null
           id: string
           invite_code: string
@@ -38,12 +97,46 @@ export type Database = {
         Update: {
           balance?: number
           created_at?: string
+          demo_balance?: number
           email?: string | null
           id?: string
           invite_code?: string
           level?: number
           phone?: string | null
           referred_by?: string | null
+        }
+        Relationships: []
+      }
+      recharge_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          note: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          note?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          user_id?: string
         }
         Relationships: []
       }
@@ -67,6 +160,7 @@ export type Database = {
       }
       user_vehicles: {
         Row: {
+          catalog_id: string | null
           cycle: string
           daily: string
           id: string
@@ -74,12 +168,14 @@ export type Database = {
           name: string
           plate: string
           price: string
+          purchase_price: number | null
           purchased_at: string
           region: string
           return_value: string
           user_id: string
         }
         Insert: {
+          catalog_id?: string | null
           cycle: string
           daily: string
           id?: string
@@ -87,12 +183,14 @@ export type Database = {
           name: string
           plate: string
           price: string
+          purchase_price?: number | null
           purchased_at?: string
           region: string
           return_value: string
           user_id: string
         }
         Update: {
+          catalog_id?: string | null
           cycle?: string
           daily?: string
           id?: string
@@ -100,9 +198,90 @@ export type Database = {
           name?: string
           plate?: string
           price?: string
+          purchase_price?: number | null
           purchased_at?: string
           region?: string
           return_value?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_vehicles_catalog_id_fkey"
+            columns: ["catalog_id"]
+            isOneToOne: false
+            referencedRelation: "vehicle_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicle_catalog: {
+        Row: {
+          active: boolean
+          created_at: string
+          cycle_days: number
+          daily_amount: number
+          id: string
+          image_key: string
+          name: string
+          price: number
+          region: string
+          return_amount: number
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          cycle_days?: number
+          daily_amount: number
+          id: string
+          image_key: string
+          name: string
+          price: number
+          region: string
+          return_amount: number
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          cycle_days?: number
+          daily_amount?: number
+          id?: string
+          image_key?: string
+          name?: string
+          price?: number
+          region?: string
+          return_amount?: number
+        }
+        Relationships: []
+      }
+      withdrawal_requests: {
+        Row: {
+          amount: number
+          created_at: string
+          id: string
+          pix_key: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          id?: string
+          pix_key: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          id?: string
+          pix_key?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: Database["public"]["Enums"]["request_status"]
           user_id?: string
         }
         Relationships: []
@@ -112,6 +291,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_demo_balance: {
+        Args: { _amount: number; _reason: string; _user_id: string }
+        Returns: number
+      }
+      admin_review_recharge: {
+        Args: { _approve: boolean; _request_id: string }
+        Returns: undefined
+      }
+      admin_review_withdrawal: {
+        Args: { _approve: boolean; _request_id: string }
+        Returns: undefined
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -119,9 +310,21 @@ export type Database = {
         }
         Returns: boolean
       }
+      purchase_vehicle: { Args: { _catalog_id: string }; Returns: string }
+      request_demo_recharge: { Args: { _amount: number }; Returns: string }
+      request_withdrawal: {
+        Args: { _amount: number; _pix_key: string }
+        Returns: string
+      }
     }
     Enums: {
       app_role: "admin" | "user"
+      ledger_type:
+        | "recharge"
+        | "vehicle_purchase"
+        | "withdrawal"
+        | "admin_adjustment"
+      request_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -250,6 +453,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "user"],
+      ledger_type: [
+        "recharge",
+        "vehicle_purchase",
+        "withdrawal",
+        "admin_adjustment",
+      ],
+      request_status: ["pending", "approved", "rejected"],
     },
   },
 } as const
