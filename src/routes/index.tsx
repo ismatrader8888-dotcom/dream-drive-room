@@ -209,6 +209,10 @@ function useCountdown(target: number) {
   return `${days}d ${pad(Math.floor(diff / 3600000) % 24)}:${pad(Math.floor(diff / 60000) % 60)}:${pad(Math.floor(diff / 1000) % 60)}`;
 }
 
+type ImageKey = "entry" | "mid" | "premium" | "top";
+
+const vehicleImages: Record<ImageKey, string> = { entry: bydEntry, mid: bydMid, premium: bydPremium, top: bydTop };
+
 type Vehicle = {
   name: string;
   region: string;
@@ -216,20 +220,20 @@ type Vehicle = {
   returnValue: string;
   price: string;
   cycle: string;
-  image: string;
+  imageKey: ImageKey;
 };
 
 const vehicles: Vehicle[] = [
-  { name: "BYD Dolphin Mini", region: "New York", daily: "R$ 5,00/dia", returnValue: "R$ 125,00", price: "R$ 62,50", cycle: "25 dias úteis", image: bydEntry },
-  { name: "Yangwang U8", region: "New York", daily: "R$ 50,00/dia", returnValue: "R$ 1.250,00", price: "R$ 625,00", cycle: "25 dias úteis", image: bydTop },
-  { name: "BYD Dolphin", region: "Israel", daily: "R$ 8,00/dia", returnValue: "R$ 200,00", price: "R$ 100,00", cycle: "25 dias úteis", image: bydMid },
-  { name: "BYD Han", region: "Alemanha", daily: "R$ 18,00/dia", returnValue: "R$ 450,00", price: "R$ 225,00", cycle: "25 dias úteis", image: bydPremium },
-  { name: "BYD Han EV", region: "Dubai", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 312,50", cycle: "25 dias úteis", image: bydPremium },
-  { name: "BYD Seal", region: "Tokyo", daily: "R$ 12,00/dia", returnValue: "R$ 300,00", price: "R$ 150,00", cycle: "25 dias úteis", image: bydMid },
-  { name: "BYD Dolphin", region: "Paris", daily: "R$ 10,00/dia", returnValue: "R$ 250,00", price: "R$ 125,00", cycle: "25 dias úteis", image: bydMid },
-  { name: "BYD Han", region: "Los Angeles", daily: "R$ 20,00/dia", returnValue: "R$ 500,00", price: "R$ 250,00", cycle: "25 dias úteis", image: bydPremium },
-  { name: "BYD Seal", region: "Jerusalém", daily: "R$ 9,00/dia", returnValue: "R$ 225,00", price: "R$ 112,50", cycle: "25 dias úteis", image: bydMid },
-  { name: "BYD Han", region: "Berlim", daily: "R$ 16,00/dia", returnValue: "R$ 400,00", price: "R$ 200,00", cycle: "25 dias úteis", image: bydPremium },
+  { name: "BYD Dolphin Mini", region: "New York", daily: "R$ 5,00/dia", returnValue: "R$ 125,00", price: "R$ 62,50", cycle: "25 dias úteis", imageKey: "entry" },
+  { name: "Yangwang U8", region: "New York", daily: "R$ 50,00/dia", returnValue: "R$ 1.250,00", price: "R$ 625,00", cycle: "25 dias úteis", imageKey: "top" },
+  { name: "BYD Dolphin", region: "Israel", daily: "R$ 8,00/dia", returnValue: "R$ 200,00", price: "R$ 100,00", cycle: "25 dias úteis", imageKey: "mid" },
+  { name: "BYD Han", region: "Alemanha", daily: "R$ 18,00/dia", returnValue: "R$ 450,00", price: "R$ 225,00", cycle: "25 dias úteis", imageKey: "premium" },
+  { name: "BYD Han EV", region: "Dubai", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 312,50", cycle: "25 dias úteis", imageKey: "premium" },
+  { name: "BYD Seal", region: "Tokyo", daily: "R$ 12,00/dia", returnValue: "R$ 300,00", price: "R$ 150,00", cycle: "25 dias úteis", imageKey: "mid" },
+  { name: "BYD Dolphin", region: "Paris", daily: "R$ 10,00/dia", returnValue: "R$ 250,00", price: "R$ 125,00", cycle: "25 dias úteis", imageKey: "mid" },
+  { name: "BYD Han", region: "Los Angeles", daily: "R$ 20,00/dia", returnValue: "R$ 500,00", price: "R$ 250,00", cycle: "25 dias úteis", imageKey: "premium" },
+  { name: "BYD Seal", region: "Jerusalém", daily: "R$ 9,00/dia", returnValue: "R$ 225,00", price: "R$ 112,50", cycle: "25 dias úteis", imageKey: "mid" },
+  { name: "BYD Han", region: "Berlim", daily: "R$ 16,00/dia", returnValue: "R$ 400,00", price: "R$ 200,00", cycle: "25 dias úteis", imageKey: "premium" },
 ];
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
@@ -308,7 +312,7 @@ function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehic
           <p className="mt-1 text-xs text-muted-foreground">Retorno <b className="text-accent-foreground">{vehicle.returnValue}</b></p>
           <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground"><span className="rounded bg-muted px-2 py-1">{vehicle.region}</span><span className="rounded bg-muted px-2 py-1">Rende seg–sex</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
         </div>
-        <img src={vehicle.image} alt={`${vehicle.name} disponível em ${vehicle.region}`} loading="lazy" width={992} height={672} className="h-28 w-full self-center object-contain" />
+        <img src={vehicleImages[vehicle.imageKey]} alt={`${vehicle.name} disponível em ${vehicle.region}`} loading="lazy" width={992} height={672} className="h-28 w-full self-center object-contain" />
       </div>
       <div className="flex items-center justify-between border-t border-border px-4 py-2"><b className="text-xl">{vehicle.price}</b><Button onClick={onRent} disabled={rented} className="h-10 rounded-full px-7 text-base shadow-none">{rented ? "Selecionado" : "Alugar"}</Button></div>
     </article>
@@ -368,7 +372,7 @@ function VehicleCard({ vehicle }: { vehicle: OwnedVehicle }) {
       <div className="mt-5 grid grid-cols-2 gap-3 text-center">
         <div><p className="text-xs text-muted-foreground">Validade</p><p className="mt-1 font-medium">{vehicle.cycle}</p></div>
         <div><p className="text-xs text-muted-foreground">Quilometragem de hoje</p><p className="mt-1 font-medium">0.01KM</p></div>
-        <div className="flex items-center justify-center"><img src={vehicle.image} alt={vehicle.name} width={992} height={672} className="h-16 w-full object-contain" /></div>
+        <div className="flex items-center justify-center"><img src={vehicleImages[vehicle.imageKey]} alt={vehicle.name} width={992} height={672} className="h-16 w-full object-contain" /></div>
         <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>1</b><p className="text-xs text-muted-foreground">Pedidos</p></div><div className="rounded-lg bg-muted p-2"><b>{vehicle.daily.replace("/dia", "")}</b><p className="text-xs text-muted-foreground">Lucro</p></div></div>
       </div>
       <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ 1º rendimento em</span><b className="tabular-nums text-primary">{countdown}</b></div><p className="mt-2 text-xs text-muted-foreground">Rende {vehicle.daily} a cada 24h da compra, em dias úteis.</p></div>
@@ -376,12 +380,12 @@ function VehicleCard({ vehicle }: { vehicle: OwnedVehicle }) {
   );
 }
 
-function ProfilePage({ onNavigate }: { onNavigate: (view: View) => void }) {
+function ProfilePage({ onNavigate, displayName, inviteCode }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string }) {
   return (
     <div className="min-h-screen bg-highlight pb-24 pt-4">
       <header className="flex items-center gap-4 px-5">
-        <div className="grid h-16 w-16 place-items-center rounded-full bg-card text-[10px] font-bold shadow-card">voltiva</div>
-        <div className="min-w-0 flex-1"><h1 className="text-2xl font-bold">71982172158</h1><p className="mt-1 text-sm text-muted-foreground"><span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">LV1</span> &nbsp;ESBXQ9XI</p></div>
+        <img src={bydLogo} alt="BYD Driving" width={816} height={816} className="h-16 w-16 rounded-full bg-card object-contain p-1 shadow-card" />
+        <div className="min-w-0 flex-1"><h1 className="truncate text-xl font-bold">{displayName}</h1><p className="mt-1 text-sm text-muted-foreground"><span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">LV1</span> &nbsp;{inviteCode}</p></div>
         <Button variant="outline" size="icon" aria-label="Notificações" className="relative h-12 w-12 rounded-full bg-card shadow-card"><Bell /><span className="absolute -right-1 -top-1 rounded-full bg-foreground px-1 text-[10px] text-background">9+</span></Button>
       </header>
       <section className="mx-4 mt-5 overflow-hidden rounded-2xl bg-card shadow-card">
@@ -397,14 +401,14 @@ function ProfilePage({ onNavigate }: { onNavigate: (view: View) => void }) {
 
 function Row({ label, value }: { label: string; value: string }) { return <div className="mt-3 flex justify-between text-sm"><span className="text-muted-foreground">{label}</span><b>{value}</b></div>; }
 
-function InvitePage({ onBack, copyText, copied }: { onBack: () => void; copyText: (key: string, text: string) => void; copied: string | null }) {
-  const link = "https://voltiva.app/registro?ind=ESBXQ9XI";
-  return <div className="min-h-screen bg-highlight px-4 pb-8"><PageHeader title="Convidar amigos" onBack={onBack}/><section className="rounded-2xl bg-card p-6 text-center"><b>voltiva</b><h2 className="mt-3 text-xl font-bold">71982172158</h2><p className="mt-2">Compartilhar código QR ou link com amigos</p><div className="mx-auto mt-5 grid h-48 w-48 place-items-center rounded-xl bg-muted"><QrCode className="h-44 w-44" /></div><p className="mt-5 text-sm text-muted-foreground">Faça uma captura de tela ou salve o código QR</p></section><section className="mt-4 rounded-2xl bg-card p-5"><p className="text-sm text-muted-foreground">Código de convite</p><CopyRow value="ESBXQ9XI" onCopy={() => copyText("code", "ESBXQ9XI")} copied={copied === "code"}/><div className="my-4 h-px bg-border"/><p className="text-sm text-muted-foreground">Convidar para conectar</p><CopyRow value={link} onCopy={() => copyText("link", link)} copied={copied === "link"}/></section></div>;
+function InvitePage({ onBack, copyText, copied, displayName, inviteCode }: { onBack: () => void; copyText: (key: string, text: string) => void; copied: string | null; displayName: string; inviteCode: string }) {
+  const link = `https://byddriving.app/registro?ind=${inviteCode}`;
+  return <div className="min-h-screen bg-highlight px-4 pb-8"><PageHeader title="Convidar amigos" onBack={onBack}/><section className="rounded-2xl bg-card p-6 text-center"><img src={bydLogo} alt="BYD Driving" width={816} height={816} className="mx-auto h-12 w-12 object-contain" /><h2 className="mt-3 truncate text-xl font-bold">{displayName}</h2><p className="mt-2">Compartilhar código QR ou link com amigos</p><div className="mx-auto mt-5 grid h-48 w-48 place-items-center rounded-xl bg-muted"><QrCode className="h-44 w-44" /></div><p className="mt-5 text-sm text-muted-foreground">Faça uma captura de tela ou salve o código QR</p></section><section className="mt-4 rounded-2xl bg-card p-5"><p className="text-sm text-muted-foreground">Código de convite</p><CopyRow value={inviteCode} onCopy={() => copyText("code", inviteCode)} copied={copied === "code"}/><div className="my-4 h-px bg-border"/><p className="text-sm text-muted-foreground">Convidar para conectar</p><CopyRow value={link} onCopy={() => copyText("link", link)} copied={copied === "link"}/></section></div>;
 }
 
 function CopyRow({ value, onCopy, copied }: { value: string; onCopy: () => void; copied: boolean }) { return <div className="mt-2 flex items-center gap-3"><span className="min-w-0 flex-1 break-all text-left text-lg font-medium">{value}</span><Button variant="secondary" onClick={onCopy} className="shrink-0">{copied ? "Copiado" : <><Copy/>Copiar</>}</Button></div>; }
 
-function MembershipPage({ onBack }: { onBack: () => void }) { return <div className="min-h-screen bg-background px-4"><PageHeader title="Direitos de membro" onBack={onBack}/><section className="rounded-2xl bg-primary p-5 text-primary-foreground"><div className="flex items-center gap-4"><div className="grid h-12 w-12 place-items-center rounded-full bg-card text-[9px] font-bold text-foreground">voltiva</div><div><b>71982172158</b><p className="text-sm">ESBXQ9XI</p></div><Medal className="ml-auto h-12 w-12"/></div><p className="mt-7">Programa de níveis de associação chegando em breve.</p><p className="mt-2">Em breve você poderá subir de nível e aumentar seus ganhos.</p><b className="block text-right text-3xl">LV1</b></section><h2 className="my-6 text-2xl font-bold">Direitos de membro</h2><section className="grid grid-cols-3 gap-3 rounded-2xl bg-card p-5 text-center text-xs shadow-card"><Benefit icon={Home} text="Obtenha mais bônus"/><Benefit icon={BadgeDollarSign} text="Consiga um emprego bem remunerado"/><Benefit icon={Link2} text="Acesso prioritário a veículos"/></section><h2 className="my-6 text-2xl font-bold">Descrições dos níveis de associação</h2><section className="rounded-2xl bg-card p-10 text-center shadow-card"><span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-muted text-muted-foreground">◷</span><b className="mt-4 block">Disponível em breve</b><p className="mt-2 text-sm text-muted-foreground">Os níveis de associação e suas recompensas estão sendo preparados. Volte em breve!</p></section></div>; }
+function MembershipPage({ onBack, displayName, inviteCode }: { onBack: () => void; displayName: string; inviteCode: string }) { return <div className="min-h-screen bg-background px-4"><PageHeader title="Direitos de membro" onBack={onBack}/><section className="rounded-2xl bg-primary p-5 text-primary-foreground"><div className="flex items-center gap-4"><img src={bydLogo} alt="BYD Driving" width={816} height={816} className="h-12 w-12 rounded-full bg-card object-contain p-1" /><div className="min-w-0"><b className="block truncate">{displayName}</b><p className="text-sm">{inviteCode}</p></div><Medal className="ml-auto h-12 w-12"/></div><p className="mt-7">Programa de níveis de associação chegando em breve.</p><p className="mt-2">Em breve você poderá subir de nível e aumentar seus ganhos.</p><b className="block text-right text-3xl">LV1</b></section><h2 className="my-6 text-2xl font-bold">Direitos de membro</h2><section className="grid grid-cols-3 gap-3 rounded-2xl bg-card p-5 text-center text-xs shadow-card"><Benefit icon={Home} text="Obtenha mais bônus"/><Benefit icon={BadgeDollarSign} text="Consiga um emprego bem remunerado"/><Benefit icon={Link2} text="Acesso prioritário a veículos"/></section><h2 className="my-6 text-2xl font-bold">Descrições dos níveis de associação</h2><section className="rounded-2xl bg-card p-10 text-center shadow-card"><span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-muted text-muted-foreground">◷</span><b className="mt-4 block">Disponível em breve</b><p className="mt-2 text-sm text-muted-foreground">Os níveis de associação e suas recompensas estão sendo preparados. Volte em breve!</p></section></div>; }
 
 function Benefit({ icon: Icon, text }: { icon: ComponentType<{ className?: string }>; text: string }) { return <div className="flex flex-col items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-lg border border-border"><Icon className="h-5 w-5"/></span><span>{text}</span></div>; }
 function PageHeader({ title, onBack }: { title: string; onBack: () => void }) { return <header className="relative flex h-16 items-center justify-center"><Button variant="ghost" size="icon" onClick={onBack} aria-label="Voltar" className="absolute left-0"><ArrowLeft/></Button><h1 className="text-lg font-bold">{title}</h1></header>; }
