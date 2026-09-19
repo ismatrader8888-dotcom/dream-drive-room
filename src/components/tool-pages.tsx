@@ -1,5 +1,5 @@
 import { ArrowLeft, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -70,17 +70,22 @@ function Tabs({ items, value, onChange }: { items: string[]; value: string; onCh
 }
 
 function PixPage({ onBack }: { onBack: () => void }) {
-  const [keys, setKeys] = useState<string[]>([]);
+  const [keys, setKeys] = useState<Array<{ id: string; key_value: string }>>([]);
   const [draft, setDraft] = useState("");
   const [open, setOpen] = useState(false);
+  const loadKeys = async () => {
+    const { data } = await supabase.from("pix_keys").select("id, key_value").order("created_at");
+    setKeys(data ?? []);
+  };
+  useEffect(() => { void loadKeys(); }, []);
   return (
     <Shell title="Gerenciamento de chaves" onBack={onBack}>
       {keys.length ? (
         <ul className="space-y-3 p-4">
           {keys.map((key) => (
-            <li key={key} className="flex items-center justify-between rounded-xl bg-card p-4 shadow-card">
-              <span className="min-w-0 break-all text-sm">{key}</span>
-              <Button variant="ghost" size="sm" onClick={() => setKeys((list) => list.filter((item) => item !== key))}>Remover</Button>
+            <li key={key.id} className="flex items-center justify-between rounded-xl bg-card p-4 shadow-card">
+              <span className="min-w-0 break-all text-sm">{key.key_value}</span>
+              <Button variant="ghost" size="sm" onClick={async () => { await supabase.from("pix_keys").delete().eq("id", key.id); await loadKeys(); }}>Remover</Button>
             </li>
           ))}
         </ul>
@@ -90,7 +95,7 @@ function PixPage({ onBack }: { onBack: () => void }) {
           <label className="text-sm text-muted-foreground" htmlFor="pix-key">Nova chave PIX</label>
           <input id="pix-key" value={draft} onChange={(event) => setDraft(event.target.value)} placeholder="CPF, e-mail ou telefone" className="mt-2 h-11 w-full rounded-lg border border-border bg-background px-3 text-sm outline-none focus:border-primary" />
           <div className="mt-3 flex gap-2">
-            <Button className="flex-1" onClick={() => { if (draft.trim()) { setKeys((list) => [...list, draft.trim()]); setDraft(""); setOpen(false); } }}>Salvar</Button>
+            <Button className="flex-1" onClick={async () => { const value = draft.trim(); if (!value) return; const { data: { user } } = await supabase.auth.getUser(); if (!user) return; await supabase.from("pix_keys").insert({ user_id: user.id, key_value: value }); setDraft(""); setOpen(false); await loadKeys(); }}>Salvar</Button>
             <Button variant="secondary" onClick={() => setOpen(false)}>Cancelar</Button>
           </div>
         </div>
@@ -252,21 +257,40 @@ function OrdersPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-function BalancePage({ title, onBack, mode }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer" }) {
+function BalancePage({ title, onBack, mode, balance, onBalanceChanged }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer"; balance: number; onBalanceChanged: () => void }) {
   const [amount, setAmount] = useState("");
-  const [done, setDone] = useState(false);
+  const [message, setMessage] = useState("");
+  const [pixKey, setPixKey] = useState("");
+  const [busy, setBusy] = useState(false);
+  const submit = async () => {
+    const value = Number(amount.replace(",", "."));
+    if (!Number.isFinite(value) || value <= 0) return;
+    setBusy(true); setMessage("");
+    if (mode === "recharge") {
+      const { error } = await supabase.rpc("request_demo_recharge", { _amount: value });
+      setMessage(error ? "Não foi possível registrar a solicitação." : "Solicitação demonstrativa enviada para aprovação.");
+    } else if (mode === "withdraw") {
+      const { error } = await supabase.rpc("request_withdrawal", { _amount: value, _pix_key: pixKey });
+      setMessage(error ? "Não foi possível solicitar. Confira seu saldo, a chave PIX e pendências." : "Solicitação de saque demonstrativo registrada.");
+    } else {
+      setMessage("Transferências estarão disponíveis em breve.");
+    }
+    setBusy(false); onBalanceChanged();
+  };
   return (
     <Shell title={title} onBack={onBack}>
       <section className="m-4 rounded-2xl bg-card p-5 shadow-card">
         <p className="text-sm text-muted-foreground">Saldo disponível</p>
-        <b className="mt-1 block text-3xl">R$ 0,00</b>
+        <b className="mt-1 block text-3xl">{balance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b>
+        <p className="mt-1 text-xs text-muted-foreground">Créditos demonstrativos, sem valor monetário real.</p>
         <label className="mt-5 block text-sm text-muted-foreground" htmlFor="amount">Valor</label>
-        <input id="amount" inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setDone(false); }} placeholder="0,00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 text-lg outline-none focus:border-primary" />
+        <input id="amount" inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setMessage(""); }} placeholder="0,00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 text-lg outline-none focus:border-primary" />
+        {mode === "withdraw" && <><label className="mt-4 block text-sm text-muted-foreground" htmlFor="withdraw-pix">Chave PIX</label><input id="withdraw-pix" value={pixKey} onChange={(event) => setPixKey(event.target.value)} placeholder="CPF, e-mail ou telefone" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}
         <div className="mt-3 flex flex-wrap gap-2">{["10", "50", "100", "500"].map((value) => <Button key={value} variant="secondary" size="sm" className="rounded-full" onClick={() => setAmount(value)}>R$ {value}</Button>)}</div>
-        <Button className="mt-5 h-12 w-full rounded-full text-base" disabled={!amount} onClick={() => setDone(true)}>
+        <Button className="mt-5 h-12 w-full rounded-full text-base" disabled={!amount || busy || (mode === "withdraw" && !pixKey.trim())} onClick={() => void submit()}>
           {mode === "recharge" ? "Recarregar agora" : mode === "withdraw" ? "Solicitar saque" : "Transferir"}
         </Button>
-        {done && <p className="mt-3 text-center text-sm text-success">Solicitação de R$ {amount} registrada. Processamento em até 24h.</p>}
+        {message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}
       </section>
       {mode === "withdraw" && <p className="px-6 text-center text-xs text-muted-foreground">Saques exigem uma chave PIX cadastrada.</p>}
     </Shell>
@@ -339,7 +363,7 @@ function SupportPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-export function ToolPage({ view, onBack }: { view: ToolView; onBack: () => void }) {
+export function ToolPage({ view, onBack, balance = 0, onBalanceChanged = () => undefined }: { view: ToolView; onBack: () => void; balance?: number; onBalanceChanged?: () => void }) {
   switch (view) {
     case "pix": return <PixPage onBack={onBack} />;
     case "team": return <TeamPage onBack={onBack} />;
@@ -353,9 +377,9 @@ export function ToolPage({ view, onBack }: { view: ToolView; onBack: () => void 
     case "exchange": return <ExchangePage onBack={onBack} />;
     case "settings": return <SettingsPage onBack={onBack} />;
     case "support": return <SupportPage onBack={onBack} />;
-    case "recharge": return <BalancePage title="Recarregar" onBack={onBack} mode="recharge" />;
-    case "withdraw": return <BalancePage title="Sacar dinheiro" onBack={onBack} mode="withdraw" />;
-    case "transfer": return <BalancePage title="Transferir renda" onBack={onBack} mode="transfer" />;
+    case "recharge": return <BalancePage title="Recarga PIX" onBack={onBack} mode="recharge" balance={balance} onBalanceChanged={onBalanceChanged} />;
+    case "withdraw": return <BalancePage title="Sacar dinheiro" onBack={onBack} mode="withdraw" balance={balance} onBalanceChanged={onBalanceChanged} />;
+    case "transfer": return <BalancePage title="Transferir renda" onBack={onBack} mode="transfer" balance={balance} onBalanceChanged={onBalanceChanged} />;
     case "incomeDetails": return <DetailsPage title="Detalhes da renda" onBack={onBack} />;
     case "luckyDetails": return <DetailsPage title="Registro da Sorte" onBack={onBack} />;
     case "privacy": return <TextPage title="Política de privacidade" onBack={onBack} paragraphs={[
