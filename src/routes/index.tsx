@@ -37,12 +37,14 @@ import bydPremium from "@/assets/byd-premium.png";
 import bydTop from "@/assets/byd-top.png";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ToolPage, type ToolView } from "@/components/tool-pages";
+import { AdminPanel } from "@/components/admin-panel";
 import { AuthScreen } from "@/components/auth-screen";
 import { BydSplash } from "@/components/byd-splash";
 import { supabase } from "@/integrations/supabase/client";
 
-type View = "home" | "resources" | "news" | "profile" | "invite" | "membership" | ToolView;
+type View = "home" | "resources" | "news" | "profile" | "invite" | "membership" | "admin" | ToolView;
 
 const toolViews: ToolView[] = ["pix", "team", "contract", "salary", "vehicleIncome", "coupon", "inviteReward", "tasks", "orders", "exchange", "privacy", "about", "support", "settings", "recharge", "withdraw", "incomeDetails", "luckyDetails", "transfer"];
 
@@ -78,7 +80,7 @@ const tools: Array<{ label: string; icon: ComponentType<{ className?: string }>;
   { label: "Configurações", icon: Settings, view: "settings" },
 ];
 
-type Account = { phone: string | null; invite_code: string; email: string | null };
+type Account = { phone: string | null; invite_code: string; email: string | null; demo_balance: number };
 
 function Index() {
   const [view, setView] = useState<View>("home");
@@ -88,6 +90,18 @@ function Index() {
   const [ready, setReady] = useState(false);
   const [booting, setBooting] = useState(false);
   const [account, setAccount] = useState<Account | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [insufficient, setInsufficient] = useState<Vehicle | null>(null);
+  const [renting, setRenting] = useState(false);
+
+  const loadAccount = async (id: string) => {
+    const [{ data: profile }, { data: role }] = await Promise.all([
+      supabase.from("profiles").select("phone, invite_code, email, demo_balance").eq("id", id).maybeSingle(),
+      supabase.from("user_roles").select("role").eq("user_id", id).eq("role", "admin").maybeSingle(),
+    ]);
+    if (profile) setAccount(profile as Account);
+    setIsAdmin(Boolean(role));
+  };
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
@@ -111,8 +125,7 @@ function Index() {
 
   useEffect(() => {
     if (!userId) return;
-    void supabase.from("profiles").select("phone, invite_code, email").eq("id", userId).maybeSingle()
-      .then(({ data }) => { if (data) setAccount(data as Account); });
+    void loadAccount(userId);
     void supabase.from("user_vehicles").select("*").eq("user_id", userId).order("purchased_at")
       .then(({ data }) => {
         if (!data) return;
@@ -138,22 +151,18 @@ function Index() {
 
   const rentVehicle = async (vehicle: Vehicle) => {
     if (!userId) return;
-    const plate = `VX${12178 + owned.length}`;
-    const purchasedAt = Date.now();
-    setOwned((list) => [...list, { ...vehicle, plate, purchasedAt }]);
+    if ((account?.demo_balance ?? 0) < vehicle.priceAmount) { setInsufficient(vehicle); return; }
+    setRenting(true);
+    const { error } = await supabase.rpc("purchase_vehicle", { _catalog_id: vehicle.id });
+    setRenting(false);
+    if (error) {
+      if (error.message.includes("INSUFFICIENT_BALANCE")) setInsufficient(vehicle);
+      return;
+    }
+    await loadAccount(userId);
+    const { data } = await supabase.from("user_vehicles").select("*").eq("user_id", userId).order("purchased_at");
+    if (data) setOwned(data.map((row) => ({ name: row.name, region: row.region, daily: row.daily, returnValue: row.return_value, price: row.price, priceAmount: row.purchase_price ?? 0, cycle: row.cycle, imageKey: row.image_key as ImageKey, plate: row.plate, purchasedAt: new Date(row.purchased_at).getTime(), id: row.catalog_id ?? row.id })));
     setView("resources");
-    await supabase.from("user_vehicles").insert({
-      user_id: userId,
-      name: vehicle.name,
-      region: vehicle.region,
-      daily: vehicle.daily,
-      return_value: vehicle.returnValue,
-      price: vehicle.price,
-      cycle: vehicle.cycle,
-      image_key: vehicle.imageKey,
-      plate,
-      purchased_at: new Date(purchasedAt).toISOString(),
-    });
   };
 
   if (!ready) return <BydSplash />;
@@ -166,19 +175,21 @@ function Index() {
   const isTool = toolViews.includes(view as ToolView);
 
   const page = isTool ? (
-    <ToolPage view={view as ToolView} onBack={() => setView("profile")} />
+    <ToolPage view={view as ToolView} onBack={() => setView("profile")} balance={account?.demo_balance ?? 0} onBalanceChanged={() => userId && loadAccount(userId)} />
   ) : view === "invite" ? (
     <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "membership" ? (
     <MembershipPage onBack={() => setView("profile")} displayName={displayName} inviteCode={inviteCode} />
+  ) : view === "admin" ? (
+    <AdminPanel onBack={() => setView("profile")} />
   ) : view === "profile" ? (
-    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} />
+    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} isAdmin={isAdmin} />
   ) : view === "resources" ? (
     <ResourcesPage owned={owned} onBuy={() => setView("home")} />
   ) : view === "news" ? (
     <SimplePage icon={FileText} title="Notícias" copy="As novidades da sua frota aparecerão aqui." />
   ) : (
-    <MarketplacePage onRent={rentVehicle} />
+    <MarketplacePage onRent={rentVehicle} renting={renting} />
   );
 
   return (
@@ -186,6 +197,12 @@ function Index() {
       <div className="mx-auto min-h-screen w-full max-w-[430px] overflow-hidden bg-background shadow-phone">
         {page}
         {!isTool && view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
+        <Dialog open={Boolean(insufficient)} onOpenChange={(open) => { if (!open) setInsufficient(null); }}>
+          <DialogContent className="max-w-[calc(100%-2rem)] rounded-xl">
+            <DialogHeader><DialogTitle>Saldo insuficiente</DialogTitle><DialogDescription>Você precisa de {insufficient?.price} em créditos demonstrativos para alugar este veículo. Solicite uma recarga para continuar.</DialogDescription></DialogHeader>
+            <DialogFooter><Button variant="outline" onClick={() => setInsufficient(null)}>Agora não</Button><Button onClick={() => { setInsufficient(null); setView("recharge"); }}>Ir para recarga PIX</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );
@@ -214,26 +231,28 @@ type ImageKey = "entry" | "mid" | "premium" | "top";
 const vehicleImages: Record<ImageKey, string> = { entry: bydEntry, mid: bydMid, premium: bydPremium, top: bydTop };
 
 type Vehicle = {
+  id: string;
   name: string;
   region: string;
   daily: string;
   returnValue: string;
   price: string;
+  priceAmount: number;
   cycle: string;
   imageKey: ImageKey;
 };
 
 const vehicles: Vehicle[] = [
-  { name: "BYD Dolphin Mini", region: "New York", daily: "R$ 5,00/dia", returnValue: "R$ 125,00", price: "R$ 62,50", cycle: "25 dias úteis", imageKey: "entry" },
-  { name: "Yangwang U8", region: "New York", daily: "R$ 50,00/dia", returnValue: "R$ 1.250,00", price: "R$ 625,00", cycle: "25 dias úteis", imageKey: "top" },
-  { name: "BYD Dolphin", region: "Israel", daily: "R$ 8,00/dia", returnValue: "R$ 200,00", price: "R$ 100,00", cycle: "25 dias úteis", imageKey: "mid" },
-  { name: "BYD Han", region: "Alemanha", daily: "R$ 18,00/dia", returnValue: "R$ 450,00", price: "R$ 225,00", cycle: "25 dias úteis", imageKey: "premium" },
-  { name: "BYD Han EV", region: "Dubai", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 312,50", cycle: "25 dias úteis", imageKey: "premium" },
-  { name: "BYD Seal", region: "Tokyo", daily: "R$ 12,00/dia", returnValue: "R$ 300,00", price: "R$ 150,00", cycle: "25 dias úteis", imageKey: "mid" },
-  { name: "BYD Dolphin", region: "Paris", daily: "R$ 10,00/dia", returnValue: "R$ 250,00", price: "R$ 125,00", cycle: "25 dias úteis", imageKey: "mid" },
-  { name: "BYD Han", region: "Los Angeles", daily: "R$ 20,00/dia", returnValue: "R$ 500,00", price: "R$ 250,00", cycle: "25 dias úteis", imageKey: "premium" },
-  { name: "BYD Seal", region: "Jerusalém", daily: "R$ 9,00/dia", returnValue: "R$ 225,00", price: "R$ 112,50", cycle: "25 dias úteis", imageKey: "mid" },
-  { name: "BYD Han", region: "Berlim", daily: "R$ 16,00/dia", returnValue: "R$ 400,00", price: "R$ 200,00", cycle: "25 dias úteis", imageKey: "premium" },
+  { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 5,00/dia", returnValue: "R$ 125,00", price: "R$ 62,50", priceAmount: 62.5, cycle: "25 dias úteis", imageKey: "entry" },
+  { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 50,00/dia", returnValue: "R$ 1.250,00", price: "R$ 625,00", priceAmount: 625, cycle: "25 dias úteis", imageKey: "top" },
+  { id: "dolphin-israel", name: "BYD Dolphin", region: "Israel", daily: "R$ 8,00/dia", returnValue: "R$ 200,00", price: "R$ 100,00", priceAmount: 100, cycle: "25 dias úteis", imageKey: "mid" },
+  { id: "han-alemanha", name: "BYD Han", region: "Alemanha", daily: "R$ 18,00/dia", returnValue: "R$ 450,00", price: "R$ 225,00", priceAmount: 225, cycle: "25 dias úteis", imageKey: "premium" },
+  { id: "han-ev-dubai", name: "BYD Han EV", region: "Dubai", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 312,50", priceAmount: 312.5, cycle: "25 dias úteis", imageKey: "premium" },
+  { id: "seal-tokyo", name: "BYD Seal", region: "Tokyo", daily: "R$ 12,00/dia", returnValue: "R$ 300,00", price: "R$ 150,00", priceAmount: 150, cycle: "25 dias úteis", imageKey: "mid" },
+  { id: "dolphin-paris", name: "BYD Dolphin", region: "Paris", daily: "R$ 10,00/dia", returnValue: "R$ 250,00", price: "R$ 125,00", priceAmount: 125, cycle: "25 dias úteis", imageKey: "mid" },
+  { id: "han-los-angeles", name: "BYD Han", region: "Los Angeles", daily: "R$ 20,00/dia", returnValue: "R$ 500,00", price: "R$ 250,00", priceAmount: 250, cycle: "25 dias úteis", imageKey: "premium" },
+  { id: "seal-jerusalem", name: "BYD Seal", region: "Jerusalém", daily: "R$ 9,00/dia", returnValue: "R$ 225,00", price: "R$ 112,50", priceAmount: 112.5, cycle: "25 dias úteis", imageKey: "mid" },
+  { id: "han-berlim", name: "BYD Han", region: "Berlim", daily: "R$ 16,00/dia", returnValue: "R$ 400,00", price: "R$ 200,00", priceAmount: 200, cycle: "25 dias úteis", imageKey: "premium" },
 ];
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
@@ -242,7 +261,7 @@ const toNumber = (value: string) => Number(value.replace(/[^\d,]/g, "").replace(
 const rateOf = (vehicle: Vehicle) => toNumber(vehicle.returnValue) / toNumber(vehicle.price);
 type SortKey = "Padrão" | "Preço" | "Taxa de juros" | "Renda";
 
-function MarketplacePage({ onRent }: { onRent: (vehicle: Vehicle) => void }) {
+function MarketplacePage({ onRent, renting }: { onRent: (vehicle: Vehicle) => void; renting: boolean }) {
   const [region, setRegion] = useState("Todos");
   const [period, setPeriod] = useState<"Diário" | "Ciclo">("Diário");
   const [rented, setRented] = useState<string | null>(null);
@@ -296,7 +315,7 @@ function MarketplacePage({ onRent }: { onRent: (vehicle: Vehicle) => void }) {
         {regions.map((item) => <Button key={item} onClick={() => setRegion(item)} variant={region === item ? "default" : "secondary"} size="sm" className="rounded-full px-4 shadow-none">{item}</Button>)}
       </div>
       <div className="mt-3 space-y-3 px-2">
-        {visible.length ? visible.map((vehicle) => <MarketVehicleCard key={`${vehicle.region}-${vehicle.name}`} vehicle={vehicle} period={period} rented={rented === vehicle.name} onRent={() => { setRented(vehicle.name); onRent(vehicle); }} />) : <div className="rounded-2xl bg-card p-8 text-center text-sm text-muted-foreground">Novos veículos para {region} chegam em breve.</div>}
+        {visible.length ? visible.map((vehicle) => <MarketVehicleCard key={vehicle.id} vehicle={vehicle} period={period} rented={renting && rented === vehicle.id} onRent={() => { setRented(vehicle.id); onRent(vehicle); }} />) : <div className="rounded-2xl bg-card p-8 text-center text-sm text-muted-foreground">Novos veículos para {region} chegam em breve.</div>}
       </div>
     </div>
   );
@@ -380,7 +399,7 @@ function VehicleCard({ vehicle }: { vehicle: OwnedVehicle }) {
   );
 }
 
-function ProfilePage({ onNavigate, displayName, inviteCode }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string }) {
+function ProfilePage({ onNavigate, displayName, inviteCode, balance, isAdmin }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; balance: number; isAdmin: boolean }) {
   return (
     <div className="min-h-screen bg-highlight pb-24 pt-4">
       <header className="flex items-center gap-4 px-5">
@@ -390,11 +409,12 @@ function ProfilePage({ onNavigate, displayName, inviteCode }: { onNavigate: (vie
       </header>
       <section className="mx-4 mt-5 overflow-hidden rounded-2xl bg-card shadow-card">
         <button type="button" onClick={() => onNavigate("membership")} className="flex w-full items-center justify-between bg-primary px-4 py-3 text-left text-primary-foreground"><b>◉ Vip1</b><span>Direitos de membro &gt;</span></button>
-        <div className="grid grid-cols-2 divide-x divide-border p-4 text-center"><div><p>▣ Saldo de Recarga</p><b className="mt-3 block text-xl">0,00</b><Button className="mt-2 rounded-full" onClick={() => onNavigate("recharge")}>Recarregar</Button></div><div><p>◎ Registro da Sorte</p><b className="mt-3 block text-xl">0,00</b><button type="button" onClick={() => onNavigate("luckyDetails")} className="mt-4 text-sm text-muted-foreground">Detalhes &gt;</button></div></div>
+        <div className="grid grid-cols-2 divide-x divide-border p-4 text-center"><div><p>▣ Créditos de teste</p><b className="mt-3 block text-xl">{balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b><Button className="mt-2 rounded-full" onClick={() => onNavigate("recharge")}>Recarregar</Button></div><div><p>◎ Registro da Sorte</p><b className="mt-3 block text-xl">0,00</b><button type="button" onClick={() => onNavigate("luckyDetails")} className="mt-4 text-sm text-muted-foreground">Detalhes &gt;</button></div></div>
       </section>
       <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda da conta</h2><button type="button" onClick={() => onNavigate("incomeDetails")} className="text-sm text-muted-foreground">Detalhes &gt;</button></div><Row label="Saldo Ganhos" value="1,00"/><Row label="Ganhos de hoje" value="1,00"/><Row label="Ganhos totais" value="1,00"/><Button variant="outline" onClick={() => onNavigate("withdraw")} className="mt-3 h-12 w-full rounded-full border-primary text-base shadow-none">Sacar dinheiro</Button></section>
       <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda de contrato</h2><span className="text-sm text-muted-foreground"><CircleHelp className="mr-1 inline h-4 w-4"/>Dica</span></div><div className="mt-5 grid grid-cols-4 items-center text-center text-xs"><div><b className="text-lg">0,00</b><p>Valor da renda</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">A transferir</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">Transferido</p></div><Button variant="outline" onClick={() => onNavigate("transfer")} className="rounded-full border-primary px-2 text-muted-foreground shadow-none">Transferir</Button></div></section>
       <section className="mx-4 mt-4 grid grid-cols-4 gap-x-3 gap-y-5 rounded-2xl bg-card p-4 shadow-card">{tools.map(({ label, icon: Icon, view, badge }) => <button type="button" key={label} onClick={() => view && onNavigate(view)} className="relative flex min-w-0 flex-col items-center gap-2 text-center text-xs text-muted-foreground"><span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></span>{badge && <span className="absolute right-1 top-0 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">{badge}</span>}<span>{label}</span></button>)}</section>
+      {isAdmin && <div className="mx-4 mt-4"><Button className="h-12 w-full" onClick={() => onNavigate("admin")}><ShieldCheck /> Abrir painel administrativo</Button></div>}
     </div>
   );
 }
