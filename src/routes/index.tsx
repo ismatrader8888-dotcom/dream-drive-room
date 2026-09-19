@@ -182,7 +182,7 @@ function Index() {
     <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "membership" ? (
     <MembershipPage onBack={() => setView("profile")} displayName={displayName} inviteCode={inviteCode} />
-  ) : view === "admin" ? (
+  ) : view === "admin" && isAdmin ? (
     <AdminPanel onBack={() => setView("profile")} />
   ) : view === "profile" ? (
     <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} isAdmin={isAdmin} />
