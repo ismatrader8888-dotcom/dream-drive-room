@@ -39,12 +39,11 @@ import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ToolPage, type ToolView } from "@/components/tool-pages";
-import { AdminPanel } from "@/components/admin-panel";
 import { AuthScreen } from "@/components/auth-screen";
 import { BydSplash } from "@/components/byd-splash";
 import { supabase } from "@/integrations/supabase/client";
 
-type View = "home" | "resources" | "news" | "profile" | "invite" | "membership" | "admin" | ToolView;
+type View = "home" | "resources" | "news" | "profile" | "invite" | "membership" | ToolView;
 
 const toolViews: ToolView[] = ["pix", "team", "contract", "salary", "vehicleIncome", "coupon", "inviteReward", "tasks", "orders", "exchange", "privacy", "about", "support", "settings", "recharge", "withdraw", "incomeDetails", "luckyDetails", "transfer"];
 
@@ -90,17 +89,12 @@ function Index() {
   const [ready, setReady] = useState(false);
   const [booting, setBooting] = useState(false);
   const [account, setAccount] = useState<Account | null>(null);
-  const [isAdmin, setIsAdmin] = useState(false);
   const [insufficient, setInsufficient] = useState<Vehicle | null>(null);
   const [renting, setRenting] = useState(false);
 
   const loadAccount = async (id: string) => {
-    const [{ data: profile }, { data: role }] = await Promise.all([
-      supabase.from("profiles").select("phone, invite_code, email, demo_balance").eq("id", id).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", id).eq("role", "admin").maybeSingle(),
-    ]);
+    const { data: profile } = await supabase.from("profiles").select("phone, invite_code, email, demo_balance").eq("id", id).maybeSingle();
     if (profile) setAccount(profile as Account);
-    setIsAdmin(Boolean(role));
   };
 
   useEffect(() => {
@@ -117,7 +111,6 @@ function Index() {
       if (event === "SIGNED_OUT") {
         setOwned([]);
         setAccount(null);
-        setIsAdmin(false);
         setView("home");
       }
     });
@@ -183,10 +176,8 @@ function Index() {
     <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "membership" ? (
     <MembershipPage onBack={() => setView("profile")} displayName={displayName} inviteCode={inviteCode} />
-  ) : view === "admin" && isAdmin ? (
-    <AdminPanel onBack={() => setView("profile")} />
   ) : view === "profile" ? (
-    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} isAdmin={isAdmin} />
+    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} />
   ) : view === "resources" ? (
     <ResourcesPage owned={owned} onBuy={() => setView("home")} />
   ) : view === "news" ? (
@@ -199,7 +190,7 @@ function Index() {
     <main className="min-h-screen bg-shell font-sans text-foreground">
       <div className="mx-auto min-h-screen w-full max-w-[430px] overflow-hidden bg-background shadow-phone">
         {page}
-        {!isTool && view !== "invite" && view !== "membership" && view !== "admin" && <BottomNav view={view} onNavigate={setView} />}
+        {!isTool && view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
         <Dialog open={Boolean(insufficient)} onOpenChange={(open) => { if (!open) setInsufficient(null); }}>
           <DialogContent className="max-w-[calc(100%-2rem)] rounded-xl">
             <DialogHeader><DialogTitle>Saldo insuficiente</DialogTitle><DialogDescription>Você precisa de {insufficient?.price} em créditos demonstrativos para alugar este veículo. Solicite uma recarga para continuar.</DialogDescription></DialogHeader>
@@ -402,7 +393,7 @@ function VehicleCard({ vehicle }: { vehicle: OwnedVehicle }) {
   );
 }
 
-function ProfilePage({ onNavigate, displayName, inviteCode, balance, isAdmin }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; balance: number; isAdmin: boolean }) {
+function ProfilePage({ onNavigate, displayName, inviteCode, balance }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; balance: number }) {
   return (
     <div className="min-h-screen bg-highlight pb-24 pt-4">
       <header className="flex items-center gap-4 px-5">
@@ -417,7 +408,6 @@ function ProfilePage({ onNavigate, displayName, inviteCode, balance, isAdmin }: 
       <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda da conta</h2><button type="button" onClick={() => onNavigate("incomeDetails")} className="text-sm text-muted-foreground">Detalhes &gt;</button></div><Row label="Saldo Ganhos" value="1,00"/><Row label="Ganhos de hoje" value="1,00"/><Row label="Ganhos totais" value="1,00"/><Button variant="outline" onClick={() => onNavigate("withdraw")} className="mt-3 h-12 w-full rounded-full border-primary text-base shadow-none">Sacar dinheiro</Button></section>
       <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda de contrato</h2><span className="text-sm text-muted-foreground"><CircleHelp className="mr-1 inline h-4 w-4"/>Dica</span></div><div className="mt-5 grid grid-cols-4 items-center text-center text-xs"><div><b className="text-lg">0,00</b><p>Valor da renda</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">A transferir</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">Transferido</p></div><Button variant="outline" onClick={() => onNavigate("transfer")} className="rounded-full border-primary px-2 text-muted-foreground shadow-none">Transferir</Button></div></section>
       <section className="mx-4 mt-4 grid grid-cols-4 gap-x-3 gap-y-5 rounded-2xl bg-card p-4 shadow-card">{tools.map(({ label, icon: Icon, view, badge }) => <button type="button" key={label} onClick={() => view && onNavigate(view)} className="relative flex min-w-0 flex-col items-center gap-2 text-center text-xs text-muted-foreground"><span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></span>{badge && <span className="absolute right-1 top-0 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">{badge}</span>}<span>{label}</span></button>)}</section>
-      {isAdmin && <div className="mx-4 mt-4"><Button className="h-12 w-full" onClick={() => onNavigate("admin")}><ShieldCheck /> Abrir painel administrativo</Button></div>}
     </div>
   );
 }

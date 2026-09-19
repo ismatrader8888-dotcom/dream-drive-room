@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { ArrowLeft, BarChart3, CarFront, RefreshCw, Users, WalletCards } from "lucide-react";
+import { BarChart3, CarFront, LogOut, RefreshCw, Users, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -12,7 +12,7 @@ type Tab = "users" | "purchases" | "recharges" | "withdrawals";
 
 const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-export function AdminPanel({ onBack }: { onBack: () => void }) {
+export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
   const [data, setData] = useState<Dashboard | null>(null);
   const [tab, setTab] = useState<Tab>("users");
   const [error, setError] = useState("");
@@ -52,28 +52,28 @@ export function AdminPanel({ onBack }: { onBack: () => void }) {
 
   return (
     <div className="min-h-screen bg-background pb-10">
-      <header className="flex h-16 items-center border-b border-border px-3">
-        <Button variant="ghost" size="icon" onClick={onBack} aria-label="Voltar"><ArrowLeft /></Button>
-        <div className="ml-2"><h1 className="font-bold">Painel administrativo</h1><p className="text-xs text-muted-foreground">Créditos demonstrativos</p></div>
-        <Button variant="ghost" size="icon" onClick={() => void load()} className="ml-auto" aria-label="Atualizar"><RefreshCw /></Button>
+      <header className="flex h-20 items-center border-b border-border px-6 lg:px-10">
+        <div><h1 className="text-xl font-bold">BYD Driving Admin</h1><p className="text-sm text-muted-foreground">Gestão de créditos demonstrativos</p></div>
+        <div className="ml-auto flex gap-2"><Button variant="outline" size="icon" onClick={() => void load()} aria-label="Atualizar"><RefreshCw /></Button><Button variant="outline" onClick={onSignOut}><LogOut /> Sair</Button></div>
       </header>
       {error && <p className="m-4 rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
       {!data ? <p className="p-8 text-center text-muted-foreground">Carregando dados...</p> : <>
-        <section className="grid grid-cols-2 gap-3 p-4">
+        <main className="mx-auto max-w-[1440px] p-6 lg:p-10">
+        <section className="grid grid-cols-2 gap-4 lg:grid-cols-4">
           <Metric icon={Users} label="Usuários" value={String(data.users)} />
           <Metric icon={WalletCards} label="Saldo em circulação" value={money(data.demoBalance)} />
           <Metric icon={CarFront} label="Compras" value={String(data.purchases)} />
           <Metric icon={BarChart3} label="Pendências" value={String(data.pendingWithdrawals + data.pendingRecharges)} />
         </section>
-        <nav className="mx-4 grid grid-cols-4 rounded-lg bg-muted p-1 text-xs">
+        <nav className="mt-8 grid max-w-3xl grid-cols-4 rounded-lg bg-muted p-1 text-sm">
           {([['users','Usuários'],['purchases','Compras'],['recharges','Recargas'],['withdrawals','Saques']] as const).map(([key, label]) => <button key={key} onClick={() => setTab(key)} className={`min-h-10 rounded-md px-1 ${tab === key ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground"}`}>{label}</button>)}
         </nav>
-        <div className="space-y-3 p-4">
-          {tab === "users" && data.profiles.map((profile) => <article key={profile.id} className="rounded-lg bg-card p-4 shadow-card"><b className="block truncate">{profile.email ?? profile.phone ?? "Sem identificação"}</b><div className="mt-2 grid grid-cols-2 text-sm text-muted-foreground"><span>Saldo: <strong className="text-foreground">{money(profile.balance)}</strong></span><span>Indicados: <strong className="text-foreground">{profile.referrals}</strong></span></div><p className="mt-2 text-xs text-muted-foreground">Código: {profile.inviteCode}</p><Button className="mt-3 w-full" disabled={busy === profile.id} onClick={() => void adjust(profile)}>Alterar saldo</Button></article>)}
+        <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          {tab === "users" && data.profiles.map((profile) => <article key={profile.id} className="rounded-lg bg-card p-5 shadow-card"><b className="block truncate">{profile.email ?? profile.phone ?? "Sem identificação"}</b><div className="mt-3 grid grid-cols-2 text-sm text-muted-foreground"><span>Saldo: <strong className="text-foreground">{money(profile.balance)}</strong></span><span>Indicados: <strong className="text-foreground">{profile.referrals}</strong></span></div><p className="mt-3 text-xs text-muted-foreground">Código: {profile.inviteCode}</p><Button className="mt-4 w-full" disabled={busy === profile.id} onClick={() => void adjust(profile)}>Alterar saldo</Button></article>)}
           {tab === "purchases" && <><h2 className="font-bold">Mais comprados</h2>{data.popularVehicles.map((item) => <article key={item.name} className="flex justify-between rounded-lg bg-card p-4"><span>{item.name}</span><b>{item.purchases} compras</b></article>)}<h2 className="pt-3 font-bold">Histórico</h2>{data.purchasesList.map((item) => <article key={item.id} className="rounded-lg bg-card p-4 text-sm"><b>{item.name}</b><p className="text-muted-foreground">{item.email ?? "Usuário"} · {item.region}</p><p className="mt-1">{money(item.price ?? 0)}</p></article>)}</>}
           {tab === "recharges" && <Requests rows={data.recharges} busy={busy} onReview={(id, approve) => review("recharge", id, approve)} />}
           {tab === "withdrawals" && <Requests rows={data.withdrawals} busy={busy} onReview={(id, approve) => review("withdrawal", id, approve)} />}
-        </div>
+        </div></main>
       </>}
     </div>
   );
