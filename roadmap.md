@@ -11,3 +11,5 @@
 - [x] Exibir cobranças PIX no painel administrativo
 - [ ] Ativar SimPix com novas credenciais e segredo do webhook
 - [ ] Validar uma cobrança real de baixo valor após ativação
+- [x] Registrar eventos SimPix de transação, saque e disputa no banco
+- [x] Criar o endpoint público real da SimPix na estrutura atual
