@@ -104,6 +104,12 @@ function Index() {
     if (data) setRewards(data as unknown as RewardSummary);
   };
 
+  const loadOwned = async (id: string) => {
+    const { data } = await supabase.from("user_vehicles").select("*").eq("user_id", id).order("purchased_at");
+    if (!data) return;
+    setOwned(data.map((row) => ({ id: row.catalog_id ?? row.id, name: row.name, region: row.region, daily: row.daily, returnValue: row.return_value, price: row.price, priceAmount: row.purchase_price ?? 0, cycle: row.cycle, imageKey: row.image_key as ImageKey, plate: row.plate, purchasedAt: new Date(row.purchased_at).getTime(), nextRewardAt: row.next_reward_at ? new Date(row.next_reward_at).getTime() : null, cyclesCompleted: row.cycles_completed, contractCycles: row.contract_cycles, pendingReward: row.pending_reward, transferredReward: row.transferred_reward }));
+  };
+
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
       setUserId(data.session?.user.id ?? null);
@@ -128,29 +134,7 @@ function Index() {
   useEffect(() => {
     if (!userId) return;
     void loadAccount(userId);
-    void loadRewards();
-    void supabase.from("user_vehicles").select("*").eq("user_id", userId).order("purchased_at")
-      .then(({ data }) => {
-        if (!data) return;
-        setOwned(data.map((row) => ({
-          id: row.catalog_id ?? row.id,
-          name: row.name,
-          region: row.region,
-          daily: row.daily,
-          returnValue: row.return_value,
-          price: row.price,
-          priceAmount: row.purchase_price ?? 0,
-          cycle: row.cycle,
-          imageKey: row.image_key as ImageKey,
-          plate: row.plate,
-          purchasedAt: new Date(row.purchased_at).getTime(),
-          nextRewardAt: row.next_reward_at ? new Date(row.next_reward_at).getTime() : null,
-          cyclesCompleted: row.cycles_completed,
-          contractCycles: row.contract_cycles,
-          pendingReward: row.pending_reward,
-          transferredReward: row.transferred_reward,
-        })));
-      });
+    void loadRewards().then(() => loadOwned(userId));
   }, [userId]);
 
   const copyText = async (key: string, text: string) => {
@@ -170,8 +154,7 @@ function Index() {
       return;
     }
     await loadAccount(userId);
-    const { data } = await supabase.from("user_vehicles").select("*").eq("user_id", userId).order("purchased_at");
-    if (data) setOwned(data.map((row) => ({ name: row.name, region: row.region, daily: row.daily, returnValue: row.return_value, price: row.price, priceAmount: row.purchase_price ?? 0, cycle: row.cycle, imageKey: row.image_key as ImageKey, plate: row.plate, purchasedAt: new Date(row.purchased_at).getTime(), nextRewardAt: row.next_reward_at ? new Date(row.next_reward_at).getTime() : null, cyclesCompleted: row.cycles_completed, contractCycles: row.contract_cycles, pendingReward: row.pending_reward, transferredReward: row.transferred_reward, id: row.catalog_id ?? row.id })));
+    await loadOwned(userId);
     await loadRewards();
     setView("resources");
   };

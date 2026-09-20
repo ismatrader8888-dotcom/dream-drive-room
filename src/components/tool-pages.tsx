@@ -389,6 +389,21 @@ function RewardDetailsPage({ title, onBack, rewards }: { title: string; onBack: 
   return <Shell title={title} onBack={onBack}><section className="m-4 grid grid-cols-3 gap-2 rounded-2xl bg-card p-4 text-center shadow-card"><div><p className="text-xs text-muted-foreground">Hoje</p><b>{money(rewards.today)}</b></div><div><p className="text-xs text-muted-foreground">Total</p><b>{money(rewards.total)}</b></div><div><p className="text-xs text-muted-foreground">A transferir</p><b>{money(rewards.pending)}</b></div></section><RewardHistory events={rewards.events} /></Shell>;
 }
 
+function TransferRewardsPage({ onBack, rewards, onBalanceChanged }: { onBack: () => void; rewards: RewardSummary; onBalanceChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const transfer = async () => {
+    setBusy(true); setMessage("");
+    const { data, error } = await supabase.rpc("transfer_my_vehicle_rewards");
+    setBusy(false);
+    if (error) { setMessage("Não foi possível transferir agora."); return; }
+    const amount = Number(data ?? 0);
+    setMessage(amount > 0 ? `${money(amount)} transferidos para Prêmios disponíveis.` : "Não há recompensas aguardando transferência.");
+    onBalanceChanged();
+  };
+  return <Shell title="Transferir recompensas" onBack={onBack}><section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">A transferir</p><b className="mt-1 block text-3xl">{money(rewards.pending)}</b><div className="mt-5 grid grid-cols-2 gap-3 text-sm"><div className="rounded-xl bg-muted p-3"><p className="text-muted-foreground">Gerado</p><b>{money(rewards.total)}</b></div><div className="rounded-xl bg-muted p-3"><p className="text-muted-foreground">Já transferido</p><b>{money(rewards.transferred)}</b></div></div><Button className="mt-5 h-12 w-full rounded-full" disabled={busy || rewards.pending <= 0} onClick={() => void transfer()}>{busy ? "Transferindo..." : "Transferir para Prêmios"}</Button>{message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}</section></Shell>;
+}
+
 function TextPage({ title, onBack, paragraphs }: { title: string; onBack: () => void; paragraphs: string[] }) {
   return (
     <Shell title={title} onBack={onBack}>
