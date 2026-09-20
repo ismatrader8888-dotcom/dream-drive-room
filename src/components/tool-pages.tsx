@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { createPixCharge } from "@/lib/pix.functions";
+import { createPixCharge, syncPixCharge } from "@/lib/pix.functions";
 
 export type ToolView =
   | "pix"
@@ -262,6 +262,7 @@ function OrdersPage({ onBack }: { onBack: () => void }) {
 
 function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceChanged }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer"; balance: number; rewardBalance: number; onBalanceChanged: () => void }) {
   const createCharge = useServerFn(createPixCharge);
+  const syncCharge = useServerFn(syncPixCharge);
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
   const [pixKey, setPixKey] = useState("");
@@ -270,6 +271,23 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
   const [charge, setCharge] = useState<{ id: string; code: string; image: string; expiresAt: string } | null>(null);
   const [remaining, setRemaining] = useState(300);
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (mode !== "recharge" || charge) return;
+    let active = true;
+    const syncLatest = async () => {
+      const { data } = await supabase.from("pix_charges").select("id").eq("status", "PENDING").order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (!active || !data) return;
+      try {
+        const result = await syncCharge({ data: { chargeId: data.id } });
+        if (active && result.status === "CONFIRMED") {
+          setMessage("Pagamento confirmado. Seus créditos já estão disponíveis.");
+          void onBalanceChanged();
+        }
+      } catch { /* O webhook continua sendo a confirmação principal. */ }
+    };
+    void syncLatest();
+    return () => { active = false; };
+  }, [charge, mode, onBalanceChanged, syncCharge]);
   useEffect(() => {
     if (!charge) return;
     const update = () => setRemaining(Math.max(0, Math.ceil((new Date(charge.expiresAt).getTime() - Date.now()) / 1000)));
@@ -288,11 +306,16 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
       applyStatus((payload.new as { status?: string }).status);
     }).subscribe();
     const poll = window.setInterval(async () => {
-      const { data } = await supabase.from("pix_charges").select("status").eq("id", charge.id).maybeSingle();
-      applyStatus(data?.status);
+      try {
+        const result = await syncCharge({ data: { chargeId: charge.id } });
+        applyStatus(result.status);
+      } catch {
+        const { data } = await supabase.from("pix_charges").select("status").eq("id", charge.id).maybeSingle();
+        applyStatus(data?.status);
+      }
     }, 4000);
     return () => { window.clearInterval(poll); void supabase.removeChannel(channel); };
-  }, [charge, onBalanceChanged]);
+  }, [charge, onBalanceChanged, syncCharge]);
   const submit = async () => {
     const value = Number(amount.replace(",", "."));
     if (!Number.isFinite(value) || value <= 0) return;

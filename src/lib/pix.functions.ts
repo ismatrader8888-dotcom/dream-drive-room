@@ -10,9 +10,14 @@ const chargeSchema = z.object({
 
 type ProviderContent = {
   magic_id?: string;
+  external_ref?: string;
+  amount?: number;
   qr_code?: string;
   status?: string;
+  updated_at?: string;
 };
+
+const syncSchema = z.object({ chargeId: z.string().uuid() });
 
 export const createPixCharge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -78,4 +83,36 @@ export const createPixCharge = createServerFn({ method: "POST" })
     }).eq("id", charge.id);
     if (updateError) throw new Error("Não foi possível salvar a cobrança.");
     return { ok: true as const, chargeId: charge.id, qrCode: content.qr_code, expiresAt };
+  });
+
+export const syncPixCharge = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { chargeId: string }) => syncSchema.parse(input))
+  .handler(async ({ data, context }) => {
+    const apiKey = process.env["SIMPIX_API_KEY"];
+    const token = process.env["SIMPIX_TOKEN"];
+    if (!apiKey || !token) return { status: "PENDING" };
+    const { data: charge } = await context.supabase
+      .from("pix_charges")
+      .select("external_ref, provider_magic_id, amount, status")
+      .eq("id", data.chargeId)
+      .eq("user_id", context.userId)
+      .maybeSingle();
+    if (!charge || charge.status === "CONFIRMED" || !charge.provider_magic_id) return { status: charge?.status ?? "PENDING" };
+    const query = new URLSearchParams({ magic_id: charge.provider_magic_id, limit: "1" });
+    const response = await fetch(`https://api.simpixpagamentos.com/api/transactions?${query}`, {
+      headers: { "x-api-key": apiKey, "x-token": token, "x-timezone": "America/Sao_Paulo" },
+    });
+    if (!response.ok) return { status: charge.status };
+    const raw = await response.json().catch(() => ({})) as { content?: ProviderContent | ProviderContent[]; data?: ProviderContent | ProviderContent[] } & ProviderContent;
+    const candidate = raw.content ?? raw.data ?? raw;
+    const transaction = Array.isArray(candidate) ? candidate[0] : candidate;
+    if (!transaction?.status) return { status: charge.status };
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const updatedAt = transaction.updated_at ?? new Date().toISOString();
+    const result = transaction.status === "CONFIRMED"
+      ? await supabaseAdmin.rpc("confirm_pix_charge", { _external_ref: charge.external_ref, _magic_id: charge.provider_magic_id, _amount: Number(charge.amount), _provider_updated_at: updatedAt })
+      : await supabaseAdmin.rpc("update_pix_charge_status", { _external_ref: charge.external_ref, _magic_id: charge.provider_magic_id, _status: transaction.status, _provider_updated_at: updatedAt });
+    if (result.error) throw new Error(result.error.message);
+    return { status: transaction.status };
   });
