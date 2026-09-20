@@ -360,47 +360,68 @@ export type Database = {
       user_vehicles: {
         Row: {
           catalog_id: string | null
+          completed_at: string | null
+          contract_cycles: number
           cycle: string
+          cycles_completed: number
           daily: string
           id: string
           image_key: string
           name: string
+          next_reward_at: string | null
+          pending_reward: number
           plate: string
           price: string
           purchase_price: number | null
           purchased_at: string
           region: string
           return_value: string
+          reward_per_cycle: number
+          transferred_reward: number
           user_id: string
         }
         Insert: {
           catalog_id?: string | null
+          completed_at?: string | null
+          contract_cycles?: number
           cycle: string
+          cycles_completed?: number
           daily: string
           id?: string
           image_key: string
           name: string
+          next_reward_at?: string | null
+          pending_reward?: number
           plate: string
           price: string
           purchase_price?: number | null
           purchased_at?: string
           region: string
           return_value: string
+          reward_per_cycle?: number
+          transferred_reward?: number
           user_id: string
         }
         Update: {
           catalog_id?: string | null
+          completed_at?: string | null
+          contract_cycles?: number
           cycle?: string
+          cycles_completed?: number
           daily?: string
           id?: string
           image_key?: string
           name?: string
+          next_reward_at?: string | null
+          pending_reward?: number
           plate?: string
           price?: string
           purchase_price?: number | null
           purchased_at?: string
           region?: string
           return_value?: string
+          reward_per_cycle?: number
+          transferred_reward?: number
           user_id?: string
         }
         Relationships: [
@@ -451,6 +472,57 @@ export type Database = {
           return_amount?: number
         }
         Relationships: []
+      }
+      vehicle_reward_events: {
+        Row: {
+          amount: number
+          created_at: string
+          cycle_number: number
+          earned_at: string
+          id: string
+          status: string
+          transferred_at: string | null
+          user_id: string
+          vehicle_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          cycle_number: number
+          earned_at: string
+          id?: string
+          status?: string
+          transferred_at?: string | null
+          user_id: string
+          vehicle_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          cycle_number?: number
+          earned_at?: string
+          id?: string
+          status?: string
+          transferred_at?: string | null
+          user_id?: string
+          vehicle_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_reward_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "vehicle_reward_events_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "user_vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       withdrawal_requests: {
         Row: {
@@ -522,6 +594,7 @@ export type Database = {
       }
       get_admin_dashboard: { Args: never; Returns: Json }
       get_my_referral_dashboard: { Args: never; Returns: Json }
+      get_my_reward_summary: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -529,12 +602,18 @@ export type Database = {
         }
         Returns: boolean
       }
+      process_my_vehicle_rewards: { Args: never; Returns: number }
+      process_vehicle_rewards_for: {
+        Args: { _user_id: string }
+        Returns: number
+      }
       purchase_vehicle: { Args: { _catalog_id: string }; Returns: string }
       request_demo_recharge: { Args: { _amount: number }; Returns: string }
       request_withdrawal: {
         Args: { _amount: number; _pix_key: string }
         Returns: string
       }
+      transfer_my_vehicle_rewards: { Args: never; Returns: number }
       update_pix_charge_status: {
         Args: {
           _external_ref: string
@@ -554,6 +633,8 @@ export type Database = {
         | "withdrawal"
         | "admin_adjustment"
         | "referral_bonus"
+        | "vehicle_reward"
+        | "reward_transfer"
       request_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -689,6 +770,8 @@ export const Constants = {
         "withdrawal",
         "admin_adjustment",
         "referral_bonus",
+        "vehicle_reward",
+        "reward_transfer",
       ],
       request_status: ["pending", "approved", "rejected"],
     },

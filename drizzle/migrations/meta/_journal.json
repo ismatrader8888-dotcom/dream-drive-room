@@ -57,6 +57,13 @@
       "when": 1789931199963,
       "tag": "0007_protect_referral_fields",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1789932160123,
+      "tag": "0008_add_vehicle_reward_cycles",
+      "breakpoints": true
     }
   ]
 }
