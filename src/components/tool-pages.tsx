@@ -272,6 +272,23 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
   const [remaining, setRemaining] = useState(300);
   const [busy, setBusy] = useState(false);
   useEffect(() => {
+    if (mode !== "recharge" || charge) return;
+    let active = true;
+    const syncLatest = async () => {
+      const { data } = await supabase.from("pix_charges").select("id").eq("status", "PENDING").order("created_at", { ascending: false }).limit(1).maybeSingle();
+      if (!active || !data) return;
+      try {
+        const result = await syncCharge({ data: { chargeId: data.id } });
+        if (active && result.status === "CONFIRMED") {
+          setMessage("Pagamento confirmado. Seus créditos já estão disponíveis.");
+          void onBalanceChanged();
+        }
+      } catch { /* O webhook continua sendo a confirmação principal. */ }
+    };
+    void syncLatest();
+    return () => { active = false; };
+  }, [charge, mode, onBalanceChanged, syncCharge]);
+  useEffect(() => {
     if (!charge) return;
     const update = () => setRemaining(Math.max(0, Math.ceil((new Date(charge.expiresAt).getTime() - Date.now()) / 1000)));
     update();
