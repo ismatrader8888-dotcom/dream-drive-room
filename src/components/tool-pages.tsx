@@ -28,6 +28,9 @@ export type ToolView =
   | "luckyDetails"
   | "transfer";
 
+export type RewardEvent = { id: string; vehicleId: string; vehicleName: string; cycle: number; amount: number; status: "pending" | "transferred"; earnedAt: string; transferredAt: string | null };
+export type RewardSummary = { available: number; today: number; total: number; pending: number; transferred: number; cyclesCompleted: number; cyclesTotal: number; events: RewardEvent[] };
+
 export function ToolHeader({ title, onBack }: { title: string; onBack: () => void }) {
   return (
     <header className="relative flex h-16 items-center justify-center border-b border-border">
@@ -174,7 +177,7 @@ function SalaryPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-function VehicleIncomePage({ onBack }: { onBack: () => void }) {
+function VehicleIncomePage({ onBack, rewards }: { onBack: () => void; rewards: RewardSummary }) {
   const [range, setRange] = useState("Hoje");
   return (
     <Shell title="Receita de Veículos" onBack={onBack}>
@@ -182,10 +185,10 @@ function VehicleIncomePage({ onBack }: { onBack: () => void }) {
         <Button className="rounded-lg" onClick={() => setRange((current) => (current === "Hoje" ? "Total" : "Hoje"))}>{range}</Button>
       </div>
       <section className="grid grid-cols-2 divide-x divide-border p-4 text-center">
-        <div><p className="text-sm text-muted-foreground">Pedidos</p><b className="mt-1 block text-xl">0</b></div>
-        <div><p className="text-sm text-muted-foreground">Recompensas virtuais</p><b className="mt-1 block text-xl">0 créditos</b></div>
+        <div><p className="text-sm text-muted-foreground">Ciclos</p><b className="mt-1 block text-xl">{range === "Hoje" ? rewards.events.filter((event) => new Date(event.earnedAt).toLocaleDateString("pt-BR") === new Date().toLocaleDateString("pt-BR")).length : rewards.cyclesCompleted}</b></div>
+        <div><p className="text-sm text-muted-foreground">Recompensas</p><b className="mt-1 block text-xl">{money(range === "Hoje" ? rewards.today : rewards.total)}</b></div>
       </section>
-      <EmptyState />
+      <RewardHistory events={range === "Hoje" ? rewards.events.filter((event) => new Date(event.earnedAt).toLocaleDateString("pt-BR") === new Date().toLocaleDateString("pt-BR")) : rewards.events} />
     </Shell>
   );
 }
@@ -377,6 +380,30 @@ function DetailsPage({ title, onBack }: { title: string; onBack: () => void }) {
   return <Shell title={title} onBack={onBack}><EmptyState /></Shell>;
 }
 
+function RewardHistory({ events }: { events: RewardEvent[] }) {
+  if (!events.length) return <EmptyState label="Nenhuma recompensa concluída" />;
+  return <div className="space-y-3 px-4">{events.map((event) => <article key={event.id} className="flex items-center justify-between rounded-xl bg-card p-4 shadow-card"><div className="min-w-0"><b className="block truncate">{event.vehicleName}</b><p className="text-xs text-muted-foreground">Ciclo {event.cycle} · {new Date(event.earnedAt).toLocaleString("pt-BR")}</p></div><div className="text-right"><b className="text-primary">+{money(event.amount)}</b><p className="text-xs text-muted-foreground">{event.status === "transferred" ? "Transferido" : "A transferir"}</p></div></article>)}</div>;
+}
+
+function RewardDetailsPage({ title, onBack, rewards }: { title: string; onBack: () => void; rewards: RewardSummary }) {
+  return <Shell title={title} onBack={onBack}><section className="m-4 grid grid-cols-3 gap-2 rounded-2xl bg-card p-4 text-center shadow-card"><div><p className="text-xs text-muted-foreground">Hoje</p><b>{money(rewards.today)}</b></div><div><p className="text-xs text-muted-foreground">Total</p><b>{money(rewards.total)}</b></div><div><p className="text-xs text-muted-foreground">A transferir</p><b>{money(rewards.pending)}</b></div></section><RewardHistory events={rewards.events} /></Shell>;
+}
+
+function TransferRewardsPage({ onBack, rewards, onBalanceChanged }: { onBack: () => void; rewards: RewardSummary; onBalanceChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState("");
+  const transfer = async () => {
+    setBusy(true); setMessage("");
+    const { data, error } = await supabase.rpc("transfer_my_vehicle_rewards");
+    setBusy(false);
+    if (error) { setMessage("Não foi possível transferir agora."); return; }
+    const amount = Number(data ?? 0);
+    setMessage(amount > 0 ? `${money(amount)} transferidos para Prêmios disponíveis.` : "Não há recompensas aguardando transferência.");
+    onBalanceChanged();
+  };
+  return <Shell title="Transferir recompensas" onBack={onBack}><section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">A transferir</p><b className="mt-1 block text-3xl">{money(rewards.pending)}</b><div className="mt-5 grid grid-cols-2 gap-3 text-sm"><div className="rounded-xl bg-muted p-3"><p className="text-muted-foreground">Gerado</p><b>{money(rewards.total)}</b></div><div className="rounded-xl bg-muted p-3"><p className="text-muted-foreground">Já transferido</p><b>{money(rewards.transferred)}</b></div></div><Button className="mt-5 h-12 w-full rounded-full" disabled={busy || rewards.pending <= 0} onClick={() => void transfer()}>{busy ? "Transferindo..." : "Transferir para Prêmios"}</Button>{message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}</section></Shell>;
+}
+
 function TextPage({ title, onBack, paragraphs }: { title: string; onBack: () => void; paragraphs: string[] }) {
   return (
     <Shell title={title} onBack={onBack}>
@@ -439,13 +466,13 @@ function SupportPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-export function ToolPage({ view, onBack, balance = 0, rewardBalance = 0, onBalanceChanged = () => undefined }: { view: ToolView; onBack: () => void; balance?: number; rewardBalance?: number; onBalanceChanged?: () => void }) {
+export function ToolPage({ view, onBack, balance = 0, rewardBalance = 0, rewards, onBalanceChanged = () => undefined }: { view: ToolView; onBack: () => void; balance?: number; rewardBalance?: number; rewards: RewardSummary; onBalanceChanged?: () => void }) {
   switch (view) {
     case "pix": return <PixPage onBack={onBack} />;
     case "team": return <TeamPage onBack={onBack} />;
     case "contract": return <ContractPage onBack={onBack} />;
     case "salary": return <SalaryPage onBack={onBack} />;
-    case "vehicleIncome": return <VehicleIncomePage onBack={onBack} />;
+    case "vehicleIncome": return <VehicleIncomePage onBack={onBack} rewards={rewards} />;
     case "coupon": return <CouponPage onBack={onBack} />;
     case "inviteReward": return <InviteRewardPage onBack={onBack} />;
     case "tasks": return <TasksPage onBack={onBack} />;
@@ -455,9 +482,9 @@ export function ToolPage({ view, onBack, balance = 0, rewardBalance = 0, onBalan
     case "support": return <SupportPage onBack={onBack} />;
     case "recharge": return <BalancePage title="Recarga PIX" onBack={onBack} mode="recharge" balance={balance} rewardBalance={rewardBalance} onBalanceChanged={onBalanceChanged} />;
     case "withdraw": return <BalancePage title="Sacar prêmios" onBack={onBack} mode="withdraw" balance={balance} rewardBalance={rewardBalance} onBalanceChanged={onBalanceChanged} />;
-    case "transfer": return <BalancePage title="Transferir recompensas" onBack={onBack} mode="transfer" balance={balance} rewardBalance={rewardBalance} onBalanceChanged={onBalanceChanged} />;
-    case "incomeDetails": return <DetailsPage title="Detalhes da renda" onBack={onBack} />;
-    case "luckyDetails": return <DetailsPage title="Registro da Sorte" onBack={onBack} />;
+    case "transfer": return <TransferRewardsPage onBack={onBack} rewards={rewards} onBalanceChanged={onBalanceChanged} />;
+    case "incomeDetails": return <RewardDetailsPage title="Detalhes das recompensas" onBack={onBack} rewards={rewards} />;
+    case "luckyDetails": return <RewardDetailsPage title="Histórico de prêmios" onBack={onBack} rewards={rewards} />;
     case "privacy": return <TextPage title="Política de privacidade" onBack={onBack} paragraphs={[
       "A BYD Driving coleta apenas os dados necessários para criar e manter sua conta: e-mail, telefone, código de convite e histórico de operações dos veículos.",
       "Para gerar uma cobrança PIX, seu nome e CPF são enviados à processadora de pagamentos. Armazenamos somente o nome e os quatro últimos dígitos do documento para conciliação.",
