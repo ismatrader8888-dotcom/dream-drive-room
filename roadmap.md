@@ -16,3 +16,7 @@
 - [x] Validar código de convite somente no cadastro e impedir códigos inexistentes
 - [x] Creditar 5% no primeiro depósito do convidado e 15% recorrente ao dono do código
 - [x] Exibir equipe, recompensas e auditoria de indicações no painel administrativo
+- [ ] Permitir ao administrador alterar Prêmios disponíveis por usuário
+- [ ] Creditar automaticamente a recompensa dos veículos ao concluir cada ciclo de horas
+- [ ] Atualizar Recompensas de hoje, totais e progresso de contrato com dados reais
+- [ ] Validar cálculos, segurança e telas administrativa/móvel
