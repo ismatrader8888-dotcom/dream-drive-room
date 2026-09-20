@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Loader2 } from "lucide-react";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
@@ -17,6 +17,11 @@ export function AuthScreen() {
   const [error, setError] = useState("");
   const [info, setInfo] = useState("");
 
+  useEffect(() => {
+    const code = new URLSearchParams(window.location.search).get("ind")?.trim().toUpperCase();
+    if (code) { setInvite(code); setMode("register"); }
+  }, []);
+
   const submit = async (event: React.FormEvent) => {
     event.preventDefault();
     setError("");
@@ -24,12 +29,17 @@ export function AuthScreen() {
     setLoading(true);
     try {
       if (mode === "register") {
+        const normalizedInvite = invite.trim().toUpperCase();
+        if (normalizedInvite) {
+          const { data: valid, error: validationError } = await supabase.rpc("validate_invite_code", { _code: normalizedInvite });
+          if (validationError || !valid) throw new Error("INVALID_INVITE_CODE");
+        }
         const { error: signUpError } = await supabase.auth.signUp({
           email,
           password,
           options: {
             emailRedirectTo: window.location.origin,
-            data: { phone, referred_by: invite || null },
+            data: { phone, referred_by: normalizedInvite || null },
           },
         });
         if (signUpError) throw signUpError;
@@ -43,6 +53,8 @@ export function AuthScreen() {
       setError(
         message.includes("Invalid login credentials")
           ? "E-mail ou senha incorretos."
+          : message.includes("INVALID_INVITE_CODE")
+            ? "Código de convite inválido. Corrija ou apague o código para continuar."
           : message.includes("already registered")
             ? "Este e-mail já possui conta. Faça login."
             : message,
@@ -88,16 +100,16 @@ export function AuthScreen() {
           )}
           <Field id="password" label="Senha" type="password" value={password} onChange={setPassword} placeholder="Mínimo de 6 caracteres" />
           {mode === "register" && (
-            <Field id="invite" label="Código de convite (opcional)" type="text" value={invite} onChange={setInvite} placeholder="Ex.: ESBXQ9XI" required={false} />
+            <Field id="invite" label="Código de convite (opcional)" type="text" value={invite} onChange={(value) => setInvite(value.toUpperCase())} placeholder="Ex.: ESBXQ9XI" required={false} />
           )}
           {error && <p className="text-sm text-destructive">{error}</p>}
           {info && <p className="text-sm text-success">{info}</p>}
           <Button type="submit" disabled={loading} className="h-12 w-full rounded-full text-base">
             {loading ? <Loader2 className="animate-spin" /> : mode === "login" ? "Entrar" : "Criar conta"}
           </Button>
-          <Button type="button" variant="outline" onClick={google} className="h-12 w-full rounded-full bg-transparent text-base shadow-none">
+          {mode === "login" && <Button type="button" variant="outline" onClick={google} className="h-12 w-full rounded-full bg-transparent text-base shadow-none">
             Continuar com Google
-          </Button>
+          </Button>}
         </form>
 
         <p className="relative mt-6 pb-8 text-center text-xs text-muted-foreground">

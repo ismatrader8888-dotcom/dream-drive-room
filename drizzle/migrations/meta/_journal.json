@@ -36,6 +36,27 @@
       "when": 1789928122961,
       "tag": "0004_log_simpix_webhook_events",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1789931069413,
+      "tag": "0005_add_referral_bonus_program",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789931147798,
+      "tag": "0006_refine_referral_reward_totals",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1789931199963,
+      "tag": "0007_protect_referral_fields",
+      "breakpoints": true
     }
   ]
 }

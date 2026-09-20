@@ -194,6 +194,121 @@ export type Database = {
         }
         Relationships: []
       }
+      referral_rewards: {
+        Row: {
+          beneficiary_id: string
+          charge_id: string
+          created_at: string
+          credit_amount: number
+          deposit_amount: number
+          id: string
+          percentage: number
+          referral_id: string
+          reward_type: string
+        }
+        Insert: {
+          beneficiary_id: string
+          charge_id: string
+          created_at?: string
+          credit_amount: number
+          deposit_amount: number
+          id?: string
+          percentage: number
+          referral_id: string
+          reward_type: string
+        }
+        Update: {
+          beneficiary_id?: string
+          charge_id?: string
+          created_at?: string
+          credit_amount?: number
+          deposit_amount?: number
+          id?: string
+          percentage?: number
+          referral_id?: string
+          reward_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referral_rewards_beneficiary_id_fkey"
+            columns: ["beneficiary_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_charge_id_fkey"
+            columns: ["charge_id"]
+            isOneToOne: false
+            referencedRelation: "pix_charges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referral_rewards_referral_id_fkey"
+            columns: ["referral_id"]
+            isOneToOne: false
+            referencedRelation: "referrals"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      referrals: {
+        Row: {
+          created_at: string
+          effective_at: string | null
+          first_deposit_amount: number | null
+          id: string
+          invite_code: string
+          referee_bonus_total: number
+          referred_user_id: string
+          referrer_bonus_total: number
+          referrer_id: string
+          total_confirmed_deposits: number
+          total_deposited: number
+        }
+        Insert: {
+          created_at?: string
+          effective_at?: string | null
+          first_deposit_amount?: number | null
+          id?: string
+          invite_code: string
+          referee_bonus_total?: number
+          referred_user_id: string
+          referrer_bonus_total?: number
+          referrer_id: string
+          total_confirmed_deposits?: number
+          total_deposited?: number
+        }
+        Update: {
+          created_at?: string
+          effective_at?: string | null
+          first_deposit_amount?: number | null
+          id?: string
+          invite_code?: string
+          referee_bonus_total?: number
+          referred_user_id?: string
+          referrer_bonus_total?: number
+          referrer_id?: string
+          total_confirmed_deposits?: number
+          total_deposited?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referrals_referred_user_id_fkey"
+            columns: ["referred_user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referrals_referrer_id_fkey"
+            columns: ["referrer_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       simpix_webhook_events: {
         Row: {
           error_message: string | null
@@ -406,6 +521,7 @@ export type Database = {
         Returns: boolean
       }
       get_admin_dashboard: { Args: never; Returns: Json }
+      get_my_referral_dashboard: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -428,6 +544,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      validate_invite_code: { Args: { _code: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
@@ -436,6 +553,7 @@ export type Database = {
         | "vehicle_purchase"
         | "withdrawal"
         | "admin_adjustment"
+        | "referral_bonus"
       request_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -570,6 +688,7 @@ export const Constants = {
         "vehicle_purchase",
         "withdrawal",
         "admin_adjustment",
+        "referral_bonus",
       ],
       request_status: ["pending", "approved", "rejected"],
     },

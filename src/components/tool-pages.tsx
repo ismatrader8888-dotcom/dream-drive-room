@@ -112,21 +112,29 @@ function PixPage({ onBack }: { onBack: () => void }) {
 
 function TeamPage({ onBack }: { onBack: () => void }) {
   const [tab, setTab] = useState("Eficiente");
+  const [data, setData] = useState<ReferralDashboard | null>(null);
+  useEffect(() => { void supabase.rpc("get_my_referral_dashboard").then(({ data: result }) => setData(result as unknown as ReferralDashboard)); }, []);
+  const members = (data?.members ?? []).filter((member) => member.status === (tab === "Eficiente" ? "effective" : "invalid"));
   return (
     <Shell title="Minha Equipe" onBack={onBack}>
       <section className="m-4 grid grid-cols-2 gap-4 rounded-2xl bg-card p-5 text-center shadow-card">
-        <div><p className="text-sm text-muted-foreground">Benefícios da Equipe</p><b className="mt-2 block text-xl">R$ 0,00</b></div>
-        <div><p className="text-sm text-muted-foreground">Membros Eficazes da Equipe</p><b className="mt-2 block text-xl">0 / 0</b></div>
+        <div><p className="text-sm text-muted-foreground">Créditos da equipe</p><b className="mt-2 block text-xl">{money(data?.teamEarned ?? 0)}</b></div>
+        <div><p className="text-sm text-muted-foreground">Membros eficazes</p><b className="mt-2 block text-xl">{data?.effectiveMembers ?? 0} / {data?.totalMembers ?? 0}</b></div>
       </section>
       <section className="m-4 grid grid-cols-2 gap-4 rounded-2xl bg-card p-5 text-center shadow-card">
-        <div><p className="text-sm text-muted-foreground">Recompensas da equipe hoje</p><b className="mt-2 block text-xl">0 créditos</b></div>
-        <div><p className="text-sm text-muted-foreground">Recargas de Hoje</p><b className="mt-2 block text-xl">R$ 0,00</b></div>
+        <div><p className="text-sm text-muted-foreground">Bônus de hoje</p><b className="mt-2 block text-xl">{money(data?.earnedToday ?? 0)}</b></div>
+        <div><p className="text-sm text-muted-foreground">Depósitos de hoje</p><b className="mt-2 block text-xl">{money(data?.depositedToday ?? 0)}</b></div>
       </section>
       <Tabs items={["Eficiente", "Inválido"]} value={tab} onChange={setTab} />
-      <EmptyState />
+      {members.length ? <div className="space-y-3 px-4">{members.map((member) => <article key={member.id} className="rounded-xl bg-card p-4 shadow-card"><div className="flex items-center justify-between gap-3"><b className="truncate">{member.displayName}</b><span className={`rounded-full px-2 py-1 text-xs font-semibold ${member.status === "effective" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>{member.status === "effective" ? "Eficiente" : "Aguardando depósito"}</span></div><div className="mt-3 grid grid-cols-2 gap-2 text-sm text-muted-foreground"><span>Depósitos <b className="block text-foreground">{member.deposits}</b></span><span>Bônus recebido <b className="block text-foreground">{money(member.bonusEarned)}</b></span></div></article>)}</div> : <EmptyState label={tab === "Eficiente" ? "Nenhum membro eficaz ainda" : "Nenhum membro aguardando depósito"} />}
     </Shell>
   );
 }
+
+type ReferralMember = { id: string; displayName: string; status: "effective" | "invalid"; deposits: number; bonusEarned: number };
+type ReferralReward = { id: string; type: "referee_first_deposit" | "referrer_commission"; depositAmount: number; percentage: number; creditAmount: number; createdAt: string; memberName: string };
+type ReferralDashboard = { totalMembers: number; effectiveMembers: number; totalDeposited: number; totalEarned: number; teamEarned: number; earnedToday: number; depositedToday: number; members: ReferralMember[]; rewards: ReferralReward[] };
+const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 function ContractPage({ onBack }: { onBack: () => void }) {
   return (
@@ -193,9 +201,12 @@ function CouponPage({ onBack }: { onBack: () => void }) {
 }
 
 function InviteRewardPage({ onBack }: { onBack: () => void }) {
+  const [data, setData] = useState<ReferralDashboard | null>(null);
+  useEffect(() => { void supabase.rpc("get_my_referral_dashboard").then(({ data: result }) => setData(result as unknown as ReferralDashboard)); }, []);
   return (
-    <Shell title="Recompensa(R$)" onBack={onBack}>
-      <div className="flex min-h-[60vh] flex-col items-center justify-center gap-3 text-muted-foreground"><FileMinus2 className="h-16 w-16 opacity-50" /><p className="text-sm">Ainda não há dados</p></div>
+    <Shell title="Recompensas por convite" onBack={onBack}>
+      <section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">Total em créditos do jogo</p><b className="mt-1 block text-3xl">{money(data?.totalEarned ?? 0)}</b><p className="mt-2 text-xs text-muted-foreground">5% no primeiro depósito feito com convite e 15% para quem convidou em cada depósito confirmado.</p></section>
+      {data?.rewards.length ? <div className="space-y-3 px-4">{data.rewards.map((reward) => <article key={reward.id} className="rounded-xl bg-card p-4 shadow-card"><div className="flex justify-between gap-3"><div><b>{reward.type === "referee_first_deposit" ? "Bônus de boas-vindas" : `Depósito de ${reward.memberName}`}</b><p className="mt-1 text-xs text-muted-foreground">{reward.percentage}% sobre {money(reward.depositAmount)} · {new Date(reward.createdAt).toLocaleDateString("pt-BR")}</p></div><b className="text-primary">+{money(reward.creditAmount)}</b></div></article>)}</div> : <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 text-muted-foreground"><FileMinus2 className="h-16 w-16 opacity-50" /><p className="text-sm">Nenhum bônus recebido ainda</p></div>}
     </Shell>
   );
 }

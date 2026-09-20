@@ -13,3 +13,6 @@
 - [ ] Validar uma cobrança real de baixo valor após ativação
 - [x] Registrar eventos SimPix de transação, saque e disputa no banco
 - [x] Criar o endpoint público real da SimPix na estrutura atual
+- [x] Validar código de convite somente no cadastro e impedir códigos inexistentes
+- [x] Creditar 5% no primeiro depósito do convidado e 15% recorrente ao dono do código
+- [x] Exibir equipe, recompensas e auditoria de indicações no painel administrativo
