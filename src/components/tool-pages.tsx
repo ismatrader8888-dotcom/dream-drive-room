@@ -279,13 +279,19 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
   }, [charge]);
   useEffect(() => {
     if (!charge) return;
-    const channel = supabase.channel(`pix-${charge.id}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "pix_charges", filter: `id=eq.${charge.id}` }, (payload) => {
-      const status = (payload.new as { status?: string }).status;
+    const applyStatus = (status?: string) => {
       if (status === "CONFIRMED") { setMessage("Pagamento confirmado. Seus créditos já estão disponíveis."); void onBalanceChanged(); }
       else if (status === "EXPIRED") setMessage("Este QR Code expirou. Gere uma nova cobrança.");
       else if (status === "FAILED") setMessage("O pagamento não pôde ser processado.");
+    };
+    const channel = supabase.channel(`pix-${charge.id}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "pix_charges", filter: `id=eq.${charge.id}` }, (payload) => {
+      applyStatus((payload.new as { status?: string }).status);
     }).subscribe();
-    return () => { void supabase.removeChannel(channel); };
+    const poll = window.setInterval(async () => {
+      const { data } = await supabase.from("pix_charges").select("status").eq("id", charge.id).maybeSingle();
+      applyStatus(data?.status);
+    }, 4000);
+    return () => { window.clearInterval(poll); void supabase.removeChannel(channel); };
   }, [charge, onBalanceChanged]);
   const submit = async () => {
     const value = Number(amount.replace(",", "."));
