@@ -415,7 +415,7 @@ function ProfilePage({ onNavigate, displayName, inviteCode, balance, rewardBalan
 function Row({ label, value }: { label: string; value: string }) { return <div className="mt-3 flex justify-between text-sm"><span className="text-muted-foreground">{label}</span><b>{value}</b></div>; }
 
 function InvitePage({ onBack, copyText, copied, displayName, inviteCode }: { onBack: () => void; copyText: (key: string, text: string) => void; copied: string | null; displayName: string; inviteCode: string }) {
-  const link = `https://byddriving.app/registro?ind=${inviteCode}`;
+  const link = `https://byddriving.app/?ind=${inviteCode}`;
   return <div className="min-h-screen bg-highlight px-4 pb-8"><PageHeader title="Convidar amigos" onBack={onBack}/><section className="rounded-2xl bg-card p-6 text-center"><img src={bydLogo} alt="BYD Driving" width={816} height={816} className="mx-auto h-12 w-12 object-contain" /><h2 className="mt-3 truncate text-xl font-bold">{displayName}</h2><p className="mt-2">Compartilhar código QR ou link com amigos</p><div className="mx-auto mt-5 grid h-48 w-48 place-items-center rounded-xl bg-muted"><QrCode className="h-44 w-44" /></div><p className="mt-5 text-sm text-muted-foreground">Faça uma captura de tela ou salve o código QR</p></section><section className="mt-4 rounded-2xl bg-card p-5"><p className="text-sm text-muted-foreground">Código de convite</p><CopyRow value={inviteCode} onCopy={() => copyText("code", inviteCode)} copied={copied === "code"}/><div className="my-4 h-px bg-border"/><p className="text-sm text-muted-foreground">Convidar para conectar</p><CopyRow value={link} onCopy={() => copyText("link", link)} copied={copied === "link"}/></section></div>;
 }
 
