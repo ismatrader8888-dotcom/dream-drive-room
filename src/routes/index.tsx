@@ -152,6 +152,11 @@ function Index() {
     if (!userId) return;
     void loadAccount(userId);
     void loadRewards().then(() => loadOwned(userId));
+    const timer = window.setInterval(() => {
+      void loadRewards().then(() => loadOwned(userId));
+      void loadAccount(userId);
+    }, 60000);
+    return () => window.clearInterval(timer);
   }, [userId]);
 
   const copyText = async (key: string, text: string) => {
