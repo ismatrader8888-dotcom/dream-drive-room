@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import type { Json } from "@/integrations/supabase/types";
 
 const webhookSchema = z.object({ event: z.string().min(1), data: z.record(z.unknown()) });
 const transactionSchema = z.object({
@@ -30,7 +31,7 @@ export const Route = createFileRoute("/api/public/simpix-webhook")({
         if (!parsed.success) return new Response("Invalid payload", { status: 400 });
         const eventType = parsed.data.event.toUpperCase();
         if (!["TRANSACTION", "WITHDRAW", "DISPUTE"].includes(eventType)) return new Response("Unsupported event", { status: 400 });
-        const { data: eventRow, error: logError } = await supabaseAdmin.from("simpix_webhook_events").insert({ event_type: eventType.toLowerCase(), payload: json as Record<string, unknown> }).select("id").single();
+        const { data: eventRow, error: logError } = await supabaseAdmin.from("simpix_webhook_events").insert({ event_type: eventType.toLowerCase(), payload: json as Json }).select("id").single();
         if (logError || !eventRow) { console.error("SimPix event log failed", logError?.message); return new Response("Event log failed", { status: 500 }); }
         try {
           if (eventType === "TRANSACTION") {
