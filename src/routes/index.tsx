@@ -79,7 +79,7 @@ const tools: Array<{ label: string; icon: ComponentType<{ className?: string }>;
   { label: "Configurações", icon: Settings, view: "settings" },
 ];
 
-type Account = { phone: string | null; invite_code: string; email: string | null; demo_balance: number };
+type Account = { phone: string | null; invite_code: string; email: string | null; demo_balance: number; reward_balance: number };
 
 function Index() {
   const [view, setView] = useState<View>("home");
@@ -93,7 +93,7 @@ function Index() {
   const [renting, setRenting] = useState(false);
 
   const loadAccount = async (id: string) => {
-    const { data: profile } = await supabase.from("profiles").select("phone, invite_code, email, demo_balance").eq("id", id).maybeSingle();
+    const { data: profile } = await supabase.from("profiles").select("phone, invite_code, email, demo_balance, reward_balance").eq("id", id).maybeSingle();
     if (profile) setAccount(profile as Account);
   };
 
@@ -171,13 +171,13 @@ function Index() {
   const isTool = toolViews.includes(view as ToolView);
 
   const page = isTool ? (
-    <ToolPage view={view as ToolView} onBack={() => setView("profile")} balance={account?.demo_balance ?? 0} onBalanceChanged={() => userId && loadAccount(userId)} />
+    <ToolPage view={view as ToolView} onBack={() => setView("profile")} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} onBalanceChanged={() => userId && loadAccount(userId)} />
   ) : view === "invite" ? (
     <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "membership" ? (
     <MembershipPage onBack={() => setView("profile")} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "profile" ? (
-    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} />
+    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} />
   ) : view === "resources" ? (
     <ResourcesPage owned={owned} onBuy={() => setView("home")} />
   ) : view === "news" ? (
@@ -193,7 +193,7 @@ function Index() {
         {!isTool && view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
         <Dialog open={Boolean(insufficient)} onOpenChange={(open) => { if (!open) setInsufficient(null); }}>
           <DialogContent className="max-w-[calc(100%-2rem)] rounded-xl">
-            <DialogHeader><DialogTitle>Saldo insuficiente</DialogTitle><DialogDescription>Você precisa de {insufficient?.price} em créditos demonstrativos para alugar este veículo. Solicite uma recarga para continuar.</DialogDescription></DialogHeader>
+            <DialogHeader><DialogTitle>Créditos insuficientes</DialogTitle><DialogDescription>Você precisa de {insufficient?.price} em créditos do jogo para ativar este veículo. Faça uma recarga PIX para continuar.</DialogDescription></DialogHeader>
             <DialogFooter><Button variant="outline" onClick={() => setInsufficient(null)}>Agora não</Button><Button onClick={() => { setInsufficient(null); setView("recharge"); }}>Ir para recarga PIX</Button></DialogFooter>
           </DialogContent>
         </Dialog>
@@ -393,7 +393,7 @@ function VehicleCard({ vehicle }: { vehicle: OwnedVehicle }) {
   );
 }
 
-function ProfilePage({ onNavigate, displayName, inviteCode, balance }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; balance: number }) {
+function ProfilePage({ onNavigate, displayName, inviteCode, balance, rewardBalance }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; balance: number; rewardBalance: number }) {
   return (
     <div className="min-h-screen bg-highlight pb-24 pt-4">
       <header className="flex items-center gap-4 px-5">
@@ -403,9 +403,9 @@ function ProfilePage({ onNavigate, displayName, inviteCode, balance }: { onNavig
       </header>
       <section className="mx-4 mt-5 overflow-hidden rounded-2xl bg-card shadow-card">
         <button type="button" onClick={() => onNavigate("membership")} className="flex w-full items-center justify-between bg-primary px-4 py-3 text-left text-primary-foreground"><b>◉ Vip1</b><span>Direitos de membro &gt;</span></button>
-        <div className="grid grid-cols-2 divide-x divide-border p-4 text-center"><div><p>▣ Créditos de teste</p><b className="mt-3 block text-xl">{balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b><Button className="mt-2 rounded-full" onClick={() => onNavigate("recharge")}>Recarregar</Button></div><div><p>◎ Registro da Sorte</p><b className="mt-3 block text-xl">0,00</b><button type="button" onClick={() => onNavigate("luckyDetails")} className="mt-4 text-sm text-muted-foreground">Detalhes &gt;</button></div></div>
+        <div className="grid grid-cols-2 divide-x divide-border p-4 text-center"><div><p>▣ Créditos do jogo</p><b className="mt-3 block text-xl">{balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b><Button className="mt-2 rounded-full" onClick={() => onNavigate("recharge")}>Recarregar</Button></div><div><p>◎ Prêmios disponíveis</p><b className="mt-3 block text-xl">{rewardBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b><button type="button" onClick={() => onNavigate("luckyDetails")} className="mt-4 text-sm text-muted-foreground">Detalhes &gt;</button></div></div>
       </section>
-      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda da conta</h2><button type="button" onClick={() => onNavigate("incomeDetails")} className="text-sm text-muted-foreground">Detalhes &gt;</button></div><Row label="Saldo Ganhos" value="1,00"/><Row label="Ganhos de hoje" value="1,00"/><Row label="Ganhos totais" value="1,00"/><Button variant="outline" onClick={() => onNavigate("withdraw")} className="mt-3 h-12 w-full rounded-full border-primary text-base shadow-none">Sacar dinheiro</Button></section>
+      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Recompensas do jogo</h2><button type="button" onClick={() => onNavigate("incomeDetails")} className="text-sm text-muted-foreground">Detalhes &gt;</button></div><Row label="Prêmios disponíveis" value={rewardBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/><Row label="Recompensas de hoje" value="0,00"/><Row label="Recompensas totais" value="0,00"/><Button variant="outline" onClick={() => onNavigate("withdraw")} className="mt-3 h-12 w-full rounded-full border-primary text-base shadow-none">Sacar prêmios</Button></section>
       <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda de contrato</h2><span className="text-sm text-muted-foreground"><CircleHelp className="mr-1 inline h-4 w-4"/>Dica</span></div><div className="mt-5 grid grid-cols-4 items-center text-center text-xs"><div><b className="text-lg">0,00</b><p>Valor da renda</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">A transferir</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">Transferido</p></div><Button variant="outline" onClick={() => onNavigate("transfer")} className="rounded-full border-primary px-2 text-muted-foreground shadow-none">Transferir</Button></div></section>
       <section className="mx-4 mt-4 grid grid-cols-4 gap-x-3 gap-y-5 rounded-2xl bg-card p-4 shadow-card">{tools.map(({ label, icon: Icon, view, badge }) => <button type="button" key={label} onClick={() => view && onNavigate(view)} className="relative flex min-w-0 flex-col items-center gap-2 text-center text-xs text-muted-foreground"><span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></span>{badge && <span className="absolute right-1 top-0 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">{badge}</span>}<span>{label}</span></button>)}</section>
     </div>
