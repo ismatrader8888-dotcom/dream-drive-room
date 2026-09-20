@@ -2,15 +2,13 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 
-const webhookSchema = z.object({
-  event: z.string(),
-  data: z.object({
-    magic_id: z.string().min(1),
-    external_ref: z.string().uuid(),
-    amount: z.coerce.number().positive(),
-    status: z.string(),
-    updated_at: z.string().optional(),
-  }),
+const webhookSchema = z.object({ event: z.string().min(1), data: z.record(z.unknown()) });
+const transactionSchema = z.object({
+  magic_id: z.string().min(1),
+  external_ref: z.string().uuid(),
+  amount: z.coerce.number().positive(),
+  status: z.string(),
+  updated_at: z.string().optional(),
 });
 
 export const Route = createFileRoute("/api/public/simpix-webhook")({
@@ -25,15 +23,31 @@ export const Route = createFileRoute("/api/public/simpix-webhook")({
         const suppliedBuffer = Buffer.from(signature, "utf8");
         const expectedBuffer = Buffer.from(expected, "utf8");
         if (suppliedBuffer.length !== expectedBuffer.length || !timingSafeEqual(suppliedBuffer, expectedBuffer)) return new Response("Unauthorized", { status: 401 });
-        const parsed = webhookSchema.safeParse(JSON.parse(body));
-        if (!parsed.success || parsed.data.event.toUpperCase() !== "TRANSACTION") return new Response("Invalid payload", { status: 400 });
-        const event = parsed.data.data;
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-        const updatedAt = event.updated_at ?? new Date().toISOString();
-        const result = event.status === "CONFIRMED"
-          ? await supabaseAdmin.rpc("confirm_pix_charge", { _external_ref: event.external_ref, _magic_id: event.magic_id, _amount: event.amount, _provider_updated_at: updatedAt })
-          : await supabaseAdmin.rpc("update_pix_charge_status", { _external_ref: event.external_ref, _magic_id: event.magic_id, _status: event.status, _provider_updated_at: updatedAt });
-        if (result.error) { console.error("SimPix webhook processing failed", result.error.message); return new Response("Processing failed", { status: 422 }); }
+        let json: unknown;
+        try { json = JSON.parse(body); } catch { return new Response("Invalid JSON", { status: 400 }); }
+        const parsed = webhookSchema.safeParse(json);
+        if (!parsed.success) return new Response("Invalid payload", { status: 400 });
+        const eventType = parsed.data.event.toUpperCase();
+        if (!["TRANSACTION", "WITHDRAW", "DISPUTE"].includes(eventType)) return new Response("Unsupported event", { status: 400 });
+        const { data: eventRow, error: logError } = await supabaseAdmin.from("simpix_webhook_events").insert({ event_type: eventType.toLowerCase(), payload: json as Record<string, unknown> }).select("id").single();
+        if (logError || !eventRow) { console.error("SimPix event log failed", logError?.message); return new Response("Event log failed", { status: 500 }); }
+        try {
+          if (eventType === "TRANSACTION") {
+            const transaction = transactionSchema.parse(parsed.data.data);
+            const updatedAt = transaction.updated_at ?? new Date().toISOString();
+            const result = transaction.status === "CONFIRMED"
+              ? await supabaseAdmin.rpc("confirm_pix_charge", { _external_ref: transaction.external_ref, _magic_id: transaction.magic_id, _amount: transaction.amount, _provider_updated_at: updatedAt })
+              : await supabaseAdmin.rpc("update_pix_charge_status", { _external_ref: transaction.external_ref, _magic_id: transaction.magic_id, _status: transaction.status, _provider_updated_at: updatedAt });
+            if (result.error) throw result.error;
+          }
+          await supabaseAdmin.from("simpix_webhook_events").update({ processed: true, processed_at: new Date().toISOString() }).eq("id", eventRow.id);
+        } catch (error) {
+          const message = error instanceof Error ? error.message : "Unknown processing error";
+          await supabaseAdmin.from("simpix_webhook_events").update({ error_message: message.slice(0, 500) }).eq("id", eventRow.id);
+          console.error("SimPix webhook processing failed", message);
+          return new Response("Processing failed", { status: 422 });
+        }
         return Response.json({ received: true });
       },
     },
