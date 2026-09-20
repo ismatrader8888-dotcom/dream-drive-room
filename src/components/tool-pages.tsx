@@ -118,7 +118,7 @@ function TeamPage({ onBack }: { onBack: () => void }) {
   return (
     <Shell title="Minha Equipe" onBack={onBack}>
       <section className="m-4 grid grid-cols-2 gap-4 rounded-2xl bg-card p-5 text-center shadow-card">
-        <div><p className="text-sm text-muted-foreground">Créditos da equipe</p><b className="mt-2 block text-xl">{money(data?.totalEarned ?? 0)}</b></div>
+        <div><p className="text-sm text-muted-foreground">Créditos da equipe</p><b className="mt-2 block text-xl">{money(data?.teamEarned ?? 0)}</b></div>
         <div><p className="text-sm text-muted-foreground">Membros eficazes</p><b className="mt-2 block text-xl">{data?.effectiveMembers ?? 0} / {data?.totalMembers ?? 0}</b></div>
       </section>
       <section className="m-4 grid grid-cols-2 gap-4 rounded-2xl bg-card p-5 text-center shadow-card">
@@ -133,7 +133,7 @@ function TeamPage({ onBack }: { onBack: () => void }) {
 
 type ReferralMember = { id: string; displayName: string; status: "effective" | "invalid"; deposits: number; bonusEarned: number };
 type ReferralReward = { id: string; type: "referee_first_deposit" | "referrer_commission"; depositAmount: number; percentage: number; creditAmount: number; createdAt: string; memberName: string };
-type ReferralDashboard = { totalMembers: number; effectiveMembers: number; totalDeposited: number; totalEarned: number; earnedToday: number; depositedToday: number; members: ReferralMember[]; rewards: ReferralReward[] };
+type ReferralDashboard = { totalMembers: number; effectiveMembers: number; totalDeposited: number; totalEarned: number; teamEarned: number; earnedToday: number; depositedToday: number; members: ReferralMember[]; rewards: ReferralReward[] };
 const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 function ContractPage({ onBack }: { onBack: () => void }) {
