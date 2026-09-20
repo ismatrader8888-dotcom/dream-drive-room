@@ -5,7 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { createPixCharge } from "@/lib/pix.functions";
+import { createPixCharge, syncPixCharge } from "@/lib/pix.functions";
 
 export type ToolView =
   | "pix"
@@ -262,6 +262,7 @@ function OrdersPage({ onBack }: { onBack: () => void }) {
 
 function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceChanged }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer"; balance: number; rewardBalance: number; onBalanceChanged: () => void }) {
   const createCharge = useServerFn(createPixCharge);
+  const syncCharge = useServerFn(syncPixCharge);
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
   const [pixKey, setPixKey] = useState("");
@@ -288,11 +289,16 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
       applyStatus((payload.new as { status?: string }).status);
     }).subscribe();
     const poll = window.setInterval(async () => {
-      const { data } = await supabase.from("pix_charges").select("status").eq("id", charge.id).maybeSingle();
-      applyStatus(data?.status);
+      try {
+        const result = await syncCharge({ data: { chargeId: charge.id } });
+        applyStatus(result.status);
+      } catch {
+        const { data } = await supabase.from("pix_charges").select("status").eq("id", charge.id).maybeSingle();
+        applyStatus(data?.status);
+      }
     }, 4000);
     return () => { window.clearInterval(poll); void supabase.removeChannel(channel); };
-  }, [charge, onBalanceChanged]);
+  }, [charge, onBalanceChanged, syncCharge]);
   const submit = async () => {
     const value = Number(amount.replace(",", "."));
     if (!Number.isFinite(value) || value <= 0) return;
