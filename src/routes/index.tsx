@@ -38,7 +38,7 @@ import bydTop from "@/assets/byd-top.png";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ToolPage, type ToolView } from "@/components/tool-pages";
+import { ToolPage, type RewardSummary, type ToolView } from "@/components/tool-pages";
 import { AuthScreen } from "@/components/auth-screen";
 import { BydSplash } from "@/components/byd-splash";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,6 +80,7 @@ const tools: Array<{ label: string; icon: ComponentType<{ className?: string }>;
 ];
 
 type Account = { phone: string | null; invite_code: string; email: string | null; demo_balance: number; reward_balance: number };
+const emptyRewards: RewardSummary = { available: 0, today: 0, total: 0, pending: 0, transferred: 0, cyclesCompleted: 0, cyclesTotal: 0, events: [] };
 
 function Index() {
   const [view, setView] = useState<View>("home");
@@ -91,10 +92,16 @@ function Index() {
   const [account, setAccount] = useState<Account | null>(null);
   const [insufficient, setInsufficient] = useState<Vehicle | null>(null);
   const [renting, setRenting] = useState(false);
+  const [rewards, setRewards] = useState<RewardSummary>(emptyRewards);
 
   const loadAccount = async (id: string) => {
     const { data: profile } = await supabase.from("profiles").select("phone, invite_code, email, demo_balance, reward_balance").eq("id", id).maybeSingle();
     if (profile) setAccount(profile as Account);
+  };
+
+  const loadRewards = async () => {
+    const { data } = await supabase.rpc("get_my_reward_summary");
+    if (data) setRewards(data as unknown as RewardSummary);
   };
 
   useEffect(() => {
@@ -111,6 +118,7 @@ function Index() {
       if (event === "SIGNED_OUT") {
         setOwned([]);
         setAccount(null);
+        setRewards(emptyRewards);
         setView("home");
       }
     });
@@ -120,6 +128,7 @@ function Index() {
   useEffect(() => {
     if (!userId) return;
     void loadAccount(userId);
+    void loadRewards();
     void supabase.from("user_vehicles").select("*").eq("user_id", userId).order("purchased_at")
       .then(({ data }) => {
         if (!data) return;
@@ -135,6 +144,11 @@ function Index() {
           imageKey: row.image_key as ImageKey,
           plate: row.plate,
           purchasedAt: new Date(row.purchased_at).getTime(),
+          nextRewardAt: row.next_reward_at ? new Date(row.next_reward_at).getTime() : null,
+          cyclesCompleted: row.cycles_completed,
+          contractCycles: row.contract_cycles,
+          pendingReward: row.pending_reward,
+          transferredReward: row.transferred_reward,
         })));
       });
   }, [userId]);
@@ -157,7 +171,8 @@ function Index() {
     }
     await loadAccount(userId);
     const { data } = await supabase.from("user_vehicles").select("*").eq("user_id", userId).order("purchased_at");
-    if (data) setOwned(data.map((row) => ({ name: row.name, region: row.region, daily: row.daily, returnValue: row.return_value, price: row.price, priceAmount: row.purchase_price ?? 0, cycle: row.cycle, imageKey: row.image_key as ImageKey, plate: row.plate, purchasedAt: new Date(row.purchased_at).getTime(), id: row.catalog_id ?? row.id })));
+    if (data) setOwned(data.map((row) => ({ name: row.name, region: row.region, daily: row.daily, returnValue: row.return_value, price: row.price, priceAmount: row.purchase_price ?? 0, cycle: row.cycle, imageKey: row.image_key as ImageKey, plate: row.plate, purchasedAt: new Date(row.purchased_at).getTime(), nextRewardAt: row.next_reward_at ? new Date(row.next_reward_at).getTime() : null, cyclesCompleted: row.cycles_completed, contractCycles: row.contract_cycles, pendingReward: row.pending_reward, transferredReward: row.transferred_reward, id: row.catalog_id ?? row.id })));
+    await loadRewards();
     setView("resources");
   };
 
@@ -171,13 +186,13 @@ function Index() {
   const isTool = toolViews.includes(view as ToolView);
 
   const page = isTool ? (
-    <ToolPage view={view as ToolView} onBack={() => setView("profile")} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} onBalanceChanged={() => userId && loadAccount(userId)} />
+    <ToolPage view={view as ToolView} onBack={() => setView("profile")} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} onBalanceChanged={() => { if (userId) void loadAccount(userId); void loadRewards(); }} />
   ) : view === "invite" ? (
     <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "membership" ? (
     <MembershipPage onBack={() => setView("profile")} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "profile" ? (
-    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} />
+    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} />
   ) : view === "resources" ? (
     <ResourcesPage owned={owned} onBuy={() => setView("home")} />
   ) : view === "news" ? (
@@ -202,9 +217,7 @@ function Index() {
   );
 }
 
-type OwnedVehicle = Vehicle & { plate: string; purchasedAt: number };
-
-const CYCLE_MS = 24 * 60 * 60 * 1000;
+type OwnedVehicle = Vehicle & { plate: string; purchasedAt: number; nextRewardAt: number | null; cyclesCompleted: number; contractCycles: number; pendingReward: number; transferredReward: number };
 
 function useCountdown(target: number) {
   const [now, setNow] = useState<number | null>(null);
@@ -378,22 +391,24 @@ function EmptyGarage({ onBuy }: { onBuy: () => void }) {
 }
 
 function VehicleCard({ vehicle }: { vehicle: OwnedVehicle }) {
-  const countdown = useCountdown(vehicle.purchasedAt + CYCLE_MS);
+  const countdown = useCountdown(vehicle.nextRewardAt ?? Date.now());
   return (
     <article className="mt-5 rounded-2xl bg-card p-4 shadow-card">
       <div className="flex items-center gap-3"><span className="rounded-md bg-primary px-2 py-1 text-xs font-semibold text-primary-foreground">Operação</span><b>{vehicle.name} • {vehicle.plate}</b></div>
       <div className="mt-5 grid grid-cols-2 gap-3 text-center">
-        <div><p className="text-xs text-muted-foreground">Validade</p><p className="mt-1 font-medium">{vehicle.cycle}</p></div>
+        <div><p className="text-xs text-muted-foreground">Progresso</p><p className="mt-1 font-medium">{vehicle.cyclesCompleted}/{vehicle.contractCycles} ciclos</p></div>
         <div><p className="text-xs text-muted-foreground">Quilometragem de hoje</p><p className="mt-1 font-medium">0.01KM</p></div>
         <div className="flex items-center justify-center"><img src={vehicleImages[vehicle.imageKey]} alt={vehicle.name} width={992} height={672} className="h-16 w-full object-contain" /></div>
         <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>1</b><p className="text-xs text-muted-foreground">Missões</p></div><div className="rounded-lg bg-muted p-2"><b>{vehicle.daily.replace("/dia", "")}</b><p className="text-xs text-muted-foreground">Recompensa</p></div></div>
       </div>
-      <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ Próxima recompensa em</span><b className="tabular-nums text-primary">{countdown}</b></div><p className="mt-2 text-xs text-muted-foreground">Acumula {vehicle.daily} em recompensas virtuais a cada ciclo do jogo.</p></div>
+      <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ {vehicle.nextRewardAt ? "Próxima recompensa em" : "Contrato concluído"}</span><b className="tabular-nums text-primary">{vehicle.nextRewardAt ? countdown : "Concluído"}</b></div><p className="mt-2 text-xs text-muted-foreground">A transferir: {moneyValue(vehicle.pendingReward)} · Transferido: {moneyValue(vehicle.transferredReward)}</p></div>
     </article>
   );
 }
 
-function ProfilePage({ onNavigate, displayName, inviteCode, balance, rewardBalance }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; balance: number; rewardBalance: number }) {
+const moneyValue = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+
+function ProfilePage({ onNavigate, displayName, inviteCode, balance, rewardBalance, rewards }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; balance: number; rewardBalance: number; rewards: RewardSummary }) {
   return (
     <div className="min-h-screen bg-highlight pb-24 pt-4">
       <header className="flex items-center gap-4 px-5">
@@ -405,8 +420,8 @@ function ProfilePage({ onNavigate, displayName, inviteCode, balance, rewardBalan
         <button type="button" onClick={() => onNavigate("membership")} className="flex w-full items-center justify-between bg-primary px-4 py-3 text-left text-primary-foreground"><b>◉ Vip1</b><span>Direitos de membro &gt;</span></button>
         <div className="grid grid-cols-2 divide-x divide-border p-4 text-center"><div><p>▣ Créditos do jogo</p><b className="mt-3 block text-xl">{balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b><Button className="mt-2 rounded-full" onClick={() => onNavigate("recharge")}>Recarregar</Button></div><div><p>◎ Prêmios disponíveis</p><b className="mt-3 block text-xl">{rewardBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b><button type="button" onClick={() => onNavigate("luckyDetails")} className="mt-4 text-sm text-muted-foreground">Detalhes &gt;</button></div></div>
       </section>
-      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Recompensas do jogo</h2><button type="button" onClick={() => onNavigate("incomeDetails")} className="text-sm text-muted-foreground">Detalhes &gt;</button></div><Row label="Prêmios disponíveis" value={rewardBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/><Row label="Recompensas de hoje" value="0,00"/><Row label="Recompensas totais" value="0,00"/><Button variant="outline" onClick={() => onNavigate("withdraw")} className="mt-3 h-12 w-full rounded-full border-primary text-base shadow-none">Sacar prêmios</Button></section>
-      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Progresso de contrato</h2><span className="text-sm text-muted-foreground"><CircleHelp className="mr-1 inline h-4 w-4"/>Dica</span></div><div className="mt-5 grid grid-cols-4 items-center text-center text-xs"><div><b className="text-lg">0,00</b><p>Recompensas</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">A transferir</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">Transferido</p></div><Button variant="outline" onClick={() => onNavigate("transfer")} className="rounded-full border-primary px-2 text-muted-foreground shadow-none">Transferir</Button></div></section>
+      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Recompensas do jogo</h2><button type="button" onClick={() => onNavigate("incomeDetails")} className="text-sm text-muted-foreground">Detalhes &gt;</button></div><Row label="Prêmios disponíveis" value={moneyValue(rewardBalance)}/><Row label="Recompensas de hoje" value={moneyValue(rewards.today)}/><Row label="Recompensas totais" value={moneyValue(rewards.total)}/><Button variant="outline" onClick={() => onNavigate("withdraw")} className="mt-3 h-12 w-full rounded-full border-primary text-base shadow-none">Sacar prêmios</Button></section>
+      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Progresso de contrato</h2><span className="text-sm text-muted-foreground"><CircleHelp className="mr-1 inline h-4 w-4"/>{rewards.cyclesCompleted}/{rewards.cyclesTotal} ciclos</span></div><div className="mt-5 grid grid-cols-4 items-center text-center text-xs"><div><b className="text-lg">{moneyValue(rewards.total)}</b><p>Recompensas</p></div><div><b className="text-lg">{moneyValue(rewards.pending)}</b><p className="text-muted-foreground">A transferir</p></div><div><b className="text-lg">{moneyValue(rewards.transferred)}</b><p className="text-muted-foreground">Transferido</p></div><Button variant="outline" onClick={() => onNavigate("transfer")} className="rounded-full border-primary px-2 text-muted-foreground shadow-none">Transferir</Button></div></section>
       <section className="mx-4 mt-4 grid grid-cols-4 gap-x-3 gap-y-5 rounded-2xl bg-card p-4 shadow-card">{tools.map(({ label, icon: Icon, view, badge }) => <button type="button" key={label} onClick={() => view && onNavigate(view)} className="relative flex min-w-0 flex-col items-center gap-2 text-center text-xs text-muted-foreground"><span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></span>{badge && <span className="absolute right-1 top-0 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">{badge}</span>}<span>{label}</span></button>)}</section>
     </div>
   );
