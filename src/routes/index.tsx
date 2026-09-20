@@ -51,9 +51,9 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "BYD Driving — Build Your Dreams" },
-      { name: "description", content: "Acompanhe seus veículos, rendimentos e benefícios BYD Driving." },
+      { name: "description", content: "Acompanhe seus veículos, créditos e recompensas BYD Driving." },
       { property: "og:title", content: "BYD Driving — Build Your Dreams" },
-      { property: "og:description", content: "Acompanhe seus veículos, rendimentos e benefícios BYD Driving." },
+      { property: "og:description", content: "Acompanhe seus veículos, créditos e recompensas BYD Driving." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
     ],
@@ -253,7 +253,7 @@ const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "
 
 const toNumber = (value: string) => Number(value.replace(/[^\d,]/g, "").replace(",", "."));
 const rateOf = (vehicle: Vehicle) => toNumber(vehicle.returnValue) / toNumber(vehicle.price);
-type SortKey = "Padrão" | "Preço" | "Taxa de juros" | "Renda";
+type SortKey = "Padrão" | "Preço" | "Progresso" | "Recompensa";
 
 function MarketplacePage({ onRent, renting }: { onRent: (vehicle: Vehicle) => void; renting: boolean }) {
   const [region, setRegion] = useState("Todos");
@@ -273,7 +273,7 @@ function MarketplacePage({ onRent, renting }: { onRent: (vehicle: Vehicle) => vo
   let visible = region === "Todos" ? vehicles : vehicles.filter((vehicle) => vehicle.region === region);
   if (maxPrice !== null) visible = visible.filter((vehicle) => toNumber(vehicle.price) <= maxPrice);
   if (sort !== "Padrão") {
-    const value = (vehicle: Vehicle) => (sort === "Preço" ? toNumber(vehicle.price) : sort === "Renda" ? toNumber(vehicle.daily) : rateOf(vehicle));
+    const value = (vehicle: Vehicle) => (sort === "Preço" ? toNumber(vehicle.price) : sort === "Recompensa" ? toNumber(vehicle.daily) : rateOf(vehicle));
     visible = [...visible].sort((a, b) => (desc ? value(b) - value(a) : value(a) - value(b)));
   }
 
@@ -287,7 +287,7 @@ function MarketplacePage({ onRent, renting }: { onRent: (vehicle: Vehicle) => vo
         ))}
       </div>
       <div className="mt-3 flex items-center justify-between px-3 text-xs">
-        {(["Padrão", "Preço", "Taxa de juros", "Renda"] as const).map((key) => (
+        {(["Padrão", "Preço", "Progresso", "Recompensa"] as const).map((key) => (
           <button key={key} type="button" onClick={() => toggleSort(key)} className={sort === key ? "font-semibold text-primary" : ""}>
             {key}{key === "Padrão" ? "" : arrow(key)}
           </button>
@@ -321,7 +321,7 @@ function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehic
       <div className="grid grid-cols-[1fr_145px] gap-1 p-4 pb-2">
         <div>
           <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold">{vehicle.name}</h2><span className="rounded bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground">Operação</span></div>
-          <p className="mt-2 text-xs text-muted-foreground">Lucro <b className="text-foreground">{period === "Diário" ? vehicle.daily : vehicle.returnValue}</b></p>
+          <p className="mt-2 text-xs text-muted-foreground">Recompensa virtual <b className="text-foreground">{period === "Diário" ? vehicle.daily : vehicle.returnValue}</b></p>
           <p className="mt-1 text-xs text-muted-foreground">Retorno <b className="text-accent-foreground">{vehicle.returnValue}</b></p>
           <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground"><span className="rounded bg-muted px-2 py-1">{vehicle.region}</span><span className="rounded bg-muted px-2 py-1">Rende seg–sex</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
         </div>
@@ -386,9 +386,9 @@ function VehicleCard({ vehicle }: { vehicle: OwnedVehicle }) {
         <div><p className="text-xs text-muted-foreground">Validade</p><p className="mt-1 font-medium">{vehicle.cycle}</p></div>
         <div><p className="text-xs text-muted-foreground">Quilometragem de hoje</p><p className="mt-1 font-medium">0.01KM</p></div>
         <div className="flex items-center justify-center"><img src={vehicleImages[vehicle.imageKey]} alt={vehicle.name} width={992} height={672} className="h-16 w-full object-contain" /></div>
-        <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>1</b><p className="text-xs text-muted-foreground">Pedidos</p></div><div className="rounded-lg bg-muted p-2"><b>{vehicle.daily.replace("/dia", "")}</b><p className="text-xs text-muted-foreground">Lucro</p></div></div>
+        <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>1</b><p className="text-xs text-muted-foreground">Missões</p></div><div className="rounded-lg bg-muted p-2"><b>{vehicle.daily.replace("/dia", "")}</b><p className="text-xs text-muted-foreground">Recompensa</p></div></div>
       </div>
-      <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ 1º rendimento em</span><b className="tabular-nums text-primary">{countdown}</b></div><p className="mt-2 text-xs text-muted-foreground">Rende {vehicle.daily} a cada 24h da compra, em dias úteis.</p></div>
+      <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ Próxima recompensa em</span><b className="tabular-nums text-primary">{countdown}</b></div><p className="mt-2 text-xs text-muted-foreground">Acumula {vehicle.daily} em recompensas virtuais a cada ciclo do jogo.</p></div>
     </article>
   );
 }
@@ -406,7 +406,7 @@ function ProfilePage({ onNavigate, displayName, inviteCode, balance, rewardBalan
         <div className="grid grid-cols-2 divide-x divide-border p-4 text-center"><div><p>▣ Créditos do jogo</p><b className="mt-3 block text-xl">{balance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b><Button className="mt-2 rounded-full" onClick={() => onNavigate("recharge")}>Recarregar</Button></div><div><p>◎ Prêmios disponíveis</p><b className="mt-3 block text-xl">{rewardBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</b><button type="button" onClick={() => onNavigate("luckyDetails")} className="mt-4 text-sm text-muted-foreground">Detalhes &gt;</button></div></div>
       </section>
       <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Recompensas do jogo</h2><button type="button" onClick={() => onNavigate("incomeDetails")} className="text-sm text-muted-foreground">Detalhes &gt;</button></div><Row label="Prêmios disponíveis" value={rewardBalance.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}/><Row label="Recompensas de hoje" value="0,00"/><Row label="Recompensas totais" value="0,00"/><Button variant="outline" onClick={() => onNavigate("withdraw")} className="mt-3 h-12 w-full rounded-full border-primary text-base shadow-none">Sacar prêmios</Button></section>
-      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Renda de contrato</h2><span className="text-sm text-muted-foreground"><CircleHelp className="mr-1 inline h-4 w-4"/>Dica</span></div><div className="mt-5 grid grid-cols-4 items-center text-center text-xs"><div><b className="text-lg">0,00</b><p>Valor da renda</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">A transferir</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">Transferido</p></div><Button variant="outline" onClick={() => onNavigate("transfer")} className="rounded-full border-primary px-2 text-muted-foreground shadow-none">Transferir</Button></div></section>
+      <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Progresso de contrato</h2><span className="text-sm text-muted-foreground"><CircleHelp className="mr-1 inline h-4 w-4"/>Dica</span></div><div className="mt-5 grid grid-cols-4 items-center text-center text-xs"><div><b className="text-lg">0,00</b><p>Recompensas</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">A transferir</p></div><div><b className="text-lg">0,00</b><p className="text-muted-foreground">Transferido</p></div><Button variant="outline" onClick={() => onNavigate("transfer")} className="rounded-full border-primary px-2 text-muted-foreground shadow-none">Transferir</Button></div></section>
       <section className="mx-4 mt-4 grid grid-cols-4 gap-x-3 gap-y-5 rounded-2xl bg-card p-4 shadow-card">{tools.map(({ label, icon: Icon, view, badge }) => <button type="button" key={label} onClick={() => view && onNavigate(view)} className="relative flex min-w-0 flex-col items-center gap-2 text-center text-xs text-muted-foreground"><span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></span>{badge && <span className="absolute right-1 top-0 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">{badge}</span>}<span>{label}</span></button>)}</section>
     </div>
   );

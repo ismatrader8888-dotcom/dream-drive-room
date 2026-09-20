@@ -1,6 +1,7 @@
 import { ArrowLeft, CheckCircle2, ClipboardCopy, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
+import { useServerFn } from "@tanstack/react-start";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -118,7 +119,7 @@ function TeamPage({ onBack }: { onBack: () => void }) {
         <div><p className="text-sm text-muted-foreground">Membros Eficazes da Equipe</p><b className="mt-2 block text-xl">0 / 0</b></div>
       </section>
       <section className="m-4 grid grid-cols-2 gap-4 rounded-2xl bg-card p-5 text-center shadow-card">
-        <div><p className="text-sm text-muted-foreground">Lucro da equipe hoje</p><b className="mt-2 block text-xl">R$ 0,00</b></div>
+        <div><p className="text-sm text-muted-foreground">Recompensas da equipe hoje</p><b className="mt-2 block text-xl">0 créditos</b></div>
         <div><p className="text-sm text-muted-foreground">Recargas de Hoje</p><b className="mt-2 block text-xl">R$ 0,00</b></div>
       </section>
       <Tabs items={["Eficiente", "Inválido"]} value={tab} onChange={setTab} />
@@ -174,7 +175,7 @@ function VehicleIncomePage({ onBack }: { onBack: () => void }) {
       </div>
       <section className="grid grid-cols-2 divide-x divide-border p-4 text-center">
         <div><p className="text-sm text-muted-foreground">Pedidos</p><b className="mt-1 block text-xl">0</b></div>
-        <div><p className="text-sm text-muted-foreground">Renda de comissão</p><b className="mt-1 block text-xl">R$ 0,00</b></div>
+        <div><p className="text-sm text-muted-foreground">Recompensas virtuais</p><b className="mt-1 block text-xl">0 créditos</b></div>
       </section>
       <EmptyState />
     </Shell>
@@ -260,6 +261,7 @@ function OrdersPage({ onBack }: { onBack: () => void }) {
 }
 
 function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceChanged }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer"; balance: number; rewardBalance: number; onBalanceChanged: () => void }) {
+  const createCharge = useServerFn(createPixCharge);
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
   const [pixKey, setPixKey] = useState("");
@@ -291,7 +293,7 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
     setBusy(true); setMessage("");
     if (mode === "recharge") {
       try {
-        const result = await createPixCharge({ data: { amount: value, name, document } });
+        const result = await createCharge({ data: { amount: value, name, document } });
         if (!result.ok) setMessage(result.error === "PIX_SETUP_REQUIRED" ? "A recarga PIX está aguardando a ativação da SimPix." : "Não foi possível gerar o PIX. Tente novamente.");
         else {
           const image = await QRCode.toDataURL(result.qrCode, { width: 320, margin: 2 });
