@@ -107,9 +107,9 @@ export function AuthScreen() {
           <Button type="submit" disabled={loading} className="h-12 w-full rounded-full text-base">
             {loading ? <Loader2 className="animate-spin" /> : mode === "login" ? "Entrar" : "Criar conta"}
           </Button>
-          <Button type="button" variant="outline" onClick={google} className="h-12 w-full rounded-full bg-transparent text-base shadow-none">
+          {mode === "login" && <Button type="button" variant="outline" onClick={google} className="h-12 w-full rounded-full bg-transparent text-base shadow-none">
             Continuar com Google
-          </Button>
+          </Button>}
         </form>
 
         <p className="relative mt-6 pb-8 text-center text-xs text-muted-foreground">
