@@ -43,6 +43,13 @@
       "when": 1789931069413,
       "tag": "0005_add_referral_bonus_program",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1789931147798,
+      "tag": "0006_refine_referral_reward_totals",
+      "breakpoints": true
     }
   ]
 }
