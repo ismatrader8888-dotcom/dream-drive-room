@@ -528,6 +528,7 @@ export type Database = {
         Row: {
           amount: number
           created_at: string
+          full_name: string
           id: string
           pix_key: string
           reviewed_at: string | null
@@ -538,6 +539,7 @@ export type Database = {
         Insert: {
           amount: number
           created_at?: string
+          full_name?: string
           id?: string
           pix_key: string
           reviewed_at?: string | null
@@ -548,6 +550,7 @@ export type Database = {
         Update: {
           amount?: number
           created_at?: string
+          full_name?: string
           id?: string
           pix_key?: string
           reviewed_at?: string | null
@@ -608,11 +611,14 @@ export type Database = {
         Returns: number
       }
       purchase_vehicle: { Args: { _catalog_id: string }; Returns: string }
+      renew_vehicle: { Args: { _vehicle_id: string }; Returns: string }
       request_demo_recharge: { Args: { _amount: number }; Returns: string }
-      request_withdrawal: {
-        Args: { _amount: number; _pix_key: string }
-        Returns: string
-      }
+      request_withdrawal:
+        | { Args: { _amount: number; _pix_key: string }; Returns: string }
+        | {
+            Args: { _amount: number; _full_name: string; _pix_key: string }
+            Returns: string
+          }
       transfer_my_vehicle_rewards: { Args: never; Returns: number }
       update_pix_charge_status: {
         Args: {

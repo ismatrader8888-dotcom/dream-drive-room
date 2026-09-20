@@ -71,6 +71,13 @@
       "when": 1789932190365,
       "tag": "0009_harden_reward_transfer_locking",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1789933133468,
+      "tag": "0010_safe_virtual_rewards_renewals_and_withdrawal_names",
+      "breakpoints": true
     }
   ]
 }
