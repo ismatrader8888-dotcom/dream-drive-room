@@ -194,6 +194,36 @@ export type Database = {
         }
         Relationships: []
       }
+      simpix_webhook_events: {
+        Row: {
+          error_message: string | null
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean
+          processed_at: string | null
+          received_at: string
+        }
+        Insert: {
+          error_message?: string | null
+          event_type: string
+          id?: string
+          payload: Json
+          processed?: boolean
+          processed_at?: string | null
+          received_at?: string
+        }
+        Update: {
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+          processed_at?: string | null
+          received_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
