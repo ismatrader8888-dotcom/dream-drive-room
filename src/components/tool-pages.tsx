@@ -285,6 +285,13 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
   const [charge, setCharge] = useState<{ id: string; code: string; image: string; expiresAt: string } | null>(null);
   const [remaining, setRemaining] = useState(300);
   const [busy, setBusy] = useState(false);
+  const [withdrawals, setWithdrawals] = useState<Array<{ id: string; full_name: string; pix_key: string; amount: number; status: string; created_at: string }>>([]);
+  const loadWithdrawals = async () => {
+    if (mode !== "withdraw") return;
+    const { data } = await supabase.from("withdrawal_requests").select("id, full_name, pix_key, amount, status, created_at").order("created_at", { ascending: false });
+    setWithdrawals(data ?? []);
+  };
+  useEffect(() => { void loadWithdrawals(); }, [mode]);
   useEffect(() => {
     if (mode !== "recharge" || charge) return;
     let active = true;
@@ -344,8 +351,9 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
         }
       } catch { setMessage("Confira o nome completo, CPF e valor informados."); }
     } else if (mode === "withdraw") {
-      const { error } = await supabase.rpc("request_withdrawal", { _amount: value, _pix_key: pixKey });
+      const { error } = await supabase.rpc("request_withdrawal", { _amount: value, _pix_key: pixKey, _full_name: name.trim() });
       setMessage(error ? "Não foi possível solicitar. Confira seus prêmios, a chave PIX e pendências." : "Solicitação de saque registrada para análise.");
+      if (!error) { setAmount(""); setPixKey(""); setName(""); await loadWithdrawals(); }
     } else {
       setMessage("Transferências estarão disponíveis em breve.");
     }
@@ -357,13 +365,13 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
         <p className="text-sm text-muted-foreground">{mode === "withdraw" ? "Prêmios disponíveis" : "Créditos do jogo"}</p>
         <b className="mt-1 block text-3xl">{(mode === "withdraw" ? rewardBalance : balance).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b>
         <p className="mt-1 text-xs text-muted-foreground">{mode === "withdraw" ? "Somente prêmios concedidos podem ser sacados." : "Use seus créditos para veículos e ações dentro do jogo."}</p>
-        {mode === "recharge" && !charge && <><label className="mt-5 block text-sm text-muted-foreground" htmlFor="payer-name">Nome completo</label><input id="payer-name" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome do pagador" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /><label className="mt-4 block text-sm text-muted-foreground" htmlFor="payer-document">CPF</label><input id="payer-document" inputMode="numeric" value={document} onChange={(event) => setDocument(event.target.value.replace(/\D/g, "").slice(0, 11))} placeholder="000.000.000-00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}
+        {(mode === "recharge" || mode === "withdraw") && !charge && <><label className="mt-5 block text-sm text-muted-foreground" htmlFor="payer-name">Nome completo</label><input id="payer-name" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder={mode === "withdraw" ? "Nome do titular" : "Nome do pagador"} className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" />{mode === "recharge" && <><label className="mt-4 block text-sm text-muted-foreground" htmlFor="payer-document">CPF</label><input id="payer-document" inputMode="numeric" value={document} onChange={(event) => setDocument(event.target.value.replace(/\D/g, "").slice(0, 11))} placeholder="000.000.000-00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}</>}
         {!charge && <>
         <label className="mt-5 block text-sm text-muted-foreground" htmlFor="amount">Valor</label>
         <input id="amount" inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setMessage(""); }} placeholder="0,00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 text-lg outline-none focus:border-primary" />
         {mode === "withdraw" && <><label className="mt-4 block text-sm text-muted-foreground" htmlFor="withdraw-pix">Chave PIX</label><input id="withdraw-pix" value={pixKey} onChange={(event) => setPixKey(event.target.value)} placeholder="CPF, e-mail ou telefone" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}
         <div className="mt-3 flex flex-wrap gap-2">{["10", "50", "100", "500"].map((value) => <Button key={value} variant="secondary" size="sm" className="rounded-full" onClick={() => setAmount(value)}>R$ {value}</Button>)}</div>
-        <Button className="mt-5 h-12 w-full rounded-full text-base" disabled={!amount || busy || (mode === "withdraw" && !pixKey.trim())} onClick={() => void submit()}>
+        <Button className="mt-5 h-12 w-full rounded-full text-base" disabled={!amount || busy || (mode === "withdraw" && (!pixKey.trim() || name.trim().length < 5))} onClick={() => void submit()}>
           {mode === "recharge" ? "Recarregar agora" : mode === "withdraw" ? "Solicitar saque" : "Transferir"}
         </Button>
         </>}
@@ -372,6 +380,7 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
         {message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}
       </section>
       {mode === "withdraw" && <p className="px-6 text-center text-xs text-muted-foreground">Saques exigem uma chave PIX cadastrada.</p>}
+      {mode === "withdraw" && <section className="mx-4 mt-5"><h2 className="font-bold">Histórico de saques</h2>{withdrawals.length ? <div className="mt-3 space-y-3">{withdrawals.map((item) => <article key={item.id} className="rounded-xl bg-card p-4 shadow-card"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><b className="block truncate">{item.full_name}</b><p className="mt-1 break-all text-xs text-muted-foreground">PIX: {item.pix_key}</p><p className="mt-1 text-xs text-muted-foreground">{new Date(item.created_at).toLocaleString("pt-BR")}</p></div><div className="text-right"><b>{money(item.amount)}</b><p className="mt-1 text-xs font-semibold text-muted-foreground">{item.status === "pending" ? "Pendente" : item.status === "approved" ? "Pago" : "Recusado"}</p></div></div></article>)}</div> : <EmptyState label="Nenhuma solicitação de saque" />}</section>}
     </Shell>
   );
 }
@@ -398,10 +407,10 @@ function TransferRewardsPage({ onBack, rewards, onBalanceChanged }: { onBack: ()
     setBusy(false);
     if (error) { setMessage("Não foi possível transferir agora."); return; }
     const amount = Number(data ?? 0);
-    setMessage(amount > 0 ? `${money(amount)} transferidos para Prêmios disponíveis.` : "Não há recompensas aguardando transferência.");
+    setMessage(amount > 0 ? `${money(amount)} transferidos.` : "As recompensas dos veículos entram automaticamente nos créditos do jogo.");
     onBalanceChanged();
   };
-  return <Shell title="Transferir recompensas" onBack={onBack}><section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">A transferir</p><b className="mt-1 block text-3xl">{money(rewards.pending)}</b><div className="mt-5 grid grid-cols-2 gap-3 text-sm"><div className="rounded-xl bg-muted p-3"><p className="text-muted-foreground">Gerado</p><b>{money(rewards.total)}</b></div><div className="rounded-xl bg-muted p-3"><p className="text-muted-foreground">Já transferido</p><b>{money(rewards.transferred)}</b></div></div><Button className="mt-5 h-12 w-full rounded-full" disabled={busy || rewards.pending <= 0} onClick={() => void transfer()}>{busy ? "Transferindo..." : "Transferir para Prêmios"}</Button>{message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}</section></Shell>;
+  return <Shell title="Recompensas dos veículos" onBack={onBack}><section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">Créditos virtuais acumulados</p><b className="mt-1 block text-3xl">{money(rewards.total)}</b><p className="mt-3 text-sm text-muted-foreground">Cada ciclo concluído entra automaticamente nos créditos do jogo e não pode ser sacado.</p><Button className="mt-5 h-12 w-full rounded-full" disabled={busy} onClick={() => void transfer()}>{busy ? "Atualizando..." : "Atualizar recompensas"}</Button>{message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}</section></Shell>;
 }
 
 function TextPage({ title, onBack, paragraphs }: { title: string; onBack: () => void; paragraphs: string[] }) {

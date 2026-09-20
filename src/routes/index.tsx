@@ -92,6 +92,7 @@ function Index() {
   const [account, setAccount] = useState<Account | null>(null);
   const [insufficient, setInsufficient] = useState<Vehicle | null>(null);
   const [renting, setRenting] = useState(false);
+  const [renewing, setRenewing] = useState<string | null>(null);
   const [rewards, setRewards] = useState<RewardSummary>(emptyRewards);
 
   const loadAccount = async (id: string) => {
@@ -109,6 +110,7 @@ function Index() {
     if (!data) return;
     setOwned(data.map((row) => ({
       id: row.catalog_id ?? row.id,
+      recordId: row.id,
       name: row.name,
       region: row.region,
       daily: row.daily,
@@ -181,6 +183,21 @@ function Index() {
     setView("resources");
   };
 
+  const renewVehicle = async (vehicle: OwnedVehicle) => {
+    if (!userId) return;
+    if ((account?.demo_balance ?? 0) < vehicle.priceAmount) { setInsufficient(vehicle); return; }
+    setRenewing(vehicle.recordId);
+    const { error } = await supabase.rpc("renew_vehicle", { _vehicle_id: vehicle.recordId });
+    setRenewing(null);
+    if (error) {
+      if (error.message.includes("INSUFFICIENT_BALANCE")) setInsufficient(vehicle);
+      return;
+    }
+    await loadAccount(userId);
+    await loadRewards();
+    await loadOwned(userId);
+  };
+
   if (!ready) return <BydSplash />;
   if (!userId) return <AuthScreen />;
   if (booting) return <BydSplash />;
@@ -199,7 +216,7 @@ function Index() {
   ) : view === "profile" ? (
     <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} />
   ) : view === "resources" ? (
-    <ResourcesPage owned={owned} onBuy={() => setView("home")} />
+    <ResourcesPage owned={owned} onBuy={() => setView("home")} onRenew={renewVehicle} renewing={renewing} />
   ) : view === "news" ? (
     <SimplePage icon={FileText} title="Notícias" copy="As novidades da sua frota aparecerão aqui." />
   ) : (
@@ -222,7 +239,7 @@ function Index() {
   );
 }
 
-type OwnedVehicle = Vehicle & { plate: string; purchasedAt: number; nextRewardAt: number | null; cyclesCompleted: number; contractCycles: number; pendingReward: number; transferredReward: number };
+type OwnedVehicle = Vehicle & { recordId: string; plate: string; purchasedAt: number; nextRewardAt: number | null; cyclesCompleted: number; contractCycles: number; pendingReward: number; transferredReward: number };
 
 function useCountdown(target: number) {
   const [now, setNow] = useState<number | null>(null);
@@ -255,16 +272,16 @@ type Vehicle = {
 };
 
 const vehicles: Vehicle[] = [
-  { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 5,00/dia", returnValue: "R$ 125,00", price: "R$ 62,50", priceAmount: 62.5, cycle: "25 dias úteis", imageKey: "entry" },
-  { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 50,00/dia", returnValue: "R$ 1.250,00", price: "R$ 625,00", priceAmount: 625, cycle: "25 dias úteis", imageKey: "top" },
-  { id: "dolphin-israel", name: "BYD Dolphin", region: "Israel", daily: "R$ 8,00/dia", returnValue: "R$ 200,00", price: "R$ 100,00", priceAmount: 100, cycle: "25 dias úteis", imageKey: "mid" },
-  { id: "han-alemanha", name: "BYD Han", region: "Alemanha", daily: "R$ 18,00/dia", returnValue: "R$ 450,00", price: "R$ 225,00", priceAmount: 225, cycle: "25 dias úteis", imageKey: "premium" },
-  { id: "han-ev-dubai", name: "BYD Han EV", region: "Dubai", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 312,50", priceAmount: 312.5, cycle: "25 dias úteis", imageKey: "premium" },
-  { id: "seal-tokyo", name: "BYD Seal", region: "Tokyo", daily: "R$ 12,00/dia", returnValue: "R$ 300,00", price: "R$ 150,00", priceAmount: 150, cycle: "25 dias úteis", imageKey: "mid" },
-  { id: "dolphin-paris", name: "BYD Dolphin", region: "Paris", daily: "R$ 10,00/dia", returnValue: "R$ 250,00", price: "R$ 125,00", priceAmount: 125, cycle: "25 dias úteis", imageKey: "mid" },
-  { id: "han-los-angeles", name: "BYD Han", region: "Los Angeles", daily: "R$ 20,00/dia", returnValue: "R$ 500,00", price: "R$ 250,00", priceAmount: 250, cycle: "25 dias úteis", imageKey: "premium" },
-  { id: "seal-jerusalem", name: "BYD Seal", region: "Jerusalém", daily: "R$ 9,00/dia", returnValue: "R$ 225,00", price: "R$ 112,50", priceAmount: 112.5, cycle: "25 dias úteis", imageKey: "mid" },
-  { id: "han-berlim", name: "BYD Han", region: "Berlim", daily: "R$ 16,00/dia", returnValue: "R$ 400,00", price: "R$ 200,00", priceAmount: 200, cycle: "25 dias úteis", imageKey: "premium" },
+  { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 22,50/dia", returnValue: "R$ 562,50", price: "R$ 250,00", priceAmount: 250, cycle: "25 ciclos", imageKey: "entry" },
+  { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 135,00/dia", returnValue: "R$ 3.375,00", price: "R$ 1.500,00", priceAmount: 1500, cycle: "25 ciclos", imageKey: "top" },
+  { id: "dolphin-israel", name: "BYD Dolphin", region: "Israel", daily: "R$ 19,13/dia", returnValue: "R$ 478,13", price: "R$ 212,50", priceAmount: 212.5, cycle: "25 ciclos", imageKey: "mid" },
+  { id: "han-alemanha", name: "BYD Han", region: "Alemanha", daily: "R$ 82,80/dia", returnValue: "R$ 2.070,00", price: "R$ 920,00", priceAmount: 920, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "han-ev-dubai", name: "BYD Han EV", region: "Dubai", daily: "R$ 103,50/dia", returnValue: "R$ 2.587,50", price: "R$ 1.150,00", priceAmount: 1150, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "seal-tokyo", name: "BYD Seal", region: "Tokyo", daily: "R$ 45,00/dia", returnValue: "R$ 1.125,00", price: "R$ 500,00", priceAmount: 500, cycle: "25 ciclos", imageKey: "mid" },
+  { id: "dolphin-paris", name: "BYD Dolphin", region: "Paris", daily: "R$ 25,88/dia", returnValue: "R$ 646,88", price: "R$ 287,50", priceAmount: 287.5, cycle: "25 ciclos", imageKey: "mid" },
+  { id: "han-los-angeles", name: "BYD Han", region: "Los Angeles", daily: "R$ 72,00/dia", returnValue: "R$ 1.800,00", price: "R$ 800,00", priceAmount: 800, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "seal-jerusalem", name: "BYD Seal", region: "Jerusalém", daily: "R$ 38,25/dia", returnValue: "R$ 956,25", price: "R$ 425,00", priceAmount: 425, cycle: "25 ciclos", imageKey: "mid" },
+  { id: "han-berlim", name: "BYD Han", region: "Berlim", daily: "R$ 82,80/dia", returnValue: "R$ 2.070,00", price: "R$ 920,00", priceAmount: 920, cycle: "25 ciclos", imageKey: "premium" },
 ];
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
@@ -350,7 +367,7 @@ function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehic
   );
 }
 
-function ResourcesPage({ owned, onBuy }: { owned: OwnedVehicle[]; onBuy: () => void }) {
+function ResourcesPage({ owned, onBuy, onRenew, renewing }: { owned: OwnedVehicle[]; onBuy: () => void; onRenew: (vehicle: OwnedVehicle) => void; renewing: string | null }) {
   return (
     <div className="min-h-screen pb-24">
       <div className="relative h-72 w-full overflow-hidden">
@@ -375,7 +392,7 @@ function ResourcesPage({ owned, onBuy }: { owned: OwnedVehicle[]; onBuy: () => v
         <div className="mt-3 flex gap-3">
           <Button variant="outline" className="border-primary bg-transparent text-foreground shadow-none">Veículo</Button>
         </div>
-        {owned.length ? <div className="space-y-4">{owned.map((vehicle) => <VehicleCard key={vehicle.plate} vehicle={vehicle} />)}</div> : <EmptyGarage onBuy={onBuy} />}
+        {owned.length ? <div className="space-y-4">{owned.map((vehicle) => <VehicleCard key={vehicle.plate} vehicle={vehicle} onRenew={() => onRenew(vehicle)} renewing={renewing === vehicle.recordId} />)}</div> : <EmptyGarage onBuy={onBuy} />}
       </section>
     </div>
   );
@@ -395,7 +412,7 @@ function EmptyGarage({ onBuy }: { onBuy: () => void }) {
   );
 }
 
-function VehicleCard({ vehicle }: { vehicle: OwnedVehicle }) {
+function VehicleCard({ vehicle, onRenew, renewing }: { vehicle: OwnedVehicle; onRenew: () => void; renewing: boolean }) {
   const countdown = useCountdown(vehicle.nextRewardAt ?? Date.now());
   return (
     <article className="mt-5 rounded-2xl bg-card p-4 shadow-card">
@@ -407,6 +424,7 @@ function VehicleCard({ vehicle }: { vehicle: OwnedVehicle }) {
         <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>1</b><p className="text-xs text-muted-foreground">Missões</p></div><div className="rounded-lg bg-muted p-2"><b>{vehicle.daily.replace("/dia", "")}</b><p className="text-xs text-muted-foreground">Recompensa</p></div></div>
       </div>
       <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ {vehicle.nextRewardAt ? "Próxima recompensa em" : "Contrato concluído"}</span><b className="tabular-nums text-primary">{vehicle.nextRewardAt ? countdown : "Concluído"}</b></div><p className="mt-2 text-xs text-muted-foreground">A transferir: {moneyValue(vehicle.pendingReward)} · Transferido: {moneyValue(vehicle.transferredReward)}</p></div>
+      {!vehicle.nextRewardAt && <Button className="mt-3 h-11 w-full rounded-full" disabled={renewing} onClick={onRenew}>{renewing ? "Renovando..." : `Renovar contrato por ${vehicle.price}`}</Button>}
     </article>
   );
 }
