@@ -5,7 +5,7 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { supabase } from "@/integrations/supabase/client";
 
 type Profile = { id: string; email: string | null; phone: string | null; balance: number; rewardBalance: number; vehicleRewardsGenerated: number; vehicleRewardsPending: number; vehicleRewardsTransferred: number; inviteCode: string; referredBy: string | null; referrals: number; effectiveReferrals: number; referralBonus: number };
-type RequestRow = { id: string; userId: string; email: string | null; amount: number; status: string; createdAt: string; pixKey?: string };
+type RequestRow = { id: string; userId: string; email: string | null; fullName?: string; amount: number; status: string; createdAt: string; pixKey?: string };
 type PixCharge = RequestRow & { payerName: string; magicId: string | null; creditedAt: string | null; refereeBonus: number; referrerBonus: number };
 type Purchase = { id: string; email: string | null; name: string; price: number | null; region: string; createdAt: string };
 type Popular = { name: string; purchases: number; volume: number };
@@ -99,7 +99,7 @@ function Metric({ icon: Icon, label, value }: { icon: typeof Users; label: strin
 
 function Requests({ rows, busy, onReview }: { rows: RequestRow[]; busy: string | null; onReview: (id: string, approve: boolean) => void }) {
   if (!rows.length) return <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma solicitação.</p>;
-  return <>{rows.map((row) => <article key={row.id} className="rounded-lg bg-card p-4 shadow-card"><div className="flex justify-between gap-3"><div className="min-w-0"><b className="block truncate">{row.email ?? "Usuário"}</b><p className="text-sm text-muted-foreground">{money(row.amount)} · {row.status}</p>{row.pixKey && <p className="mt-1 break-all text-xs text-muted-foreground">PIX: {row.pixKey}</p>}</div>{row.status === "pending" && <div className="flex shrink-0 gap-2"><Button size="sm" disabled={busy === row.id} onClick={() => onReview(row.id, true)}>Aprovar</Button><Button size="sm" variant="outline" disabled={busy === row.id} onClick={() => onReview(row.id, false)}>Recusar</Button></div>}</div></article>)}</>;
+  return <>{rows.map((row) => <article key={row.id} className="rounded-lg bg-card p-4 shadow-card"><div className="flex justify-between gap-3"><div className="min-w-0"><b className="block truncate">{row.fullName || row.email || "Usuário"}</b><p className="truncate text-xs text-muted-foreground">{row.email ?? "Sem e-mail"}</p><p className="mt-1 text-sm text-muted-foreground">{money(row.amount)} · {row.status === "pending" ? "Pendente" : row.status === "approved" ? "Pago" : "Recusado"}</p>{row.pixKey && <p className="mt-1 break-all text-xs text-muted-foreground">PIX: {row.pixKey}</p>}</div>{row.status === "pending" && <div className="flex shrink-0 gap-2"><Button size="sm" disabled={busy === row.id} onClick={() => onReview(row.id, true)}>Marcar pago</Button><Button size="sm" variant="outline" disabled={busy === row.id} onClick={() => onReview(row.id, false)}>Recusar</Button></div>}</div></article>)}</>;
 }
 
 function PixCharges({ rows }: { rows: PixCharge[] }) {
