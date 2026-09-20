@@ -50,6 +50,57 @@ export type Database = {
         }
         Relationships: []
       }
+      pix_charges: {
+        Row: {
+          amount: number
+          created_at: string
+          credited_at: string | null
+          document_suffix: string
+          expires_at: string
+          external_ref: string
+          id: string
+          payer_name: string
+          provider_magic_id: string | null
+          provider_updated_at: string | null
+          qr_code: string | null
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          credited_at?: string | null
+          document_suffix: string
+          expires_at: string
+          external_ref: string
+          id?: string
+          payer_name: string
+          provider_magic_id?: string | null
+          provider_updated_at?: string | null
+          qr_code?: string | null
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          credited_at?: string | null
+          document_suffix?: string
+          expires_at?: string
+          external_ref?: string
+          id?: string
+          payer_name?: string
+          provider_magic_id?: string | null
+          provider_updated_at?: string | null
+          qr_code?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       pix_keys: {
         Row: {
           created_at: string
@@ -82,6 +133,7 @@ export type Database = {
           level: number
           phone: string | null
           referred_by: string | null
+          reward_balance: number
         }
         Insert: {
           balance?: number
@@ -93,6 +145,7 @@ export type Database = {
           level?: number
           phone?: string | null
           referred_by?: string | null
+          reward_balance?: number
         }
         Update: {
           balance?: number
@@ -104,6 +157,7 @@ export type Database = {
           level?: number
           phone?: string | null
           referred_by?: string | null
+          reward_balance?: number
         }
         Relationships: []
       }
@@ -291,6 +345,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      admin_adjust_balance: {
+        Args: {
+          _amount: number
+          _reason: string
+          _user_id: string
+          _wallet: string
+        }
+        Returns: number
+      }
       admin_adjust_demo_balance: {
         Args: { _amount: number; _reason: string; _user_id: string }
         Returns: number
@@ -302,6 +365,15 @@ export type Database = {
       admin_review_withdrawal: {
         Args: { _approve: boolean; _request_id: string }
         Returns: undefined
+      }
+      confirm_pix_charge: {
+        Args: {
+          _amount: number
+          _external_ref: string
+          _magic_id: string
+          _provider_updated_at?: string
+        }
+        Returns: boolean
       }
       get_admin_dashboard: { Args: never; Returns: Json }
       has_role: {
@@ -316,6 +388,15 @@ export type Database = {
       request_withdrawal: {
         Args: { _amount: number; _pix_key: string }
         Returns: string
+      }
+      update_pix_charge_status: {
+        Args: {
+          _external_ref: string
+          _magic_id: string
+          _provider_updated_at?: string
+          _status: string
+        }
+        Returns: undefined
       }
     }
     Enums: {

@@ -1,8 +1,11 @@
-import { ArrowLeft, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardCopy, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
+import QRCode from "qrcode";
+import { useServerFn } from "@tanstack/react-start";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { createPixCharge } from "@/lib/pix.functions";
 
 export type ToolView =
   | "pix"
@@ -116,7 +119,7 @@ function TeamPage({ onBack }: { onBack: () => void }) {
         <div><p className="text-sm text-muted-foreground">Membros Eficazes da Equipe</p><b className="mt-2 block text-xl">0 / 0</b></div>
       </section>
       <section className="m-4 grid grid-cols-2 gap-4 rounded-2xl bg-card p-5 text-center shadow-card">
-        <div><p className="text-sm text-muted-foreground">Lucro da equipe hoje</p><b className="mt-2 block text-xl">R$ 0,00</b></div>
+        <div><p className="text-sm text-muted-foreground">Recompensas da equipe hoje</p><b className="mt-2 block text-xl">0 créditos</b></div>
         <div><p className="text-sm text-muted-foreground">Recargas de Hoje</p><b className="mt-2 block text-xl">R$ 0,00</b></div>
       </section>
       <Tabs items={["Eficiente", "Inválido"]} value={tab} onChange={setTab} />
@@ -172,7 +175,7 @@ function VehicleIncomePage({ onBack }: { onBack: () => void }) {
       </div>
       <section className="grid grid-cols-2 divide-x divide-border p-4 text-center">
         <div><p className="text-sm text-muted-foreground">Pedidos</p><b className="mt-1 block text-xl">0</b></div>
-        <div><p className="text-sm text-muted-foreground">Renda de comissão</p><b className="mt-1 block text-xl">R$ 0,00</b></div>
+        <div><p className="text-sm text-muted-foreground">Recompensas virtuais</p><b className="mt-1 block text-xl">0 créditos</b></div>
       </section>
       <EmptyState />
     </Shell>
@@ -257,21 +260,55 @@ function OrdersPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-function BalancePage({ title, onBack, mode, balance, onBalanceChanged }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer"; balance: number; onBalanceChanged: () => void }) {
+function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceChanged }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer"; balance: number; rewardBalance: number; onBalanceChanged: () => void }) {
+  const createCharge = useServerFn(createPixCharge);
   const [amount, setAmount] = useState("");
   const [message, setMessage] = useState("");
   const [pixKey, setPixKey] = useState("");
+  const [name, setName] = useState("");
+  const [document, setDocument] = useState("");
+  const [charge, setCharge] = useState<{ id: string; code: string; image: string; expiresAt: string } | null>(null);
+  const [remaining, setRemaining] = useState(300);
   const [busy, setBusy] = useState(false);
+  useEffect(() => {
+    if (!charge) return;
+    const update = () => setRemaining(Math.max(0, Math.ceil((new Date(charge.expiresAt).getTime() - Date.now()) / 1000)));
+    update();
+    const timer = window.setInterval(update, 1000);
+    return () => window.clearInterval(timer);
+  }, [charge]);
+  useEffect(() => {
+    if (!charge) return;
+    const applyStatus = (status?: string) => {
+      if (status === "CONFIRMED") { setMessage("Pagamento confirmado. Seus créditos já estão disponíveis."); void onBalanceChanged(); }
+      else if (status === "EXPIRED") setMessage("Este QR Code expirou. Gere uma nova cobrança.");
+      else if (status === "FAILED") setMessage("O pagamento não pôde ser processado.");
+    };
+    const channel = supabase.channel(`pix-${charge.id}`).on("postgres_changes", { event: "UPDATE", schema: "public", table: "pix_charges", filter: `id=eq.${charge.id}` }, (payload) => {
+      applyStatus((payload.new as { status?: string }).status);
+    }).subscribe();
+    const poll = window.setInterval(async () => {
+      const { data } = await supabase.from("pix_charges").select("status").eq("id", charge.id).maybeSingle();
+      applyStatus(data?.status);
+    }, 4000);
+    return () => { window.clearInterval(poll); void supabase.removeChannel(channel); };
+  }, [charge, onBalanceChanged]);
   const submit = async () => {
     const value = Number(amount.replace(",", "."));
     if (!Number.isFinite(value) || value <= 0) return;
     setBusy(true); setMessage("");
     if (mode === "recharge") {
-      const { error } = await supabase.rpc("request_demo_recharge", { _amount: value });
-      setMessage(error ? "Não foi possível registrar a solicitação." : "Solicitação demonstrativa enviada para aprovação.");
+      try {
+        const result = await createCharge({ data: { amount: value, name, document } });
+        if (!result.ok) setMessage(result.error === "PIX_SETUP_REQUIRED" ? "A recarga PIX está aguardando a ativação da SimPix." : "Não foi possível gerar o PIX. Tente novamente.");
+        else {
+          const image = await QRCode.toDataURL(result.qrCode, { width: 320, margin: 2 });
+          setCharge({ id: result.chargeId, code: result.qrCode, image, expiresAt: result.expiresAt });
+        }
+      } catch { setMessage("Confira o nome completo, CPF e valor informados."); }
     } else if (mode === "withdraw") {
       const { error } = await supabase.rpc("request_withdrawal", { _amount: value, _pix_key: pixKey });
-      setMessage(error ? "Não foi possível solicitar. Confira seu saldo, a chave PIX e pendências." : "Solicitação de saque demonstrativo registrada.");
+      setMessage(error ? "Não foi possível solicitar. Confira seus prêmios, a chave PIX e pendências." : "Solicitação de saque registrada para análise.");
     } else {
       setMessage("Transferências estarão disponíveis em breve.");
     }
@@ -280,9 +317,11 @@ function BalancePage({ title, onBack, mode, balance, onBalanceChanged }: { title
   return (
     <Shell title={title} onBack={onBack}>
       <section className="m-4 rounded-2xl bg-card p-5 shadow-card">
-        <p className="text-sm text-muted-foreground">Saldo disponível</p>
-        <b className="mt-1 block text-3xl">{balance.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b>
-        <p className="mt-1 text-xs text-muted-foreground">Créditos demonstrativos, sem valor monetário real.</p>
+        <p className="text-sm text-muted-foreground">{mode === "withdraw" ? "Prêmios disponíveis" : "Créditos do jogo"}</p>
+        <b className="mt-1 block text-3xl">{(mode === "withdraw" ? rewardBalance : balance).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b>
+        <p className="mt-1 text-xs text-muted-foreground">{mode === "withdraw" ? "Somente prêmios concedidos podem ser sacados." : "Use seus créditos para veículos e ações dentro do jogo."}</p>
+        {mode === "recharge" && !charge && <><label className="mt-5 block text-sm text-muted-foreground" htmlFor="payer-name">Nome completo</label><input id="payer-name" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="Nome do pagador" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /><label className="mt-4 block text-sm text-muted-foreground" htmlFor="payer-document">CPF</label><input id="payer-document" inputMode="numeric" value={document} onChange={(event) => setDocument(event.target.value.replace(/\D/g, "").slice(0, 11))} placeholder="000.000.000-00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}
+        {!charge && <>
         <label className="mt-5 block text-sm text-muted-foreground" htmlFor="amount">Valor</label>
         <input id="amount" inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setMessage(""); }} placeholder="0,00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 text-lg outline-none focus:border-primary" />
         {mode === "withdraw" && <><label className="mt-4 block text-sm text-muted-foreground" htmlFor="withdraw-pix">Chave PIX</label><input id="withdraw-pix" value={pixKey} onChange={(event) => setPixKey(event.target.value)} placeholder="CPF, e-mail ou telefone" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}
@@ -290,6 +329,9 @@ function BalancePage({ title, onBack, mode, balance, onBalanceChanged }: { title
         <Button className="mt-5 h-12 w-full rounded-full text-base" disabled={!amount || busy || (mode === "withdraw" && !pixKey.trim())} onClick={() => void submit()}>
           {mode === "recharge" ? "Recarregar agora" : mode === "withdraw" ? "Solicitar saque" : "Transferir"}
         </Button>
+        </>}
+        {charge && <div className="mt-5 text-center"><div className="mx-auto w-fit rounded-xl bg-white p-3"><img src={charge.image} alt="QR Code PIX" className="h-56 w-56" /></div><p className="mt-3 text-sm font-semibold">Aguardando pagamento</p><p className="mt-1 text-xs tabular-nums text-muted-foreground">Expira em {String(Math.floor(remaining / 60)).padStart(2, "0")}:{String(remaining % 60).padStart(2, "0")}</p><Button variant="outline" className="mt-3 w-full" onClick={async () => { await navigator.clipboard.writeText(charge.code); setMessage("Código PIX copiado."); }}><ClipboardCopy /> Copiar PIX</Button>{remaining === 0 && <Button className="mt-2 w-full" onClick={() => { setCharge(null); setMessage(""); }}>Gerar novo PIX</Button>}</div>}
+        {message.includes("confirmado") && <CheckCircle2 className="mx-auto mt-4 h-8 w-8 text-primary" />}
         {message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}
       </section>
       {mode === "withdraw" && <p className="px-6 text-center text-xs text-muted-foreground">Saques exigem uma chave PIX cadastrada.</p>}
@@ -363,7 +405,7 @@ function SupportPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-export function ToolPage({ view, onBack, balance = 0, onBalanceChanged = () => undefined }: { view: ToolView; onBack: () => void; balance?: number; onBalanceChanged?: () => void }) {
+export function ToolPage({ view, onBack, balance = 0, rewardBalance = 0, onBalanceChanged = () => undefined }: { view: ToolView; onBack: () => void; balance?: number; rewardBalance?: number; onBalanceChanged?: () => void }) {
   switch (view) {
     case "pix": return <PixPage onBack={onBack} />;
     case "team": return <TeamPage onBack={onBack} />;
@@ -377,21 +419,23 @@ export function ToolPage({ view, onBack, balance = 0, onBalanceChanged = () => u
     case "exchange": return <ExchangePage onBack={onBack} />;
     case "settings": return <SettingsPage onBack={onBack} />;
     case "support": return <SupportPage onBack={onBack} />;
-    case "recharge": return <BalancePage title="Recarga PIX" onBack={onBack} mode="recharge" balance={balance} onBalanceChanged={onBalanceChanged} />;
-    case "withdraw": return <BalancePage title="Sacar dinheiro" onBack={onBack} mode="withdraw" balance={balance} onBalanceChanged={onBalanceChanged} />;
-    case "transfer": return <BalancePage title="Transferir renda" onBack={onBack} mode="transfer" balance={balance} onBalanceChanged={onBalanceChanged} />;
+    case "recharge": return <BalancePage title="Recarga PIX" onBack={onBack} mode="recharge" balance={balance} rewardBalance={rewardBalance} onBalanceChanged={onBalanceChanged} />;
+    case "withdraw": return <BalancePage title="Sacar prêmios" onBack={onBack} mode="withdraw" balance={balance} rewardBalance={rewardBalance} onBalanceChanged={onBalanceChanged} />;
+    case "transfer": return <BalancePage title="Transferir recompensas" onBack={onBack} mode="transfer" balance={balance} rewardBalance={rewardBalance} onBalanceChanged={onBalanceChanged} />;
     case "incomeDetails": return <DetailsPage title="Detalhes da renda" onBack={onBack} />;
     case "luckyDetails": return <DetailsPage title="Registro da Sorte" onBack={onBack} />;
     case "privacy": return <TextPage title="Política de privacidade" onBack={onBack} paragraphs={[
       "A BYD Driving coleta apenas os dados necessários para criar e manter sua conta: e-mail, telefone, código de convite e histórico de operações dos veículos.",
+      "Para gerar uma cobrança PIX, seu nome e CPF são enviados à processadora de pagamentos. Armazenamos somente o nome e os quatro últimos dígitos do documento para conciliação.",
+      "Créditos comprados por PIX são usados dentro do jogo e não podem ser convertidos em dinheiro. Somente prêmios concedidos pela empresa podem ser solicitados para saque.",
       "Não vendemos nem compartilhamos seus dados com terceiros para fins publicitários.",
       "Você pode solicitar a exclusão da sua conta e dos dados relacionados a qualquer momento pelo atendimento ao cliente.",
       "Utilizamos criptografia em trânsito para proteger as informações trocadas entre o aplicativo e nossos servidores.",
     ]} />;
     case "about": return <TextPage title="Sobre nós" onBack={onBack} paragraphs={[
       "A BYD Driving é uma plataforma de mobilidade elétrica que conecta pessoas a frotas de veículos autônomos em grandes centros urbanos.",
-      "Cada veículo alugado opera em uma região e gera rendimento diário durante o ciclo contratado.",
-      "Nossa missão é tornar a economia da mobilidade elétrica acessível a qualquer pessoa, com transparência nos rendimentos e nos prazos.",
+      "Cada veículo ativado opera em uma região e acumula recompensas virtuais durante o ciclo do jogo.",
+      "Nossa missão é criar uma experiência de mobilidade elétrica acessível, moderna e transparente.",
     ]} />;
     default: return <DetailsPage title="Em breve" onBack={onBack} />;
   }
