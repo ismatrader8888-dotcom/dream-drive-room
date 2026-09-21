@@ -28,4 +28,4 @@
 - [x] Mostrar recompensas de hoje e totais por jogador no painel administrativo
 - [x] Confirmar hospedagem e URL pública de produção do webhook anterior
 - [x] Reduzir recompensas dos veículos para 7% por ciclo e adicionar Dolphin Mini de R$ 90
-- [ ] Substituir integralmente a SimPix pela SagacePay para novos depósitos e webhooks — aguardando credenciais
+- [x] Substituir integralmente a SimPix pela SagacePay para novos depósitos e webhooks
