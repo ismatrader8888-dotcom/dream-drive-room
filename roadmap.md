@@ -26,3 +26,4 @@
 - [x] Atualizar preços por modelo, região e recompensa virtual de 9% por ciclo
 
 - [x] Mostrar recompensas de hoje e totais por jogador no painel administrativo
+- [ ] Confirmar hospedagem, acessos, secrets e URL pública de produção do webhook SimPix
