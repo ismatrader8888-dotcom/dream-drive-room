@@ -21,7 +21,7 @@ export const openAdminSupportView = createServerFn({ method: "POST" })
 
     const { data: supportView, error } = await context.supabase.rpc("admin_open_support_view", {
       _target_user_id: data.targetUserId,
-      _user_agent: data.userAgent ?? null,
+      _user_agent: data.userAgent,
     });
     if (error) throw new Error("SUPPORT_VIEW_UNAVAILABLE");
     return supportView;
