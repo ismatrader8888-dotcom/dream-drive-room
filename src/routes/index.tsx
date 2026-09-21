@@ -275,7 +275,7 @@ type Vehicle = {
 
 const vehicles: Vehicle[] = [
   { id: "dolphin-mini-new-york-90", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 6,30/dia", returnValue: "R$ 157,50", price: "R$ 90,00", priceAmount: 90, dailyRate: 7, cycle: "25 ciclos", imageKey: "entry" },
-  { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 250,00", priceAmount: 250, dailyRate: 10, cycle: "25 ciclos", imageKey: "entry" },
+  { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini Plus", region: "New York", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 250,00", priceAmount: 250, dailyRate: 10, cycle: "25 ciclos", imageKey: "entry" },
   { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 300,00/dia", returnValue: "R$ 7.500,00", price: "R$ 1.500,00", priceAmount: 1500, dailyRate: 20, cycle: "25 ciclos", imageKey: "top" },
   { id: "dolphin-israel", name: "BYD Dolphin", region: "Israel", daily: "R$ 14,88/dia", returnValue: "R$ 371,88", price: "R$ 212,50", priceAmount: 212.5, dailyRate: 7, cycle: "25 ciclos", imageKey: "mid" },
   { id: "han-alemanha", name: "BYD Han", region: "Alemanha", daily: "R$ 138,00/dia", returnValue: "R$ 3.450,00", price: "R$ 920,00", priceAmount: 920, dailyRate: 15, cycle: "25 ciclos", imageKey: "premium" },
