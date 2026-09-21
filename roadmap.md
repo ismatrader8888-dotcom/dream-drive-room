@@ -24,3 +24,5 @@
 - [x] Solicitar saque de prêmios com nome, chave PIX, valor e histórico de situação
 - [x] Permitir renovação paga do veículo após 25 ciclos
 - [x] Atualizar preços por modelo, região e recompensa virtual de 9% por ciclo
+
+- [ ] Mostrar recompensas de hoje e totais por jogador no painel administrativo
