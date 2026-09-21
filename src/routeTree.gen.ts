@@ -12,7 +12,6 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as ApiPublicSagacepayWebhookRouteImport } from './routes/api/public/sagacepay-webhook'
-import { Route as ApiPublicSimpixWebhookRouteImport } from './routes/api/public/simpix-webhook'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -30,57 +29,35 @@ const ApiPublicSagacepayWebhookRoute =
     path: '/api/public/sagacepay-webhook',
     getParentRoute: () => rootRouteImport,
   } as any)
-const ApiPublicSimpixWebhookRoute = ApiPublicSimpixWebhookRouteImport.update({
-  id: '/api/public/simpix-webhook',
-  path: '/api/public/simpix-webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/api/public/sagacepay-webhook': typeof ApiPublicSagacepayWebhookRoute
-  '/api/public/simpix-webhook': typeof ApiPublicSimpixWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/api/public/sagacepay-webhook': typeof ApiPublicSagacepayWebhookRoute
-  '/api/public/simpix-webhook': typeof ApiPublicSimpixWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/api/public/sagacepay-webhook': typeof ApiPublicSagacepayWebhookRoute
-  '/api/public/simpix-webhook': typeof ApiPublicSimpixWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/admin'
-    | '/api/public/sagacepay-webhook'
-    | '/api/public/simpix-webhook'
+  fullPaths: '/' | '/admin' | '/api/public/sagacepay-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/admin'
-    | '/api/public/sagacepay-webhook'
-    | '/api/public/simpix-webhook'
-  id:
-    | '__root__'
-    | '/'
-    | '/admin'
-    | '/api/public/sagacepay-webhook'
-    | '/api/public/simpix-webhook'
+  to: '/' | '/admin' | '/api/public/sagacepay-webhook'
+  id: '__root__' | '/' | '/admin' | '/api/public/sagacepay-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   ApiPublicSagacepayWebhookRoute: typeof ApiPublicSagacepayWebhookRoute
-  ApiPublicSimpixWebhookRoute: typeof ApiPublicSimpixWebhookRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -106,13 +83,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicSagacepayWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/simpix-webhook': {
-      id: '/api/public/simpix-webhook'
-      path: '/api/public/simpix-webhook'
-      fullPath: '/api/public/simpix-webhook'
-      preLoaderRoute: typeof ApiPublicSimpixWebhookRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
@@ -120,7 +90,6 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   ApiPublicSagacepayWebhookRoute: ApiPublicSagacepayWebhookRoute,
-  ApiPublicSimpixWebhookRoute: ApiPublicSimpixWebhookRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
