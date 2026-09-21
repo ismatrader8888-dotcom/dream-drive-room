@@ -11,8 +11,8 @@
 - [x] Exibir cobranças PIX no painel administrativo
 - [x] Desativar a SimPix para novos depósitos
 - [ ] Validar uma cobrança real de baixo valor após ativação
-- [x] Registrar eventos SimPix de transação, saque e disputa no banco
-- [x] Criar o endpoint público real da SimPix na estrutura atual
+- [x] Preservar o histórico de eventos do gateway anterior no banco
+- [x] Criar o endpoint público real da SagacePay na estrutura atual
 - [x] Validar código de convite somente no cadastro e impedir códigos inexistentes
 - [x] Creditar 5% no primeiro depósito do convidado e 15% recorrente ao dono do código
 - [x] Exibir equipe, recompensas e auditoria de indicações no painel administrativo
@@ -28,4 +28,4 @@
 - [x] Mostrar recompensas de hoje e totais por jogador no painel administrativo
 - [x] Confirmar hospedagem e URL pública de produção do webhook anterior
 - [x] Reduzir recompensas dos veículos para 7% por ciclo e adicionar Dolphin Mini de R$ 90
-- [ ] Substituir integralmente a SimPix pela SagacePay para novos depósitos e webhooks
+- [ ] Substituir integralmente a SimPix pela SagacePay para novos depósitos e webhooks — aguardando credenciais
