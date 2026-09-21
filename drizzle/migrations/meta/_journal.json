@@ -85,6 +85,13 @@
       "when": 1789958128796,
       "tag": "0011_add_admin_player_reward_totals",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1790028476388,
+      "tag": "0012_add_admin_support_access_audit",
+      "breakpoints": true
     }
   ]
 }

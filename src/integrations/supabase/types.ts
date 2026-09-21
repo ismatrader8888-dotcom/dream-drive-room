@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_support_sessions: {
+        Row: {
+          admin_id: string
+          closed_at: string | null
+          id: string
+          opened_at: string
+          target_user_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          admin_id: string
+          closed_at?: string | null
+          id?: string
+          opened_at?: string
+          target_user_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          admin_id?: string
+          closed_at?: string | null
+          id?: string
+          opened_at?: string
+          target_user_id?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       balance_transactions: {
         Row: {
           amount: number
@@ -577,6 +604,14 @@ export type Database = {
       admin_adjust_demo_balance: {
         Args: { _amount: number; _reason: string; _user_id: string }
         Returns: number
+      }
+      admin_close_support_view: {
+        Args: { _session_id: string }
+        Returns: undefined
+      }
+      admin_open_support_view: {
+        Args: { _target_user_id: string; _user_agent?: string }
+        Returns: Json
       }
       admin_review_recharge: {
         Args: { _approve: boolean; _request_id: string }
