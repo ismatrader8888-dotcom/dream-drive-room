@@ -19,10 +19,10 @@ export const openAdminSupportView = createServerFn({ method: "POST" })
     });
     if (roleError || !isAdmin) throw new Error("FORBIDDEN");
 
-    const { data: supportView, error } = await context.supabase.rpc("admin_open_support_view", {
-      _target_user_id: data.targetUserId,
-      _user_agent: data.userAgent,
-    });
+    const args = data.userAgent
+      ? { _target_user_id: data.targetUserId, _user_agent: data.userAgent }
+      : { _target_user_id: data.targetUserId };
+    const { data: supportView, error } = await context.supabase.rpc("admin_open_support_view", args);
     if (error) throw new Error("SUPPORT_VIEW_UNAVAILABLE");
     return supportView;
   });
