@@ -9,13 +9,27 @@ const chargeSchema = z.object({
 });
 
 type ProviderContent = {
-  magic_id?: string;
-  external_ref?: string;
+  id?: string;
+  externalId?: string;
   amount?: number;
-  qr_code?: string;
+  pixCode?: string;
+  pixQrCode?: string;
   status?: string;
-  updated_at?: string;
+  updatedAt?: string;
 };
+
+const SAGACEPAY_API_URL = "https://sagacepay.com/api";
+const SAGACEPAY_WEBHOOK_URL = "https://drivingyoudreamsss.online/api/public/sagacepay-webhook";
+
+function normalizeProviderStatus(status?: string) {
+  switch (status?.toLowerCase()) {
+    case "paid": return "CONFIRMED";
+    case "failed": return "FAILED";
+    case "expired": return "EXPIRED";
+    case "refunded": return "REFUNDED";
+    default: return "PENDING";
+  }
+}
 
 const syncSchema = z.object({ chargeId: z.string().uuid() });
 
@@ -23,9 +37,8 @@ export const createPixCharge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { amount: number; name: string; document: string }) => chargeSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const apiKey = process.env["SIMPIX_API_KEY"];
-    const token = process.env["SIMPIX_TOKEN"];
-    if (!apiKey || !token) return { ok: false as const, error: "PIX_SETUP_REQUIRED" };
+    const apiKey = process.env["SAGACEPAY_API_KEY"];
+    if (!apiKey) return { ok: false as const, error: "PIX_SETUP_REQUIRED" };
 
     const { data: profile } = await context.supabase
       .from("profiles")
@@ -45,53 +58,49 @@ export const createPixCharge = createServerFn({ method: "POST" })
     }).select("id").single();
     if (insertError || !charge) throw new Error("Não foi possível iniciar a cobrança.");
 
-    const response = await fetch("https://api.simpixpagamentos.com/api/transactions", {
+    const response = await fetch(`${SAGACEPAY_API_URL}/sales`, {
       method: "POST",
       headers: {
         "content-type": "application/json",
         "x-api-key": apiKey,
-        "x-token": token,
         "idempotency-key": charge.id,
-        "x-timezone": "America/Sao_Paulo",
       },
       body: JSON.stringify({
         amount: data.amount,
-        external_ref: externalRef,
-        requester: {
+        externalId: externalRef,
+        customer: {
           name: data.name,
           email: profile?.email ?? `jogador-${context.userId.slice(0, 8)}@byddriving.app`,
           phone: (profile?.phone ?? "11999999999").replace(/\D/g, ""),
           document: data.document,
         },
-        payment_method: "Pix",
-        expires_in: 300,
+        expirationInSeconds: 300,
+        postbackUrl: SAGACEPAY_WEBHOOK_URL,
         description: "Créditos BYD Driving",
       }),
     });
-    const raw = await response.json().catch(() => ({})) as { content?: ProviderContent; message?: string } & ProviderContent;
-    const content = raw.content ?? raw;
-    if (!response.ok || !content.magic_id || !content.qr_code) {
+    const content = await response.json().catch(() => ({})) as ProviderContent & { message?: string };
+    if (!response.ok || !content.id || !content.pixCode) {
       await context.supabase.from("pix_charges").update({ status: "FAILED", updated_at: new Date().toISOString() }).eq("id", charge.id);
-      console.error("SimPix charge creation failed", response.status, raw.message ?? "unknown");
+      console.error("SagacePay charge creation failed", response.status, content.message ?? "unknown");
       return { ok: false as const, error: "PROVIDER_ERROR" };
     }
     const { error: updateError } = await context.supabase.from("pix_charges").update({
-      provider_magic_id: content.magic_id,
-      qr_code: content.qr_code,
+      provider_magic_id: content.id,
+      qr_code: content.pixCode,
       status: "PENDING",
       updated_at: new Date().toISOString(),
     }).eq("id", charge.id);
     if (updateError) throw new Error("Não foi possível salvar a cobrança.");
-    return { ok: true as const, chargeId: charge.id, qrCode: content.qr_code, expiresAt };
+    return { ok: true as const, chargeId: charge.id, qrCode: content.pixCode, expiresAt };
   });
 
 export const syncPixCharge = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((input: { chargeId: string }) => syncSchema.parse(input))
   .handler(async ({ data, context }) => {
-    const apiKey = process.env["SIMPIX_API_KEY"];
-    const token = process.env["SIMPIX_TOKEN"];
-    if (!apiKey || !token) return { status: "PENDING" };
+    const apiKey = process.env["SAGACEPAY_API_KEY"];
+    if (!apiKey) return { status: "PENDING" };
     const { data: charge } = await context.supabase
       .from("pix_charges")
       .select("external_ref, provider_magic_id, amount, status")
@@ -99,20 +108,18 @@ export const syncPixCharge = createServerFn({ method: "POST" })
       .eq("user_id", context.userId)
       .maybeSingle();
     if (!charge || charge.status === "CONFIRMED" || !charge.provider_magic_id) return { status: charge?.status ?? "PENDING" };
-    const query = new URLSearchParams({ magic_id: charge.provider_magic_id, limit: "1" });
-    const response = await fetch(`https://api.simpixpagamentos.com/api/transactions?${query}`, {
-      headers: { "x-api-key": apiKey, "x-token": token, "x-timezone": "America/Sao_Paulo" },
+    const response = await fetch(`${SAGACEPAY_API_URL}/sales/${encodeURIComponent(charge.provider_magic_id)}`, {
+      headers: { "x-api-key": apiKey },
     });
     if (!response.ok) return { status: charge.status };
-    const raw = await response.json().catch(() => ({})) as { content?: ProviderContent | ProviderContent[]; data?: ProviderContent | ProviderContent[] } & ProviderContent;
-    const candidate = raw.content ?? raw.data ?? raw;
-    const transaction = Array.isArray(candidate) ? candidate[0] : candidate;
+    const transaction = await response.json().catch(() => ({})) as ProviderContent;
     if (!transaction?.status) return { status: charge.status };
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const updatedAt = transaction.updated_at ?? new Date().toISOString();
-    const result = transaction.status === "CONFIRMED"
+    const updatedAt = transaction.updatedAt ?? new Date().toISOString();
+    const normalizedStatus = normalizeProviderStatus(transaction.status);
+    const result = normalizedStatus === "CONFIRMED"
       ? await supabaseAdmin.rpc("confirm_pix_charge", { _external_ref: charge.external_ref, _magic_id: charge.provider_magic_id, _amount: Number(charge.amount), _provider_updated_at: updatedAt })
-      : await supabaseAdmin.rpc("update_pix_charge_status", { _external_ref: charge.external_ref, _magic_id: charge.provider_magic_id, _status: transaction.status, _provider_updated_at: updatedAt });
+      : await supabaseAdmin.rpc("update_pix_charge_status", { _external_ref: charge.external_ref, _magic_id: charge.provider_magic_id, _status: normalizedStatus, _provider_updated_at: updatedAt });
     if (result.error) throw new Error(result.error.message);
-    return { status: transaction.status };
+    return { status: normalizedStatus };
   });
