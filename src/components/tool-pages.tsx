@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, ClipboardCopy, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardCopy, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins, MessageCircle, Send } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { useServerFn } from "@tanstack/react-start";
@@ -467,9 +467,15 @@ function SupportPage({ onBack }: { onBack: () => void }) {
     <Shell title="Atendimento ao Cliente" onBack={onBack}>
       <section className="m-4 space-y-3 rounded-2xl bg-card p-5 shadow-card text-sm">
         <p className="text-muted-foreground">Nossa equipe responde de segunda a sábado, das 8h às 20h.</p>
-        <div className="flex items-center justify-between rounded-xl bg-muted p-4"><span>Suporte no WhatsApp</span><Coins className="h-5 w-5 text-primary" /></div>
+        <Button className="h-12 w-full rounded-full" onClick={() => window.open("https://wa.me/4917629776572", "_blank", "noopener,noreferrer")}>
+          <MessageCircle className="h-5 w-5" />
+          WhatsApp
+        </Button>
+        <Button variant="outline" className="h-12 w-full rounded-full" onClick={() => window.open("https://t.me/BYDDRIVINGSUP", "_blank", "noopener,noreferrer")}>
+          <Send className="h-5 w-5" />
+          Telegram
+        </Button>
         <div className="flex items-center justify-between rounded-xl bg-muted p-4"><span>suporte@byddriving.app</span></div>
-        <Button className="h-12 w-full rounded-full">Iniciar conversa</Button>
       </section>
     </Shell>
   );
