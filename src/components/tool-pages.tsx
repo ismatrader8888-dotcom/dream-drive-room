@@ -391,11 +391,11 @@ function DetailsPage({ title, onBack }: { title: string; onBack: () => void }) {
 
 function RewardHistory({ events }: { events: RewardEvent[] }) {
   if (!events.length) return <EmptyState label="Nenhuma recompensa concluída" />;
-  return <div className="space-y-3 px-4">{events.map((event) => <article key={event.id} className="flex items-center justify-between rounded-xl bg-card p-4 shadow-card"><div className="min-w-0"><b className="block truncate">{event.vehicleName}</b><p className="text-xs text-muted-foreground">Ciclo {event.cycle} · {new Date(event.earnedAt).toLocaleString("pt-BR")}</p></div><div className="text-right"><b className="text-primary">+{money(event.amount)}</b><p className="text-xs text-muted-foreground">{event.status === "transferred" ? "Transferido" : "A transferir"}</p></div></article>)}</div>;
+  return <div className="space-y-3 px-4">{events.map((event) => <article key={event.id} className="flex items-center justify-between rounded-xl bg-card p-4 shadow-card"><div className="min-w-0"><b className="block truncate">{event.vehicleName}</b><p className="text-xs text-muted-foreground">Ciclo {event.cycle} · {new Date(event.earnedAt).toLocaleString("pt-BR")}</p></div><div className="text-right"><b className="text-primary">+{money(event.amount)}</b><p className="text-xs text-muted-foreground">{event.status === "transferred" ? "Creditado no jogo" : "Processando"}</p></div></article>)}</div>;
 }
 
 function RewardDetailsPage({ title, onBack, rewards }: { title: string; onBack: () => void; rewards: RewardSummary }) {
-  return <Shell title={title} onBack={onBack}><section className="m-4 grid grid-cols-3 gap-2 rounded-2xl bg-card p-4 text-center shadow-card"><div><p className="text-xs text-muted-foreground">Hoje</p><b>{money(rewards.today)}</b></div><div><p className="text-xs text-muted-foreground">Total</p><b>{money(rewards.total)}</b></div><div><p className="text-xs text-muted-foreground">A transferir</p><b>{money(rewards.pending)}</b></div></section><RewardHistory events={rewards.events} /></Shell>;
+  return <Shell title={title} onBack={onBack}><section className="m-4 grid grid-cols-3 gap-2 rounded-2xl bg-card p-4 text-center shadow-card"><div><p className="text-xs text-muted-foreground">Hoje</p><b>{money(rewards.today)}</b></div><div><p className="text-xs text-muted-foreground">Total</p><b>{money(rewards.total)}</b></div><div><p className="text-xs text-muted-foreground">Creditado</p><b>{money(rewards.transferred)}</b></div></section><RewardHistory events={rewards.events} /></Shell>;
 }
 
 function TransferRewardsPage({ onBack, rewards, onBalanceChanged }: { onBack: () => void; rewards: RewardSummary; onBalanceChanged: () => void }) {
