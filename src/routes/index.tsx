@@ -117,6 +117,7 @@ function Index() {
       returnValue: row.return_value,
       price: row.price,
       priceAmount: row.purchase_price ?? 0,
+      dailyRate: row.purchase_price ? Math.round((row.reward_per_cycle / row.purchase_price) * 100) : 0,
       cycle: row.cycle,
       imageKey: row.image_key as ImageKey,
       plate: row.plate,
@@ -267,22 +268,23 @@ type Vehicle = {
   returnValue: string;
   price: string;
   priceAmount: number;
+  dailyRate: number;
   cycle: string;
   imageKey: ImageKey;
 };
 
 const vehicles: Vehicle[] = [
-  { id: "dolphin-mini-new-york-90", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 6,30/dia", returnValue: "R$ 157,50", price: "R$ 90,00", priceAmount: 90, cycle: "25 ciclos", imageKey: "entry" },
-  { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 17,50/dia", returnValue: "R$ 437,50", price: "R$ 250,00", priceAmount: 250, cycle: "25 ciclos", imageKey: "entry" },
-  { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 105,00/dia", returnValue: "R$ 2.625,00", price: "R$ 1.500,00", priceAmount: 1500, cycle: "25 ciclos", imageKey: "top" },
-  { id: "dolphin-israel", name: "BYD Dolphin", region: "Israel", daily: "R$ 14,88/dia", returnValue: "R$ 371,88", price: "R$ 212,50", priceAmount: 212.5, cycle: "25 ciclos", imageKey: "mid" },
-  { id: "han-alemanha", name: "BYD Han", region: "Alemanha", daily: "R$ 64,40/dia", returnValue: "R$ 1.610,00", price: "R$ 920,00", priceAmount: 920, cycle: "25 ciclos", imageKey: "premium" },
-  { id: "han-ev-dubai", name: "BYD Han EV", region: "Dubai", daily: "R$ 80,50/dia", returnValue: "R$ 2.012,50", price: "R$ 1.150,00", priceAmount: 1150, cycle: "25 ciclos", imageKey: "premium" },
-  { id: "seal-tokyo", name: "BYD Seal", region: "Tokyo", daily: "R$ 35,00/dia", returnValue: "R$ 875,00", price: "R$ 500,00", priceAmount: 500, cycle: "25 ciclos", imageKey: "mid" },
-  { id: "dolphin-paris", name: "BYD Dolphin", region: "Paris", daily: "R$ 20,13/dia", returnValue: "R$ 503,13", price: "R$ 287,50", priceAmount: 287.5, cycle: "25 ciclos", imageKey: "mid" },
-  { id: "han-los-angeles", name: "BYD Han", region: "Los Angeles", daily: "R$ 56,00/dia", returnValue: "R$ 1.400,00", price: "R$ 800,00", priceAmount: 800, cycle: "25 ciclos", imageKey: "premium" },
-  { id: "seal-jerusalem", name: "BYD Seal", region: "Jerusalém", daily: "R$ 29,75/dia", returnValue: "R$ 743,75", price: "R$ 425,00", priceAmount: 425, cycle: "25 ciclos", imageKey: "mid" },
-  { id: "han-berlim", name: "BYD Han", region: "Berlim", daily: "R$ 64,40/dia", returnValue: "R$ 1.610,00", price: "R$ 920,00", priceAmount: 920, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "dolphin-mini-new-york-90", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 6,30/dia", returnValue: "R$ 157,50", price: "R$ 90,00", priceAmount: 90, dailyRate: 7, cycle: "25 ciclos", imageKey: "entry" },
+  { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 250,00", priceAmount: 250, dailyRate: 10, cycle: "25 ciclos", imageKey: "entry" },
+  { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 300,00/dia", returnValue: "R$ 7.500,00", price: "R$ 1.500,00", priceAmount: 1500, dailyRate: 20, cycle: "25 ciclos", imageKey: "top" },
+  { id: "dolphin-israel", name: "BYD Dolphin", region: "Israel", daily: "R$ 14,88/dia", returnValue: "R$ 371,88", price: "R$ 212,50", priceAmount: 212.5, dailyRate: 7, cycle: "25 ciclos", imageKey: "mid" },
+  { id: "han-alemanha", name: "BYD Han", region: "Alemanha", daily: "R$ 138,00/dia", returnValue: "R$ 3.450,00", price: "R$ 920,00", priceAmount: 920, dailyRate: 15, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "han-ev-dubai", name: "BYD Han EV", region: "Dubai", daily: "R$ 230,00/dia", returnValue: "R$ 5.750,00", price: "R$ 1.150,00", priceAmount: 1150, dailyRate: 20, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "seal-tokyo", name: "BYD Seal", region: "Tokyo", daily: "R$ 75,00/dia", returnValue: "R$ 1.875,00", price: "R$ 500,00", priceAmount: 500, dailyRate: 15, cycle: "25 ciclos", imageKey: "mid" },
+  { id: "dolphin-paris", name: "BYD Dolphin", region: "Paris", daily: "R$ 28,75/dia", returnValue: "R$ 718,75", price: "R$ 287,50", priceAmount: 287.5, dailyRate: 10, cycle: "25 ciclos", imageKey: "mid" },
+  { id: "han-los-angeles", name: "BYD Han", region: "Los Angeles", daily: "R$ 120,00/dia", returnValue: "R$ 3.000,00", price: "R$ 800,00", priceAmount: 800, dailyRate: 15, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "seal-jerusalem", name: "BYD Seal", region: "Jerusalém", daily: "R$ 42,50/dia", returnValue: "R$ 1.062,50", price: "R$ 425,00", priceAmount: 425, dailyRate: 10, cycle: "25 ciclos", imageKey: "mid" },
+  { id: "han-berlim", name: "BYD Han", region: "Berlim", daily: "R$ 138,00/dia", returnValue: "R$ 3.450,00", price: "R$ 920,00", priceAmount: 920, dailyRate: 15, cycle: "25 ciclos", imageKey: "premium" },
 ];
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
@@ -358,6 +360,7 @@ function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehic
         <div>
           <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold">{vehicle.name}</h2><span className="rounded bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground">Operação</span></div>
           <p className="mt-2 text-xs text-muted-foreground">Recompensa virtual <b className="text-foreground">{period === "Diário" ? vehicle.daily : vehicle.returnValue}</b></p>
+          <p className="mt-1 text-xs text-muted-foreground">Porcentagem diária <b className="text-primary">{vehicle.dailyRate}% a cada 24h</b></p>
           <p className="mt-1 text-xs text-muted-foreground">Retorno <b className="text-accent-foreground">{vehicle.returnValue}</b></p>
           <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground"><span className="rounded bg-muted px-2 py-1">{vehicle.region}</span><span className="rounded bg-muted px-2 py-1">Rende seg–sex</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
         </div>
@@ -422,7 +425,7 @@ function VehicleCard({ vehicle, onRenew, renewing }: { vehicle: OwnedVehicle; on
         <div><p className="text-xs text-muted-foreground">Progresso</p><p className="mt-1 font-medium">{vehicle.cyclesCompleted}/{vehicle.contractCycles} ciclos</p></div>
         <div><p className="text-xs text-muted-foreground">Quilometragem de hoje</p><p className="mt-1 font-medium">0.01KM</p></div>
         <div className="flex items-center justify-center"><img src={vehicleImages[vehicle.imageKey]} alt={vehicle.name} width={992} height={672} className="h-16 w-full object-contain" /></div>
-        <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>1</b><p className="text-xs text-muted-foreground">Missões</p></div><div className="rounded-lg bg-muted p-2"><b>{vehicle.daily.replace("/dia", "")}</b><p className="text-xs text-muted-foreground">Recompensa</p></div></div>
+        <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>{vehicle.dailyRate}%</b><p className="text-xs text-muted-foreground">Por ciclo de 24h</p></div><div className="rounded-lg bg-muted p-2"><b>{vehicle.daily.replace("/dia", "")}</b><p className="text-xs text-muted-foreground">Recompensa</p></div></div>
       </div>
       <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ {vehicle.nextRewardAt ? "Próxima recompensa em" : "Contrato concluído"}</span><b className="tabular-nums text-primary">{vehicle.nextRewardAt ? countdown : "Concluído"}</b></div><p className="mt-2 text-xs text-muted-foreground">Creditado no jogo: {moneyValue(vehicle.transferredReward)}</p></div>
       {!vehicle.nextRewardAt && <Button className="mt-3 h-11 w-full rounded-full" disabled={renewing} onClick={onRenew}>{renewing ? "Renovando..." : `Renovar contrato por ${vehicle.price}`}</Button>}
