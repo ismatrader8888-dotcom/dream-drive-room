@@ -9,7 +9,7 @@
 - [x] Separar créditos do jogo e prêmios sacáveis
 - [x] Criar cobranças PIX com QR, validade e confirmação idempotente
 - [x] Exibir cobranças PIX no painel administrativo
-- [ ] Ativar SimPix com novas credenciais e segredo do webhook
+- [x] Desativar a SimPix para novos depósitos
 - [ ] Validar uma cobrança real de baixo valor após ativação
 - [x] Registrar eventos SimPix de transação, saque e disputa no banco
 - [x] Criar o endpoint público real da SimPix na estrutura atual
@@ -26,6 +26,6 @@
 - [x] Atualizar preços por modelo, região e recompensa virtual de 9% por ciclo
 
 - [x] Mostrar recompensas de hoje e totais por jogador no painel administrativo
-- [ ] Confirmar hospedagem, acessos, secrets e URL pública de produção do webhook SimPix
+- [x] Confirmar hospedagem e URL pública de produção do webhook anterior
 - [x] Reduzir recompensas dos veículos para 7% por ciclo e adicionar Dolphin Mini de R$ 90
 - [ ] Substituir integralmente a SimPix pela SagacePay para novos depósitos e webhooks

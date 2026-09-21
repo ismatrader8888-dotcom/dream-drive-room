@@ -344,7 +344,7 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
     if (mode === "recharge") {
       try {
         const result = await createCharge({ data: { amount: value, name, document } });
-        if (!result.ok) setMessage(result.error === "PIX_SETUP_REQUIRED" ? "A recarga PIX está aguardando a ativação da SimPix." : "Não foi possível gerar o PIX. Tente novamente.");
+        if (!result.ok) setMessage(result.error === "PIX_SETUP_REQUIRED" ? "A recarga PIX está aguardando a ativação da SagacePay." : "Não foi possível gerar o PIX. Tente novamente.");
         else {
           const image = await QRCode.toDataURL(result.qrCode, { width: 320, margin: 2 });
           setCharge({ id: result.chargeId, code: result.qrCode, image, expiresAt: result.expiresAt });
