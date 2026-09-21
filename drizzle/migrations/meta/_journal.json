@@ -78,6 +78,13 @@
       "when": 1789933133468,
       "tag": "0010_safe_virtual_rewards_renewals_and_withdrawal_names",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1789958128796,
+      "tag": "0011_add_admin_player_reward_totals",
+      "breakpoints": true
     }
   ]
 }
