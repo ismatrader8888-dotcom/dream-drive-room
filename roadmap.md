@@ -27,3 +27,4 @@
 
 - [x] Mostrar recompensas de hoje e totais por jogador no painel administrativo
 - [ ] Confirmar hospedagem, acessos, secrets e URL pública de produção do webhook SimPix
+- [x] Reduzir recompensas dos veículos para 7% por ciclo e adicionar Dolphin Mini de R$ 90
