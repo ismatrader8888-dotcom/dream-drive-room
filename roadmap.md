@@ -30,3 +30,4 @@
 - [x] Reduzir recompensas dos veículos para 7% por ciclo e adicionar Dolphin Mini de R$ 90
 - [x] Substituir integralmente a SimPix pela SagacePay para novos depósitos e webhooks
 - [x] Aplicar recompensas de 7%, 10%, 15%, 20% e 25% por faixa de preço e exibir a taxa diária
+- [x] Permitir acesso administrativo auditado e somente leitura às contas dos usuários
