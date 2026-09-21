@@ -410,7 +410,7 @@ function TransferRewardsPage({ onBack, rewards, onBalanceChanged }: { onBack: ()
     setMessage(amount > 0 ? `${money(amount)} transferidos.` : "As recompensas dos veículos entram automaticamente nos créditos do jogo.");
     onBalanceChanged();
   };
-  return <Shell title="Recompensas dos veículos" onBack={onBack}><section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">Créditos virtuais acumulados</p><b className="mt-1 block text-3xl">{money(rewards.total)}</b><p className="mt-3 text-sm text-muted-foreground">Cada ciclo concluído entra automaticamente nos créditos do jogo.</p><Button className="mt-5 h-12 w-full rounded-full" disabled={busy} onClick={() => void transfer()}>{busy ? "Atualizando..." : "Atualizar recompensas"}</Button>{message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}</section></Shell>;
+  return <Shell title="Recompensas dos veículos" onBack={onBack}><section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">Créditos virtuais acumulados</p><b className="mt-1 block text-3xl">{money(rewards.total)}</b><p className="mt-3 text-sm text-muted-foreground">Cada ciclo concluído entra automaticamente nos créditos</p><Button className="mt-5 h-12 w-full rounded-full" disabled={busy} onClick={() => void transfer()}>{busy ? "Atualizando..." : "Atualizar recompensas"}</Button>{message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}</section></Shell>;
 }
 
 function TextPage({ title, onBack, paragraphs }: { title: string; onBack: () => void; paragraphs: string[] }) {
