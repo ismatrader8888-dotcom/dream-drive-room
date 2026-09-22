@@ -92,6 +92,13 @@
       "when": 1790028476388,
       "tag": "0012_add_admin_support_access_audit",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1790084696021,
+      "tag": "0013_add_signup_bonus_daily_wheel_and_withdrawal_gate",
+      "breakpoints": true
     }
   ]
 }
