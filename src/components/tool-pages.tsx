@@ -192,12 +192,67 @@ function VehicleIncomePage({ onBack, rewards }: { onBack: () => void; rewards: R
   );
 }
 
-function CouponPage({ onBack }: { onBack: () => void }) {
+function CouponPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalanceChanged: () => void }) {
   const [tab, setTab] = useState("Recebido");
+  const [code, setCode] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ text: string; type: "success" | "error" } | null>(null);
+
+  const redeem = async () => {
+    if (!code.trim()) return;
+    setBusy(true);
+    setMessage(null);
+    try {
+      const { data, error } = await supabase.rpc("redeem_credit_code", { _code: code.trim() });
+      if (error) {
+        let msg = "Não foi possível resgatar este código.";
+        if (error.message.includes("INVALID_CODE")) msg = "Código inválido.";
+        else if (error.message.includes("CODE_EXPIRED")) msg = "Este código expirou.";
+        else if (error.message.includes("CODE_FULLY_REDEEMED")) msg = "Este código já atingiu o limite de usos.";
+        else if (error.message.includes("ALREADY_REDEEMED")) msg = "Você já resgatou este código.";
+        setMessage({ text: msg, type: "error" });
+      } else {
+        setMessage({ text: "Código resgatado com sucesso!", type: "success" });
+        setCode("");
+        onBalanceChanged();
+      }
+    } catch (err) {
+      setMessage({ text: "Erro ao processar o resgate.", type: "error" });
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <Shell title="Meu cupom" onBack={onBack}>
+      <div className="p-4">
+        <div className="rounded-2xl bg-card p-5 shadow-card">
+          <h3 className="text-lg font-bold">Resgatar código</h3>
+          <p className="mt-1 text-sm text-muted-foreground">Insira seu código promocional para receber créditos instantâneos.</p>
+          <div className="mt-4 flex gap-2">
+            <input
+              value={code}
+              onChange={(e) => setCode(e.target.value)}
+              placeholder="Digite o código aqui"
+              className="h-12 flex-1 rounded-xl border border-border bg-background px-4 text-sm outline-none focus:border-primary"
+            />
+            <Button disabled={busy || !code.trim()} onClick={redeem} className="h-12 rounded-xl px-6">
+              {busy ? "..." : "Resgatar"}
+            </Button>
+          </div>
+          {message && (
+            <p className={`mt-3 text-sm ${message.type === "success" ? "text-success" : "text-destructive"}`}>
+              {message.text}
+            </p>
+          )}
+        </div>
+      </div>
+      
       <Tabs items={["Recebido", "Usado", "Expirado"]} value={tab} onChange={setTab} />
-      <div className="flex min-h-[46vh] flex-col items-center justify-center gap-3 text-muted-foreground"><Ticket className="h-16 w-16 opacity-50" /><p className="text-sm">Ainda não há dados</p></div>
+      <div className="flex min-h-[30vh] flex-col items-center justify-center gap-3 text-muted-foreground">
+        <Ticket className="h-16 w-16 opacity-50" />
+        <p className="text-sm">Ainda não há cupons {tab.toLowerCase()}s</p>
+      </div>
     </Shell>
   );
 }
@@ -544,7 +599,7 @@ export function ToolPage({ view, onBack, balance = 0, rewardBalance = 0, rewards
     case "contract": return <ContractPage onBack={onBack} />;
     case "salary": return <SalaryPage onBack={onBack} />;
     case "vehicleIncome": return <VehicleIncomePage onBack={onBack} rewards={rewards} />;
-    case "coupon": return <CouponPage onBack={onBack} />;
+    case "coupon": return <CouponPage onBack={onBack} onBalanceChanged={onBalanceChanged} />;
     case "inviteReward": return <InviteRewardPage onBack={onBack} />;
     case "tasks": return <TasksPage onBack={onBack} onBalanceChanged={onBalanceChanged} />;
     case "orders": return <OrdersPage onBack={onBack} />;
