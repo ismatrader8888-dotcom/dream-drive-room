@@ -481,9 +481,11 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, rewardsTotal
   return (
     <Shell title={title} onBack={onBack}>
       <section className="m-4 rounded-2xl bg-card p-5 shadow-card">
-        <p className="text-sm text-muted-foreground">{mode === "withdraw" ? "Prêmios disponíveis" : "Créditos do jogo"}</p>
-        <b className="mt-1 block text-3xl">{(mode === "withdraw" ? rewardBalance : balance).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b>
-        <p className="mt-1 text-xs text-muted-foreground">{mode === "withdraw" ? withdrawalEligibility?.exempt ? "Saque liberado para esta conta." : rewardsTotal >= 30 ? "Requisito de R$ 30,00 em recompensas totais atingido." : `Gere mais ${money(30 - rewardsTotal)} em recompensas para liberar saques.` : "Use seus créditos para veículos e ações dentro do jogo."}</p>
+        {!charge && <>
+          <p className="text-sm text-muted-foreground">{mode === "withdraw" ? "Prêmios disponíveis" : "Créditos do jogo"}</p>
+          <b className="mt-1 block text-3xl">{(mode === "withdraw" ? rewardBalance : balance).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b>
+          <p className="mt-1 text-xs text-muted-foreground">{mode === "withdraw" ? withdrawalEligibility?.exempt ? "Saque liberado para esta conta." : rewardsTotal >= 30 ? "Requisito de R$ 30,00 em recompensas totais atingido." : `Gere mais ${money(30 - rewardsTotal)} em recompensas para liberar saques.` : "Use seus créditos para veículos e ações dentro do jogo."}</p>
+        </>}
         {(mode === "recharge" || mode === "withdraw") && !charge && <><label className="mt-5 block text-sm text-muted-foreground" htmlFor="payer-name">Nome completo</label><input id="payer-name" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder={mode === "withdraw" ? "Nome do titular" : "Nome do pagador"} className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" />{mode === "recharge" && <><label className="mt-4 block text-sm text-muted-foreground" htmlFor="payer-document">CPF</label><input id="payer-document" inputMode="numeric" value={document} onChange={(event) => setDocument(event.target.value.replace(/\D/g, "").slice(0, 11))} placeholder="000.000.000-00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}</>}
         {!charge && <>
         <label className="mt-5 block text-sm text-muted-foreground" htmlFor="amount">Valor</label>
