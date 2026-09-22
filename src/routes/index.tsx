@@ -295,7 +295,7 @@ type Vehicle = {
 };
 
 const vehicles: Vehicle[] = [
-  { id: "dolphin-mini-eco-new-york-50", name: "BYD Dolphin Mini ECO", region: "New York", daily: "R$ 6,00/dia", returnValue: "R$ 150,00", price: "R$ 50,00", priceAmount: 50, dailyRate: 12, promotion: "Promoção por tempo limitado", cycle: "25 ciclos", imageKey: "entry" },
+  { id: "dolphin-mini-eco-new-york-50", name: "BYD Dolphin Mini ECO", region: "New York", daily: "R$ 4,50/dia", returnValue: "R$ 112,50", price: "R$ 50,00", priceAmount: 50, dailyRate: 9, promotion: "Promoção por tempo limitado", cycle: "25 ciclos", imageKey: "entry" },
   { id: "dolphin-mini-new-york-90", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 6,30/dia", returnValue: "R$ 157,50", price: "R$ 90,00", priceAmount: 90, dailyRate: 7, cycle: "25 ciclos", imageKey: "entry" },
   { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini Plus", region: "New York", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 250,00", priceAmount: 250, dailyRate: 10, cycle: "25 ciclos", imageKey: "entry" },
   { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 300,00/dia", returnValue: "R$ 7.500,00", price: "R$ 1.500,00", priceAmount: 1500, dailyRate: 20, cycle: "25 ciclos", imageKey: "top" },
