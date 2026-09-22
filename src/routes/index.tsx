@@ -96,6 +96,7 @@ function Index() {
   const [renting, setRenting] = useState(false);
   const [renewing, setRenewing] = useState<string | null>(null);
   const [rewards, setRewards] = useState<RewardSummary>(emptyRewards);
+  const [showWelcomeBonus, setShowWelcomeBonus] = useState(false);
 
   const loadAccount = async (id: string) => {
     const { data: profile } = await supabase.from("profiles").select("phone, invite_code, email, demo_balance, reward_balance").eq("id", id).maybeSingle();
@@ -157,6 +158,9 @@ function Index() {
     if (!userId) return;
     void loadAccount(userId);
     void loadRewards().then(() => loadOwned(userId));
+    void supabase.rpc("consume_welcome_bonus_popup").then(({ data }) => {
+      if (data === true) setShowWelcomeBonus(true);
+    });
     const timer = window.setInterval(() => {
       void loadRewards().then(() => loadOwned(userId));
       void loadAccount(userId);
@@ -237,6 +241,19 @@ function Index() {
             <DialogFooter><Button variant="outline" onClick={() => setInsufficient(null)}>Agora não</Button><Button onClick={() => { setInsufficient(null); setView("recharge"); }}>Ir para recarga PIX</Button></DialogFooter>
           </DialogContent>
         </Dialog>
+        <Dialog open={showWelcomeBonus} onOpenChange={setShowWelcomeBonus}>
+          <DialogContent className="max-w-[calc(100%-2rem)] rounded-xl text-center">
+            <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-primary text-3xl text-primary-foreground">🎁</div>
+            <DialogHeader className="text-center">
+              <DialogTitle className="text-2xl">🎉 Parabéns! Seu bônus foi liberado!</DialogTitle>
+              <DialogDescription className="space-y-3 text-base">
+                <b className="block text-xl text-foreground">Você acaba de ganhar R$ 15,00 🎁</b>
+                <span className="block">💰 O valor de R$ 15,00 já foi creditado na sua conta e está disponível para você.</span>
+              </DialogDescription>
+            </DialogHeader>
+            <Button className="h-12 w-full rounded-full" onClick={() => setShowWelcomeBonus(false)}>Continuar</Button>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
   );
@@ -276,6 +293,7 @@ type Vehicle = {
 };
 
 const vehicles: Vehicle[] = [
+  { id: "dolphin-mini-eco-new-york-50", name: "BYD Dolphin Mini ECO", region: "New York", daily: "R$ 3,50/dia", returnValue: "R$ 87,50", price: "R$ 50,00", priceAmount: 50, dailyRate: 7, cycle: "25 ciclos", imageKey: "entry" },
   { id: "dolphin-mini-new-york-90", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 6,30/dia", returnValue: "R$ 157,50", price: "R$ 90,00", priceAmount: 90, dailyRate: 7, cycle: "25 ciclos", imageKey: "entry" },
   { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini Plus", region: "New York", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 250,00", priceAmount: 250, dailyRate: 10, cycle: "25 ciclos", imageKey: "entry" },
   { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 300,00/dia", returnValue: "R$ 7.500,00", price: "R$ 1.500,00", priceAmount: 1500, dailyRate: 20, cycle: "25 ciclos", imageKey: "top" },

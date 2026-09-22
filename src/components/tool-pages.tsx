@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, ClipboardCopy, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins, MessageCircle, Send } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardCopy, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins, MessageCircle, Send, Sparkles } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { useServerFn } from "@tanstack/react-start";
@@ -214,13 +214,64 @@ function InviteRewardPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-function TasksPage({ onBack }: { onBack: () => void }) {
+type WheelState = { canSpin: boolean; nextSpinAt: string | null; lastPrize: number | null };
+const wheelPrizes = [1, 2, 5, 10, 20, 50];
+
+function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalanceChanged: () => void }) {
   const [tab, setTab] = useState("Tarefa pessoal");
+  const [wheel, setWheel] = useState<WheelState | null>(null);
+  const [spinning, setSpinning] = useState(false);
+  const [rotation, setRotation] = useState(0);
+  const [prize, setPrize] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
+  const loadWheel = async () => {
+    const { data } = await supabase.rpc("get_my_daily_wheel_state");
+    if (data) setWheel(data as unknown as WheelState);
+  };
+  useEffect(() => {
+    void loadWheel();
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+  const spin = async () => {
+    if (!wheel?.canSpin || spinning) return;
+    setSpinning(true);
+    setPrize(null);
+    const { data, error } = await supabase.rpc("spin_daily_wheel");
+    if (error || !data) { setSpinning(false); await loadWheel(); return; }
+    const result = data as unknown as { prize: number; nextSpinAt: string };
+    const selectedIndex = wheelPrizes.indexOf(Number(result.prize));
+    setRotation((current) => current + 1800 + (360 - selectedIndex * 60));
+    window.setTimeout(() => {
+      setPrize(Number(result.prize));
+      setWheel({ canSpin: false, nextSpinAt: result.nextSpinAt, lastPrize: Number(result.prize) });
+      setSpinning(false);
+      onBalanceChanged();
+    }, 3200);
+  };
+  const remaining = wheel?.nextSpinAt ? Math.max(0, new Date(wheel.nextSpinAt).getTime() - now) : 0;
+  const readyToSpin = Boolean(wheel?.canSpin || (wheel?.nextSpinAt && remaining === 0));
+  const countdown = `${String(Math.floor(remaining / 3600000)).padStart(2, "0")}:${String(Math.floor(remaining / 60000) % 60).padStart(2, "0")}:${String(Math.floor(remaining / 1000) % 60).padStart(2, "0")}`;
   return (
     <Shell title="Central de Tarefas" onBack={onBack}>
       <Tabs items={["Tarefa pessoal", "Tarefas da equipe"]} value={tab} onChange={setTab} />
       {tab === "Tarefa pessoal" ? (
         <div className="space-y-4 px-4">
+          <section className="overflow-hidden rounded-2xl bg-card p-5 text-center shadow-card">
+            <div className="flex items-center justify-center gap-2"><Sparkles className="h-5 w-5 text-primary" /><h2 className="text-lg font-bold">Roleta da sorte</h2></div>
+            <p className="mt-1 text-sm text-muted-foreground">Uma chance a cada 24 horas</p>
+            <div className="relative mx-auto mt-5 h-64 w-64">
+              <div className="absolute left-1/2 top-[-2px] z-10 h-0 w-0 -translate-x-1/2 border-x-[12px] border-t-[24px] border-x-transparent border-t-primary" />
+              <div className="lucky-wheel-face relative h-full w-full rounded-full border-8 border-primary/30 shadow-card transition-transform duration-[3200ms] ease-[cubic-bezier(.12,.72,.12,1)]" style={{ transform: `rotate(${rotation}deg)` }}>
+                {wheelPrizes.map((value, index) => <b key={value} className="absolute left-1/2 top-1/2 text-sm text-foreground" style={{ transform: `translate(-50%, -50%) rotate(${index * 60}deg) translateY(-92px) rotate(${-index * 60}deg)` }}>R$ {value}</b>)}
+                <span className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-background bg-primary text-primary-foreground"><Gift className="h-7 w-7" /></span>
+              </div>
+            </div>
+            {prize && <p className="mt-4 animate-fade-in text-lg font-bold text-primary">Você ganhou {money(prize)} em Créditos!</p>}
+            {!readyToSpin && !prize && <p className="mt-4 text-sm text-muted-foreground">Próxima rodada em <b className="tabular-nums text-foreground">{countdown}</b></p>}
+            <Button className="mt-4 h-12 w-full rounded-full" disabled={!readyToSpin || spinning} onClick={() => void spin()}>{spinning ? "Girando..." : readyToSpin ? "Girar agora" : "Aguarde a próxima rodada"}</Button>
+            <p className="mt-3 text-xs text-muted-foreground">Prêmios possíveis em Créditos: R$ 1, R$ 2, R$ 5, R$ 10, R$ 20 e R$ 50.</p>
+          </section>
           <section className="rounded-2xl border-l-4 border-primary bg-card p-4 shadow-card">
             <p className="text-sm text-muted-foreground">Prêmio da rodada</p>
             <div className="mt-3 grid grid-cols-2 divide-x divide-border text-sm">
@@ -274,7 +325,7 @@ function OrdersPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceChanged }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer"; balance: number; rewardBalance: number; onBalanceChanged: () => void }) {
+function BalancePage({ title, onBack, mode, balance, rewardBalance, rewardsTotal, onBalanceChanged }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer"; balance: number; rewardBalance: number; rewardsTotal: number; onBalanceChanged: () => void }) {
   const createCharge = useServerFn(createPixCharge);
   const syncCharge = useServerFn(syncPixCharge);
   const [amount, setAmount] = useState("");
@@ -351,8 +402,13 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
         }
       } catch { setMessage("Confira o nome completo, CPF e valor informados."); }
     } else if (mode === "withdraw") {
+      if (rewardsTotal < 30) {
+        setMessage(`Você precisa gerar pelo menos R$ 30,00 em recompensas totais. Faltam ${money(30 - rewardsTotal)}.`);
+        setBusy(false);
+        return;
+      }
       const { error } = await supabase.rpc("request_withdrawal", { _amount: value, _pix_key: pixKey, _full_name: name.trim() });
-      setMessage(error ? "Não foi possível solicitar. Confira seus prêmios, a chave PIX e pendências." : "Solicitação de saque registrada para análise.");
+      setMessage(error?.message.includes("MIN_TOTAL_REWARDS_REQUIRED") ? "Você precisa gerar pelo menos R$ 30,00 em recompensas totais para solicitar um saque." : error ? "Não foi possível solicitar. Confira seus prêmios, a chave PIX e pendências." : "Solicitação de saque registrada para análise.");
       if (!error) { setAmount(""); setPixKey(""); setName(""); await loadWithdrawals(); }
     } else {
       setMessage("Transferências estarão disponíveis em breve.");
@@ -364,14 +420,14 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
       <section className="m-4 rounded-2xl bg-card p-5 shadow-card">
         <p className="text-sm text-muted-foreground">{mode === "withdraw" ? "Prêmios disponíveis" : "Créditos do jogo"}</p>
         <b className="mt-1 block text-3xl">{(mode === "withdraw" ? rewardBalance : balance).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b>
-        <p className="mt-1 text-xs text-muted-foreground">{mode === "withdraw" ? "Somente prêmios concedidos podem ser sacados." : "Use seus créditos para veículos e ações dentro do jogo."}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{mode === "withdraw" ? rewardsTotal >= 30 ? "Requisito de R$ 30,00 em recompensas totais atingido." : `Gere mais ${money(30 - rewardsTotal)} em recompensas para liberar saques.` : "Use seus créditos para veículos e ações dentro do jogo."}</p>
         {(mode === "recharge" || mode === "withdraw") && !charge && <><label className="mt-5 block text-sm text-muted-foreground" htmlFor="payer-name">Nome completo</label><input id="payer-name" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder={mode === "withdraw" ? "Nome do titular" : "Nome do pagador"} className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" />{mode === "recharge" && <><label className="mt-4 block text-sm text-muted-foreground" htmlFor="payer-document">CPF</label><input id="payer-document" inputMode="numeric" value={document} onChange={(event) => setDocument(event.target.value.replace(/\D/g, "").slice(0, 11))} placeholder="000.000.000-00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}</>}
         {!charge && <>
         <label className="mt-5 block text-sm text-muted-foreground" htmlFor="amount">Valor</label>
         <input id="amount" inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setMessage(""); }} placeholder="0,00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 text-lg outline-none focus:border-primary" />
         {mode === "withdraw" && <><label className="mt-4 block text-sm text-muted-foreground" htmlFor="withdraw-pix">Chave PIX</label><input id="withdraw-pix" value={pixKey} onChange={(event) => setPixKey(event.target.value)} placeholder="CPF, e-mail ou telefone" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}
         <div className="mt-3 flex flex-wrap gap-2">{["10", "50", "100", "500"].map((value) => <Button key={value} variant="secondary" size="sm" className="rounded-full" onClick={() => setAmount(value)}>R$ {value}</Button>)}</div>
-        <Button className="mt-5 h-12 w-full rounded-full text-base" disabled={!amount || busy || (mode === "withdraw" && (!pixKey.trim() || name.trim().length < 5))} onClick={() => void submit()}>
+        <Button className="mt-5 h-12 w-full rounded-full text-base" disabled={!amount || busy || (mode === "withdraw" && (!pixKey.trim() || name.trim().length < 5 || rewardsTotal < 30))} onClick={() => void submit()}>
           {mode === "recharge" ? "Recarregar agora" : mode === "withdraw" ? "Solicitar saque" : "Transferir"}
         </Button>
         </>}
@@ -490,13 +546,13 @@ export function ToolPage({ view, onBack, balance = 0, rewardBalance = 0, rewards
     case "vehicleIncome": return <VehicleIncomePage onBack={onBack} rewards={rewards} />;
     case "coupon": return <CouponPage onBack={onBack} />;
     case "inviteReward": return <InviteRewardPage onBack={onBack} />;
-    case "tasks": return <TasksPage onBack={onBack} />;
+    case "tasks": return <TasksPage onBack={onBack} onBalanceChanged={onBalanceChanged} />;
     case "orders": return <OrdersPage onBack={onBack} />;
     case "exchange": return <ExchangePage onBack={onBack} />;
     case "settings": return <SettingsPage onBack={onBack} />;
     case "support": return <SupportPage onBack={onBack} />;
-    case "recharge": return <BalancePage title="Recarga PIX" onBack={onBack} mode="recharge" balance={balance} rewardBalance={rewardBalance} onBalanceChanged={onBalanceChanged} />;
-    case "withdraw": return <BalancePage title="Sacar prêmios" onBack={onBack} mode="withdraw" balance={balance} rewardBalance={rewardBalance} onBalanceChanged={onBalanceChanged} />;
+    case "recharge": return <BalancePage title="Recarga PIX" onBack={onBack} mode="recharge" balance={balance} rewardBalance={rewardBalance} rewardsTotal={rewards.total} onBalanceChanged={onBalanceChanged} />;
+    case "withdraw": return <BalancePage title="Sacar prêmios" onBack={onBack} mode="withdraw" balance={balance} rewardBalance={rewardBalance} rewardsTotal={rewards.total} onBalanceChanged={onBalanceChanged} />;
     case "transfer": return <TransferRewardsPage onBack={onBack} rewards={rewards} onBalanceChanged={onBalanceChanged} />;
     case "incomeDetails": return <RewardDetailsPage title="Detalhes das recompensas" onBack={onBack} rewards={rewards} />;
     case "luckyDetails": return <RewardDetailsPage title="Histórico de prêmios" onBack={onBack} rewards={rewards} />;
