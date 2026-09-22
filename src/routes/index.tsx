@@ -42,6 +42,7 @@ import { ToolPage, type RewardSummary, type ToolView } from "@/components/tool-p
 import { AuthScreen } from "@/components/auth-screen";
 import { BydSplash } from "@/components/byd-splash";
 import { supabase } from "@/integrations/supabase/client";
+import { NotificationCenter } from "@/components/notification-center";
 
 type View = "home" | "resources" | "news" | "profile" | "invite" | "membership" | ToolView;
 
@@ -234,6 +235,7 @@ function Index() {
     <main className="min-h-screen bg-shell font-sans text-foreground">
       <div className="mx-auto min-h-screen w-full max-w-[430px] overflow-hidden bg-background shadow-phone">
         {page}
+        {userId && <NotificationCenter userId={userId} />}
         {!isTool && view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
         <Dialog open={Boolean(insufficient)} onOpenChange={(open) => { if (!open) setInsufficient(null); }}>
           <DialogContent className="max-w-[calc(100%-2rem)] rounded-xl">

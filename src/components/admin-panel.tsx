@@ -13,7 +13,7 @@ type Purchase = { id: string; email: string | null; name: string; price: number 
 type Popular = { name: string; purchases: number; volume: number };
 type Referral = { id: string; referrerEmail: string | null; referredEmail: string | null; inviteCode: string; status: "effective" | "invalid"; firstDeposit: number | null; deposits: number; totalDeposited: number; refereeBonus: number; referrerBonus: number };
 type Dashboard = { users: number; gameCredits: number; rewardBalance: number; vehicleRewardsGenerated: number; vehicleRewardsPending: number; vehicleRewardsTransferred: number; purchases: number; pendingWithdrawals: number; pendingPix: number; totalReferrals: number; effectiveReferrals: number; referredDepositVolume: number; referralCreditsDistributed: number; profiles: Profile[]; withdrawals: RequestRow[]; pixCharges: PixCharge[]; purchasesList: Purchase[]; popularVehicles: Popular[]; referrals: Referral[] };
-type Tab = "users" | "purchases" | "recharges" | "withdrawals" | "referrals";
+type Tab = "users" | "purchases" | "recharges" | "withdrawals" | "referrals" | "notifications" | "codes";
 type SupportView = {
   sessionId: string;
   profile: { id: string; email: string | null; phone: string | null; inviteCode: string; referredBy: string | null; level: number; balance: number; rewardBalance: number; createdAt: string };
@@ -115,8 +115,8 @@ export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
           <Metric icon={RefreshCw} label="Em processamento" value={money(data.vehicleRewardsPending)} />
           <Metric icon={WalletCards} label="Creditado no jogo" value={money(data.vehicleRewardsTransferred)} />
         </section>
-        <nav className="mt-8 grid max-w-4xl grid-cols-5 rounded-lg bg-muted p-1 text-sm">
-          {([['users','Usuários'],['purchases','Compras'],['recharges','Recargas'],['referrals','Indicações'],['withdrawals','Saques']] as const).map(([key, label]) => <button key={key} onClick={() => setTab(key)} className={`min-h-10 rounded-md px-1 ${tab === key ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground"}`}>{label}</button>)}
+        <nav className="mt-8 grid max-w-4xl grid-cols-4 lg:grid-cols-7 rounded-lg bg-muted p-1 text-sm">
+          {([['users','Usuários'],['purchases','Compras'],['recharges','Recargas'],['referrals','Indicações'],['withdrawals','Saques'],['notifications','Notificações'],['codes','Códigos']] as const).map(([key, label]) => <button key={key} onClick={() => setTab(key)} className={`min-h-10 rounded-md px-1 ${tab === key ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground"}`}>{label}</button>)}
         </nav>
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {tab === "users" && data.profiles.map((profile) => <article key={profile.id} className="rounded-lg bg-card p-5 shadow-card"><b className="block truncate">{profile.email ?? profile.phone ?? "Sem identificação"}</b><div className="mt-3 grid grid-cols-2 gap-2 text-sm text-muted-foreground"><span>Créditos: <strong className="block text-foreground">{money(profile.balance)}</strong></span><span>Prêmios disponíveis: <strong className="block text-foreground">{money(profile.rewardBalance)}</strong></span><span>Recompensas de hoje: <strong className="block text-foreground">{money(profile.vehicleRewardsToday)}</strong></span><span>Recompensas totais: <strong className="block text-foreground">{money(profile.vehicleRewardsGenerated)}</strong></span><span>Em processamento: <strong className="block text-foreground">{money(profile.vehicleRewardsPending)}</strong></span><span>Creditado no jogo: <strong className="block text-foreground">{money(profile.vehicleRewardsTransferred)}</strong></span><span>Indicados: <strong className="block text-foreground">{profile.effectiveReferrals} eficazes / {profile.referrals}</strong></span></div><p className="mt-3 text-xs text-muted-foreground">Código: {profile.inviteCode}{profile.referredBy ? ` · Convidado por ${profile.referredBy}` : ""}</p><div className="mt-4 grid grid-cols-2 gap-2"><Button variant="outline" disabled={busy === profile.id} onClick={() => void enterSupport(profile)}><Eye /> Entrar como usuário</Button><Button disabled={busy === profile.id} onClick={() => { setAdjusting(profile); setWallet("rewards"); }}>Alterar saldos</Button></div></article>)}
@@ -124,6 +124,8 @@ export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
           {tab === "recharges" && <PixCharges rows={data.pixCharges} />}
           {tab === "referrals" && <Referrals rows={data.referrals} />}
           {tab === "withdrawals" && <Requests rows={data.withdrawals} busy={busy} onReview={review} />}
+          {tab === "notifications" && <NotificationsManager />}
+          {tab === "codes" && <CodesManager />}
         </div></main>
        </>}
        <Dialog open={Boolean(adjusting)} onOpenChange={(open) => { if (!open) setAdjusting(null); }}><DialogContent><DialogHeader><DialogTitle>Alterar saldo do usuário</DialogTitle><DialogDescription>{adjusting?.email ?? adjusting?.phone ?? "Usuário"}. Use um valor negativo para debitar.</DialogDescription></DialogHeader><div className="space-y-4"><div className="grid grid-cols-2 gap-2"><Button type="button" variant={wallet === "credits" ? "default" : "outline"} onClick={() => setWallet("credits")}>Créditos do jogo</Button><Button type="button" variant={wallet === "rewards" ? "default" : "outline"} onClick={() => setWallet("rewards")}>Prêmios disponíveis</Button></div><label className="block text-sm">Valor<input value={amount} onChange={(event) => setAmount(event.target.value)} inputMode="decimal" placeholder="Ex.: 50 ou -25" className="mt-2 h-11 w-full rounded-md border border-border bg-background px-3" /></label><label className="block text-sm">Motivo<input value={reason} onChange={(event) => setReason(event.target.value)} placeholder="Motivo do ajuste" className="mt-2 h-11 w-full rounded-md border border-border bg-background px-3" /></label></div><DialogFooter><Button variant="outline" onClick={() => setAdjusting(null)}>Cancelar</Button><Button disabled={Boolean(busy)} onClick={() => void adjust()}>Confirmar ajuste</Button></DialogFooter></DialogContent></Dialog>
@@ -164,4 +166,108 @@ function PixCharges({ rows }: { rows: PixCharge[] }) {
 function Referrals({ rows }: { rows: Referral[] }) {
   if (!rows.length) return <p className="py-12 text-center text-sm text-muted-foreground">Nenhuma indicação.</p>;
   return <>{rows.map((row) => <article key={row.id} className="rounded-lg bg-card p-4 shadow-card"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><b className="block truncate">{row.referrerEmail ?? "Usuário"} → {row.referredEmail ?? "Convidado"}</b><p className="mt-1 text-xs text-muted-foreground">Código {row.inviteCode} · {row.deposits} depósito(s)</p></div><span className={`rounded-full px-2 py-1 text-xs font-semibold ${row.status === "effective" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>{row.status === "effective" ? "Eficaz" : "Aguardando"}</span></div><div className="mt-3 grid grid-cols-3 gap-2 text-sm"><span className="text-muted-foreground">Depositado<b className="block text-foreground">{money(row.totalDeposited)}</b></span><span className="text-muted-foreground">Bônus 5%<b className="block text-foreground">{money(row.refereeBonus)}</b></span><span className="text-muted-foreground">Bônus 15%<b className="block text-foreground">{money(row.referrerBonus)}</b></span></div></article>)}</>;
+}
+function NotificationsManager() {
+  const [notifs, setNotifs] = useState<any[]>([]);
+  const [title, setTitle] = useState("");
+  const [content, setContent] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    const { data } = await supabase.from("global_notifications").select("*").order("created_at", { ascending: false });
+    setNotifs(data ?? []);
+  };
+
+  useEffect(() => { void load(); }, []);
+
+  const create = async () => {
+    if (!title || !content) return;
+    setBusy(true);
+    await supabase.from("global_notifications").insert({ title, content, type: "info" });
+    setTitle(""); setContent("");
+    setBusy(false);
+    await load();
+  };
+
+  const toggle = async (id: string, active: boolean) => {
+    await supabase.from("global_notifications").update({ active }).eq("id", id);
+    await load();
+  };
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-lg bg-card p-5 shadow-card">
+        <h3 className="font-bold">Nova Notificação</h3>
+        <input value={title} onChange={e => setTitle(e.target.value)} placeholder="Título" className="mt-3 w-full rounded border p-2 bg-background" />
+        <textarea value={content} onChange={e => setContent(e.target.value)} placeholder="Conteúdo" className="mt-2 w-full rounded border p-2 bg-background" rows={3} />
+        <Button onClick={create} disabled={busy} className="mt-3 w-full">Publicar Notificação</Button>
+      </section>
+      <div className="space-y-3">
+        {notifs.map(n => (
+          <article key={n.id} className="rounded-lg bg-card p-4 shadow-card">
+            <div className="flex justify-between items-start">
+              <b>{n.title}</b>
+              <Button size="sm" variant={n.active ? "default" : "outline"} onClick={() => toggle(n.id, !n.active)}>
+                {n.active ? "Ativa" : "Inativa"}
+              </Button>
+            </div>
+            <p className="text-sm text-muted-foreground mt-1">{n.content}</p>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function CodesManager() {
+  const [codes, setCodes] = useState<any[]>([]);
+  const [newCode, setNewCode] = useState("");
+  const [amount, setAmount] = useState("");
+  const [maxUses, setMaxUses] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const load = async () => {
+    const { data } = await supabase.from("credit_codes").select("*").order("created_at", { ascending: false });
+    setCodes(data ?? []);
+  };
+
+  useEffect(() => { void load(); }, []);
+
+  const create = async () => {
+    const val = Number(amount);
+    if (!newCode || isNaN(val) || val <= 0) return;
+    setBusy(true);
+    await supabase.from("credit_codes").insert({ 
+      code: newCode.toUpperCase(), 
+      amount: val, 
+      max_uses: maxUses ? Number(maxUses) : null 
+    });
+    setNewCode(""); setAmount(""); setMaxUses("");
+    setBusy(false);
+    await load();
+  };
+
+  return (
+    <div className="space-y-6">
+      <section className="rounded-lg bg-card p-5 shadow-card">
+        <h3 className="font-bold">Gerar Código de Crédito</h3>
+        <div className="mt-3 grid grid-cols-2 gap-2">
+          <input value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="CÓDIGO" className="rounded border p-2 bg-background" />
+          <input value={amount} onChange={e => setAmount(e.target.value)} placeholder="Valor (R$)" className="rounded border p-2 bg-background" />
+          <input value={maxUses} onChange={e => setMaxUses(e.target.value)} placeholder="Máx. usos (vazio = ilimitado)" className="rounded border p-2 bg-background" />
+          <Button onClick={create} disabled={busy}>Criar</Button>
+        </div>
+      </section>
+      <div className="space-y-3">
+        {codes.map(c => (
+          <article key={c.id} className="rounded-lg bg-card p-4 shadow-card flex justify-between items-center">
+            <div>
+              <b className="text-primary">{c.code}</b>
+              <p className="text-sm text-muted-foreground">R$ {c.amount} · {c.uses_count}{c.max_uses ? `/${c.max_uses}` : ""} usos</p>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
 }

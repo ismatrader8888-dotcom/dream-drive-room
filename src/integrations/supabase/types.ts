@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_notifications: {
+        Row: {
+          active: boolean
+          created_at: string
+          created_by: string
+          id: string
+          message: string
+          title: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          created_by: string
+          id?: string
+          message: string
+          title: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          created_by?: string
+          id?: string
+          message?: string
+          title?: string
+        }
+        Relationships: []
+      }
       admin_support_sessions: {
         Row: {
           admin_id: string
@@ -102,6 +129,32 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notification_receipts: {
+        Row: {
+          notification_id: string
+          read_at: string
+          user_id: string
+        }
+        Insert: {
+          notification_id: string
+          read_at?: string
+          user_id: string
+        }
+        Update: {
+          notification_id?: string
+          read_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notification_receipts_notification_id_fkey"
+            columns: ["notification_id"]
+            isOneToOne: false
+            referencedRelation: "admin_notifications"
             referencedColumns: ["id"]
           },
         ]
@@ -253,6 +306,65 @@ export type Database = {
           reviewed_by?: string | null
           status?: Database["public"]["Enums"]["request_status"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      redeem_code_uses: {
+        Row: {
+          code_id: string
+          credit_amount: number
+          id: string
+          redeemed_at: string
+          user_id: string
+        }
+        Insert: {
+          code_id: string
+          credit_amount: number
+          id?: string
+          redeemed_at?: string
+          user_id: string
+        }
+        Update: {
+          code_id?: string
+          credit_amount?: number
+          id?: string
+          redeemed_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redeem_code_uses_code_id_fkey"
+            columns: ["code_id"]
+            isOneToOne: false
+            referencedRelation: "redeem_codes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      redeem_codes: {
+        Row: {
+          active: boolean
+          code: string
+          created_at: string
+          created_by: string
+          credit_amount: number
+          id: string
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          created_at?: string
+          created_by: string
+          credit_amount: number
+          id?: string
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          created_at?: string
+          created_by?: string
+          credit_amount?: number
+          id?: string
         }
         Relationships: []
       }
@@ -683,6 +795,7 @@ export type Database = {
         Returns: number
       }
       purchase_vehicle: { Args: { _catalog_id: string }; Returns: string }
+      redeem_credit_code: { Args: { _code: string }; Returns: Json }
       renew_vehicle: { Args: { _vehicle_id: string }; Returns: string }
       request_demo_recharge: { Args: { _amount: number }; Returns: string }
       request_withdrawal:
@@ -716,6 +829,7 @@ export type Database = {
         | "reward_transfer"
         | "signup_bonus"
         | "daily_spin"
+        | "redeem_code"
       request_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -855,6 +969,7 @@ export const Constants = {
         "reward_transfer",
         "signup_bonus",
         "daily_spin",
+        "redeem_code",
       ],
       request_status: ["pending", "approved", "rejected"],
     },
