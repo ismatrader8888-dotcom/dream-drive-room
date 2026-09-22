@@ -288,12 +288,13 @@ type Vehicle = {
   price: string;
   priceAmount: number;
   dailyRate: number;
+  promotion?: string;
   cycle: string;
   imageKey: ImageKey;
 };
 
 const vehicles: Vehicle[] = [
-  { id: "dolphin-mini-eco-new-york-50", name: "BYD Dolphin Mini ECO", region: "New York", daily: "R$ 3,50/dia", returnValue: "R$ 87,50", price: "R$ 50,00", priceAmount: 50, dailyRate: 7, cycle: "25 ciclos", imageKey: "entry" },
+  { id: "dolphin-mini-eco-new-york-50", name: "BYD Dolphin Mini ECO", region: "New York", daily: "R$ 6,00/dia", returnValue: "R$ 150,00", price: "R$ 50,00", priceAmount: 50, dailyRate: 12, promotion: "Promoção por tempo limitado", cycle: "25 ciclos", imageKey: "entry" },
   { id: "dolphin-mini-new-york-90", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 6,30/dia", returnValue: "R$ 157,50", price: "R$ 90,00", priceAmount: 90, dailyRate: 7, cycle: "25 ciclos", imageKey: "entry" },
   { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini Plus", region: "New York", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 250,00", priceAmount: 250, dailyRate: 10, cycle: "25 ciclos", imageKey: "entry" },
   { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 300,00/dia", returnValue: "R$ 7.500,00", price: "R$ 1.500,00", priceAmount: 1500, dailyRate: 20, cycle: "25 ciclos", imageKey: "top" },
@@ -379,6 +380,7 @@ function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehic
       <div className="grid grid-cols-[1fr_145px] gap-1 p-4 pb-2">
         <div>
           <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold">{vehicle.name}</h2><span className="rounded bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground">Operação</span></div>
+          {vehicle.promotion && <p className="mt-2 inline-flex rounded bg-accent px-2 py-1 text-[11px] font-bold text-accent-foreground">{vehicle.promotion}</p>}
           <p className="mt-2 text-xs text-muted-foreground">Recompensa virtual <b className="text-foreground">{period === "Diário" ? vehicle.daily : vehicle.returnValue}</b></p>
           <p className="mt-1 text-xs text-muted-foreground">Porcentagem diária <b className="text-primary">{vehicle.dailyRate}% a cada 24h</b></p>
           <p className="mt-1 text-xs text-muted-foreground">Retorno <b className="text-accent-foreground">{vehicle.returnValue}</b></p>
