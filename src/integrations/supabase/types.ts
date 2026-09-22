@@ -77,6 +77,35 @@ export type Database = {
         }
         Relationships: []
       }
+      daily_wheel_spins: {
+        Row: {
+          id: string
+          prize: number
+          spun_at: string
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          prize: number
+          spun_at?: string
+          user_id: string
+        }
+        Update: {
+          id?: string
+          prize?: number
+          spun_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "daily_wheel_spins_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pix_charges: {
         Row: {
           amount: number
@@ -161,6 +190,8 @@ export type Database = {
           phone: string | null
           referred_by: string | null
           reward_balance: number
+          signup_bonus_granted_at: string | null
+          welcome_bonus_seen_at: string | null
         }
         Insert: {
           balance?: number
@@ -173,6 +204,8 @@ export type Database = {
           phone?: string | null
           referred_by?: string | null
           reward_balance?: number
+          signup_bonus_granted_at?: string | null
+          welcome_bonus_seen_at?: string | null
         }
         Update: {
           balance?: number
@@ -185,6 +218,8 @@ export type Database = {
           phone?: string | null
           referred_by?: string | null
           reward_balance?: number
+          signup_bonus_granted_at?: string | null
+          welcome_bonus_seen_at?: string | null
         }
         Relationships: []
       }
@@ -630,7 +665,9 @@ export type Database = {
         }
         Returns: boolean
       }
+      consume_welcome_bonus_popup: { Args: never; Returns: boolean }
       get_admin_dashboard: { Args: never; Returns: Json }
+      get_my_daily_wheel_state: { Args: never; Returns: Json }
       get_my_referral_dashboard: { Args: never; Returns: Json }
       get_my_reward_summary: { Args: never; Returns: Json }
       has_role: {
@@ -654,6 +691,7 @@ export type Database = {
             Args: { _amount: number; _full_name: string; _pix_key: string }
             Returns: string
           }
+      spin_daily_wheel: { Args: never; Returns: Json }
       transfer_my_vehicle_rewards: { Args: never; Returns: number }
       update_pix_charge_status: {
         Args: {
@@ -676,6 +714,8 @@ export type Database = {
         | "referral_bonus"
         | "vehicle_reward"
         | "reward_transfer"
+        | "signup_bonus"
+        | "daily_spin"
       request_status: "pending" | "approved" | "rejected"
     }
     CompositeTypes: {
@@ -813,6 +853,8 @@ export const Constants = {
         "referral_bonus",
         "vehicle_reward",
         "reward_transfer",
+        "signup_bonus",
+        "daily_spin",
       ],
       request_status: ["pending", "approved", "rejected"],
     },

@@ -91,3 +91,19 @@
 @utility pulse-ring {
   animation: voltiva-pulse-ring 2s ease-out infinite;
 }
+
+@utility lucky-wheel-face {
+  background: conic-gradient(
+    from -30deg,
+    var(--color-primary) 0deg 60deg,
+    var(--color-accent) 60deg 120deg,
+    var(--color-secondary) 120deg 180deg,
+    var(--color-primary) 180deg 240deg,
+    var(--color-accent) 240deg 300deg,
+    var(--color-secondary) 300deg 360deg
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lucky-wheel-face { transition-duration: 1ms; }
+}
