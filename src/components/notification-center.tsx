@@ -81,7 +81,7 @@ export function NotificationCenter({ userId }: { userId: string }) {
         <Bell />
         {unread.length > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-foreground px-1 text-[10px] text-background">{unread.length > 9 ? "9+" : unread.length}</span>}
       </Button>
-      <Dialog open={Boolean(activeNotification)} onOpenChange={(open) => { if (!open) setActiveNotification(null); }}>
+      <Dialog open={Boolean(activeNotification)} onOpenChange={(open) => { if (!open && activeNotification) void dismiss(activeNotification.id); }}>
         <DialogContent className="max-w-[calc(100%-2rem)] rounded-2xl">
           <DialogHeader className="text-left"><DialogTitle className="text-xl">{activeNotification?.title}</DialogTitle></DialogHeader>
           <p className="whitespace-pre-wrap text-muted-foreground">{activeNotification?.message}</p>
