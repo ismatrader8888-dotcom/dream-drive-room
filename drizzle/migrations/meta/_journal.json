@@ -120,6 +120,13 @@
       "when": 1790099385606,
       "tag": "0016_allow_specific_user_withdrawal_below_reward_minimum",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "7",
+      "when": 1790099400208,
+      "tag": "0017_expose_my_withdrawal_eligibility",
+      "breakpoints": true
     }
   ]
 }
