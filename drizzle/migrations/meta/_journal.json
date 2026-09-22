@@ -99,6 +99,13 @@
       "when": 1790084696021,
       "tag": "0013_add_signup_bonus_daily_wheel_and_withdrawal_gate",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1790084831274,
+      "tag": "0014_secure_legacy_withdrawal_requirement",
+      "breakpoints": true
     }
   ]
 }
