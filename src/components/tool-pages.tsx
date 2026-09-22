@@ -1,4 +1,4 @@
-import { ArrowLeft, CheckCircle2, ClipboardCopy, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins, MessageCircle, Send, Sparkles } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ClipboardCopy, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins, MessageCircle, Send, Sparkles, Gift } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import QRCode from "qrcode";
 import { useServerFn } from "@tanstack/react-start";
