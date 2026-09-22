@@ -390,6 +390,7 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, rewardsTotal
   const [charge, setCharge] = useState<{ id: string; code: string; image: string; expiresAt: string } | null>(null);
   const [remaining, setRemaining] = useState(300);
   const [busy, setBusy] = useState(false);
+  const [withdrawalEligibility, setWithdrawalEligibility] = useState<{ eligible: boolean; exempt: boolean } | null>(null);
   const [withdrawals, setWithdrawals] = useState<Array<{ id: string; full_name: string; pix_key: string; amount: number; status: string; created_at: string }>>([]);
   const loadWithdrawals = async () => {
     if (mode !== "withdraw") return;
@@ -397,6 +398,13 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, rewardsTotal
     setWithdrawals(data ?? []);
   };
   useEffect(() => { void loadWithdrawals(); }, [mode]);
+  useEffect(() => {
+    if (mode !== "withdraw") return;
+    void supabase.rpc("get_my_withdrawal_eligibility").then(({ data }) => {
+      const result = data as { eligible?: boolean; exempt?: boolean } | null;
+      setWithdrawalEligibility({ eligible: result?.eligible === true, exempt: result?.exempt === true });
+    });
+  }, [mode]);
   useEffect(() => {
     if (mode !== "recharge" || charge) return;
     let active = true;
@@ -457,7 +465,7 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, rewardsTotal
         }
       } catch { setMessage("Confira o nome completo, CPF e valor informados."); }
     } else if (mode === "withdraw") {
-      if (rewardsTotal < 30) {
+      if (withdrawalEligibility?.eligible === false) {
         setMessage(`Você precisa gerar pelo menos R$ 30,00 em recompensas totais. Faltam ${money(30 - rewardsTotal)}.`);
         setBusy(false);
         return;
@@ -475,14 +483,14 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, rewardsTotal
       <section className="m-4 rounded-2xl bg-card p-5 shadow-card">
         <p className="text-sm text-muted-foreground">{mode === "withdraw" ? "Prêmios disponíveis" : "Créditos do jogo"}</p>
         <b className="mt-1 block text-3xl">{(mode === "withdraw" ? rewardBalance : balance).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</b>
-        <p className="mt-1 text-xs text-muted-foreground">{mode === "withdraw" ? rewardsTotal >= 30 ? "Requisito de R$ 30,00 em recompensas totais atingido." : `Gere mais ${money(30 - rewardsTotal)} em recompensas para liberar saques.` : "Use seus créditos para veículos e ações dentro do jogo."}</p>
+        <p className="mt-1 text-xs text-muted-foreground">{mode === "withdraw" ? withdrawalEligibility?.exempt ? "Saque liberado para esta conta." : rewardsTotal >= 30 ? "Requisito de R$ 30,00 em recompensas totais atingido." : `Gere mais ${money(30 - rewardsTotal)} em recompensas para liberar saques.` : "Use seus créditos para veículos e ações dentro do jogo."}</p>
         {(mode === "recharge" || mode === "withdraw") && !charge && <><label className="mt-5 block text-sm text-muted-foreground" htmlFor="payer-name">Nome completo</label><input id="payer-name" autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder={mode === "withdraw" ? "Nome do titular" : "Nome do pagador"} className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" />{mode === "recharge" && <><label className="mt-4 block text-sm text-muted-foreground" htmlFor="payer-document">CPF</label><input id="payer-document" inputMode="numeric" value={document} onChange={(event) => setDocument(event.target.value.replace(/\D/g, "").slice(0, 11))} placeholder="000.000.000-00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}</>}
         {!charge && <>
         <label className="mt-5 block text-sm text-muted-foreground" htmlFor="amount">Valor</label>
         <input id="amount" inputMode="decimal" value={amount} onChange={(event) => { setAmount(event.target.value); setMessage(""); }} placeholder="0,00" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 text-lg outline-none focus:border-primary" />
         {mode === "withdraw" && <><label className="mt-4 block text-sm text-muted-foreground" htmlFor="withdraw-pix">Chave PIX</label><input id="withdraw-pix" value={pixKey} onChange={(event) => setPixKey(event.target.value)} placeholder="CPF, e-mail ou telefone" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 outline-none focus:border-primary" /></>}
         <div className="mt-3 flex flex-wrap gap-2">{["10", "50", "100", "500"].map((value) => <Button key={value} variant="secondary" size="sm" className="rounded-full" onClick={() => setAmount(value)}>R$ {value}</Button>)}</div>
-        <Button className="mt-5 h-12 w-full rounded-full text-base" disabled={!amount || busy || (mode === "withdraw" && (!pixKey.trim() || name.trim().length < 5 || rewardsTotal < 30))} onClick={() => void submit()}>
+        <Button className="mt-5 h-12 w-full rounded-full text-base" disabled={!amount || busy || (mode === "withdraw" && (!pixKey.trim() || name.trim().length < 5 || withdrawalEligibility?.eligible !== true))} onClick={() => void submit()}>
           {mode === "recharge" ? "Recarregar agora" : mode === "withdraw" ? "Solicitar saque" : "Transferir"}
         </Button>
         </>}
