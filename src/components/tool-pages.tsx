@@ -558,16 +558,30 @@ function SettingsPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-function ExchangePage({ onBack }: { onBack: () => void }) {
+function ExchangePage({ onBack, onBalanceChanged }: { onBack: () => void; onBalanceChanged: () => void }) {
   const [code, setCode] = useState("");
   const [message, setMessage] = useState("");
+  const [success, setSuccess] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const redeem = async () => {
+    if (!code.trim()) return;
+    setBusy(true); setMessage(""); setSuccess(false);
+    const { data, error } = await supabase.rpc("redeem_credit_code", { _code: code.trim() });
+    setBusy(false);
+    if (error) {
+      setMessage(error.message.includes("CODE_ALREADY_USED") ? "Você já resgatou este código." : "Código inválido ou inativo.");
+      return;
+    }
+    const result = data as { amount?: number } | null;
+    setSuccess(true); setMessage(`${money(Number(result?.amount ?? 0))} adicionados aos seus créditos.`); setCode(""); onBalanceChanged();
+  };
   return (
     <Shell title="Intercâmbio" onBack={onBack}>
       <section className="m-4 rounded-2xl bg-card p-5 shadow-card">
         <p className="text-sm text-muted-foreground">Insira o código de resgate</p>
         <input value={code} onChange={(event) => { setCode(event.target.value); setMessage(""); }} placeholder="Ex.: BYD-2026" className="mt-2 h-12 w-full rounded-lg border border-border bg-background px-3 uppercase outline-none focus:border-primary" />
-        <Button className="mt-4 h-12 w-full rounded-full" disabled={!code} onClick={() => setMessage("Código inválido ou já utilizado.")}>Resgatar</Button>
-        {message && <p className="mt-3 text-center text-sm text-destructive">{message}</p>}
+        <Button className="mt-4 h-12 w-full rounded-full" disabled={!code.trim() || busy} onClick={() => void redeem()}>{busy ? "Resgatando..." : "Resgatar"}</Button>
+        {message && <p className={`mt-3 text-center text-sm ${success ? "text-success" : "text-destructive"}`}>{message}</p>}
       </section>
     </Shell>
   );
@@ -603,7 +617,7 @@ export function ToolPage({ view, onBack, balance = 0, rewardBalance = 0, rewards
     case "inviteReward": return <InviteRewardPage onBack={onBack} />;
     case "tasks": return <TasksPage onBack={onBack} onBalanceChanged={onBalanceChanged} />;
     case "orders": return <OrdersPage onBack={onBack} />;
-    case "exchange": return <ExchangePage onBack={onBack} />;
+    case "exchange": return <ExchangePage onBack={onBack} onBalanceChanged={onBalanceChanged} />;
     case "settings": return <SettingsPage onBack={onBack} />;
     case "support": return <SupportPage onBack={onBack} />;
     case "recharge": return <BalancePage title="Recarga PIX" onBack={onBack} mode="recharge" balance={balance} rewardBalance={rewardBalance} rewardsTotal={rewards.total} onBalanceChanged={onBalanceChanged} />;

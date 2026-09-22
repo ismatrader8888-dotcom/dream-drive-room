@@ -222,7 +222,7 @@ function Index() {
   ) : view === "membership" ? (
     <MembershipPage onBack={() => setView("profile")} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "profile" ? (
-    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} />
+    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} userId={userId} />
   ) : view === "resources" ? (
     <ResourcesPage owned={owned} onBuy={() => setView("home")} onRenew={renewVehicle} renewing={renewing} />
   ) : view === "news" ? (
@@ -235,7 +235,6 @@ function Index() {
     <main className="min-h-screen bg-shell font-sans text-foreground">
       <div className="mx-auto min-h-screen w-full max-w-[430px] overflow-hidden bg-background shadow-phone">
         {page}
-        {userId && <NotificationCenter userId={userId} />}
         {!isTool && view !== "invite" && view !== "membership" && <BottomNav view={view} onNavigate={setView} />}
         <Dialog open={Boolean(insufficient)} onOpenChange={(open) => { if (!open) setInsufficient(null); }}>
           <DialogContent className="max-w-[calc(100%-2rem)] rounded-xl">
@@ -459,13 +458,13 @@ function VehicleCard({ vehicle, onRenew, renewing }: { vehicle: OwnedVehicle; on
 
 const moneyValue = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-function ProfilePage({ onNavigate, displayName, inviteCode, balance, rewardBalance, rewards }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; balance: number; rewardBalance: number; rewards: RewardSummary }) {
+function ProfilePage({ onNavigate, displayName, inviteCode, balance, rewardBalance, rewards, userId }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; balance: number; rewardBalance: number; rewards: RewardSummary; userId: string }) {
   return (
     <div className="min-h-screen bg-highlight pb-24 pt-4">
       <header className="flex items-center gap-4 px-5">
         <img src={bydLogo} alt="BYD Driving" width={816} height={816} className="h-16 w-16 rounded-full bg-card object-contain p-1 shadow-card" />
         <div className="min-w-0 flex-1"><h1 className="truncate text-xl font-bold">{displayName}</h1><p className="mt-1 text-sm text-muted-foreground"><span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">LV1</span> &nbsp;{inviteCode}</p></div>
-        <Button variant="outline" size="icon" aria-label="Notificações" className="relative h-12 w-12 rounded-full bg-card shadow-card"><Bell /><span className="absolute -right-1 -top-1 rounded-full bg-foreground px-1 text-[10px] text-background">9+</span></Button>
+        <NotificationCenter userId={userId} />
       </header>
       <section className="mx-4 mt-5 overflow-hidden rounded-2xl bg-card shadow-card">
         <button type="button" onClick={() => onNavigate("membership")} className="flex w-full items-center justify-between bg-primary px-4 py-3 text-left text-primary-foreground"><b>◉ Vip1</b><span>Direitos de membro &gt;</span></button>

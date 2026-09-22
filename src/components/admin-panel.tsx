@@ -168,29 +168,31 @@ function Referrals({ rows }: { rows: Referral[] }) {
   return <>{rows.map((row) => <article key={row.id} className="rounded-lg bg-card p-4 shadow-card"><div className="flex items-start justify-between gap-3"><div className="min-w-0"><b className="block truncate">{row.referrerEmail ?? "Usuário"} → {row.referredEmail ?? "Convidado"}</b><p className="mt-1 text-xs text-muted-foreground">Código {row.inviteCode} · {row.deposits} depósito(s)</p></div><span className={`rounded-full px-2 py-1 text-xs font-semibold ${row.status === "effective" ? "bg-success/15 text-success" : "bg-muted text-muted-foreground"}`}>{row.status === "effective" ? "Eficaz" : "Aguardando"}</span></div><div className="mt-3 grid grid-cols-3 gap-2 text-sm"><span className="text-muted-foreground">Depositado<b className="block text-foreground">{money(row.totalDeposited)}</b></span><span className="text-muted-foreground">Bônus 5%<b className="block text-foreground">{money(row.refereeBonus)}</b></span><span className="text-muted-foreground">Bônus 15%<b className="block text-foreground">{money(row.referrerBonus)}</b></span></div></article>)}</>;
 }
 function NotificationsManager() {
-  const [notifs, setNotifs] = useState<any[]>([]);
+  const [notifs, setNotifs] = useState<Array<{ id: string; title: string; message: string; active: boolean; created_at: string }>>([]);
   const [title, setTitle] = useState("");
   const [content, setContent] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase.from("global_notifications").select("*").order("created_at", { ascending: false });
+    const { data } = await supabase.from("admin_notifications").select("id, title, message, active, created_at").order("created_at", { ascending: false });
     setNotifs(data ?? []);
   };
 
   useEffect(() => { void load(); }, []);
 
   const create = async () => {
-    if (!title || !content) return;
+    if (!title.trim() || !content.trim()) return;
     setBusy(true);
-    await supabase.from("global_notifications").insert({ title, content, type: "info" });
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData.user) { setBusy(false); return; }
+    await supabase.from("admin_notifications").insert({ title: title.trim(), message: content.trim(), created_by: authData.user.id });
     setTitle(""); setContent("");
     setBusy(false);
     await load();
   };
 
   const toggle = async (id: string, active: boolean) => {
-    await supabase.from("global_notifications").update({ active }).eq("id", id);
+    await supabase.from("admin_notifications").update({ active }).eq("id", id);
     await load();
   };
 
@@ -211,7 +213,7 @@ function NotificationsManager() {
                 {n.active ? "Ativa" : "Inativa"}
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground mt-1">{n.content}</p>
+            <p className="text-sm text-muted-foreground mt-1">{n.message}</p>
           </article>
         ))}
       </div>
@@ -220,15 +222,14 @@ function NotificationsManager() {
 }
 
 function CodesManager() {
-  const [codes, setCodes] = useState<any[]>([]);
+  const [codes, setCodes] = useState<Array<{ id: string; code: string; credit_amount: number; active: boolean; redeem_code_uses: Array<{ count: number }> }>>([]);
   const [newCode, setNewCode] = useState("");
   const [amount, setAmount] = useState("");
-  const [maxUses, setMaxUses] = useState("");
   const [busy, setBusy] = useState(false);
 
   const load = async () => {
-    const { data } = await supabase.from("credit_codes").select("*").order("created_at", { ascending: false });
-    setCodes(data ?? []);
+    const { data } = await supabase.from("redeem_codes").select("id, code, credit_amount, active, redeem_code_uses(count)").order("created_at", { ascending: false });
+    setCodes((data ?? []) as unknown as typeof codes);
   };
 
   useEffect(() => { void load(); }, []);
@@ -237,15 +238,14 @@ function CodesManager() {
     const val = Number(amount);
     if (!newCode || isNaN(val) || val <= 0) return;
     setBusy(true);
-    await supabase.from("credit_codes").insert({ 
-      code: newCode.toUpperCase(), 
-      amount: val, 
-      max_uses: maxUses ? Number(maxUses) : null 
-    });
-    setNewCode(""); setAmount(""); setMaxUses("");
+    const { data: authData } = await supabase.auth.getUser();
+    if (!authData.user) { setBusy(false); return; }
+    await supabase.from("redeem_codes").insert({ code: newCode.trim().toUpperCase(), credit_amount: val, created_by: authData.user.id });
+    setNewCode(""); setAmount("");
     setBusy(false);
     await load();
   };
+  const toggle = async (id: string, active: boolean) => { await supabase.from("redeem_codes").update({ active }).eq("id", id); await load(); };
 
   return (
     <div className="space-y-6">
@@ -254,17 +254,17 @@ function CodesManager() {
         <div className="mt-3 grid grid-cols-2 gap-2">
           <input value={newCode} onChange={e => setNewCode(e.target.value)} placeholder="CÓDIGO" className="rounded border p-2 bg-background" />
           <input value={amount} onChange={e => setAmount(e.target.value)} placeholder="Valor (R$)" className="rounded border p-2 bg-background" />
-          <input value={maxUses} onChange={e => setMaxUses(e.target.value)} placeholder="Máx. usos (vazio = ilimitado)" className="rounded border p-2 bg-background" />
           <Button onClick={create} disabled={busy}>Criar</Button>
         </div>
       </section>
       <div className="space-y-3">
         {codes.map(c => (
-          <article key={c.id} className="rounded-lg bg-card p-4 shadow-card flex justify-between items-center">
+          <article key={c.id} className="rounded-lg bg-card p-4 shadow-card flex justify-between items-center gap-3">
             <div>
               <b className="text-primary">{c.code}</b>
-              <p className="text-sm text-muted-foreground">R$ {c.amount} · {c.uses_count}{c.max_uses ? `/${c.max_uses}` : ""} usos</p>
+              <p className="text-sm text-muted-foreground">{money(Number(c.credit_amount))} · {c.redeem_code_uses[0]?.count ?? 0} resgate(s)</p>
             </div>
+            <Button size="sm" variant={c.active ? "default" : "outline"} onClick={() => void toggle(c.id, !c.active)}>{c.active ? "Ativo" : "Inativo"}</Button>
           </article>
         ))}
       </div>
