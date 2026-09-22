@@ -1,37 +1,37 @@
 import { useEffect, useState } from "react";
-import { Bell, X, Info, AlertTriangle, CheckCircle, AlertCircle } from "lucide-react";
+import { Bell } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
 type Notification = {
   id: string;
   title: string;
-  content: string;
-  type: "info" | "warning" | "success" | "error";
+  message: string;
   created_at: string;
 };
 
 type UserState = {
   notification_id: string;
-  dismissed_at: string | null;
+  read_at: string;
 };
 
-export function NotificationCenter({ userId }: { userId: string }) {
+export function NotificationCenter({ userId, showButton = true, autoPopup = true }: { userId: string; showButton?: boolean; autoPopup?: boolean }) {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [userStates, setUserStates] = useState<Record<string, UserState>>({});
   const [activeNotification, setActiveNotification] = useState<Notification | null>(null);
+  const [showHistory, setShowHistory] = useState(false);
 
   const load = async () => {
     const { data: notifs } = await supabase
-      .from("global_notifications" as any)
-      .select("*")
+      .from("admin_notifications")
+      .select("id, title, message, created_at")
       .eq("active", true)
       .order("created_at", { ascending: false });
 
     const { data: states } = await supabase
-      .from("user_notification_states" as any)
-      .select("notification_id, dismissed_at")
+      .from("notification_receipts")
+      .select("notification_id, read_at")
       .eq("user_id", userId);
 
     if (notifs) setNotifications(notifs);
@@ -48,63 +48,55 @@ export function NotificationCenter({ userId }: { userId: string }) {
     if (userId) void load();
   }, [userId]);
 
-  const undismissed = notifications.filter(n => !userStates[n.id]?.dismissed_at);
+  const unread = notifications.filter(n => !userStates[n.id]);
 
   useEffect(() => {
-    if (undismissed.length > 0 && !activeNotification) {
-      setActiveNotification(undismissed[0]);
+    const first = unread[0];
+    if (autoPopup && first && !activeNotification && !showHistory) {
+      setActiveNotification(first);
     }
-  }, [undismissed, activeNotification]);
+  }, [unread, activeNotification, showHistory, autoPopup]);
 
   const dismiss = async (id: string) => {
     const { error } = await supabase
-      .from("user_notification_states" as any)
+      .from("notification_receipts")
       .upsert({
         user_id: userId,
         notification_id: id,
-        dismissed_at: new Date().toISOString()
+        read_at: new Date().toISOString()
       }, { onConflict: "user_id,notification_id" });
 
     if (!error) {
       setUserStates(prev => ({
         ...prev,
-        [id]: { notification_id: id, dismissed_at: new Date().toISOString() }
+        [id]: { notification_id: id, read_at: new Date().toISOString() }
       }));
       setActiveNotification(null);
     }
   };
 
-  const getIcon = (type: string) => {
-    switch (type) {
-      case "warning": return <AlertTriangle className="h-6 w-6 text-warning" />;
-      case "success": return <CheckCircle className="h-6 w-6 text-success" />;
-      case "error": return <AlertCircle className="h-6 w-6 text-destructive" />;
-      default: return <Info className="h-6 w-6 text-primary" />;
-    }
-  };
-
-  if (!activeNotification) return null;
-
   return (
-    <Dialog open={!!activeNotification} onOpenChange={(open) => { if (!open) setActiveNotification(null); }}>
-      <DialogContent className="max-w-[calc(100%-2rem)] rounded-2xl">
-        <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-muted">
-            {getIcon(activeNotification.type)}
+    <>
+      {showButton && <Button variant="outline" size="icon" aria-label="Notificações" onClick={() => setShowHistory(true)} className="relative h-12 w-12 rounded-full bg-card shadow-card">
+        <Bell />
+        {unread.length > 0 && <span className="absolute -right-1 -top-1 rounded-full bg-foreground px-1 text-[10px] text-background">{unread.length > 9 ? "9+" : unread.length}</span>}
+      </Button>}
+      <Dialog open={Boolean(activeNotification)} onOpenChange={(open) => { if (!open && activeNotification) void dismiss(activeNotification.id); }}>
+        <DialogContent className="max-w-[calc(100%-2rem)] rounded-2xl">
+          <DialogHeader className="text-left"><DialogTitle className="text-xl">{activeNotification?.title}</DialogTitle></DialogHeader>
+          <p className="whitespace-pre-wrap text-muted-foreground">{activeNotification?.message}</p>
+          {activeNotification && <Button className="mt-4 h-12 w-full rounded-full" onClick={() => void dismiss(activeNotification.id)}>Entendi</Button>}
+        </DialogContent>
+      </Dialog>
+      <Dialog open={showHistory} onOpenChange={setShowHistory}>
+        <DialogContent className="max-h-[80vh] max-w-[calc(100%-2rem)] overflow-y-auto rounded-2xl">
+          <DialogHeader><DialogTitle>Notificações</DialogTitle></DialogHeader>
+          <div className="space-y-3">
+            {notifications.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">Nenhuma notificação.</p>}
+            {notifications.map((item) => <button type="button" key={item.id} onClick={() => { setShowHistory(false); setActiveNotification(item); }} className="w-full rounded-xl border border-border p-4 text-left"><div className="flex items-start justify-between gap-3"><b>{item.title}</b>{!userStates[item.id] && <span className="mt-1 h-2 w-2 shrink-0 rounded-full bg-primary" />}</div><p className="mt-1 line-clamp-2 text-sm text-muted-foreground">{item.message}</p><p className="mt-2 text-xs text-muted-foreground">{new Date(item.created_at).toLocaleString("pt-BR")}</p></button>)}
           </div>
-          <DialogHeader className="text-left">
-            <DialogTitle className="text-xl">{activeNotification.title}</DialogTitle>
-          </DialogHeader>
-        </div>
-        <div className="mt-2 text-muted-foreground whitespace-pre-wrap">
-          {activeNotification.content}
-        </div>
-        <div className="mt-4 flex flex-col gap-2">
-          <Button className="h-12 w-full rounded-full" onClick={() => void dismiss(activeNotification.id)}>
-            Entendi
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
