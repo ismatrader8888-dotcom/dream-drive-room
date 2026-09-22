@@ -782,6 +782,7 @@ export type Database = {
       get_my_daily_wheel_state: { Args: never; Returns: Json }
       get_my_referral_dashboard: { Args: never; Returns: Json }
       get_my_reward_summary: { Args: never; Returns: Json }
+      get_my_withdrawal_eligibility: { Args: never; Returns: Json }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
