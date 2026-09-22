@@ -30,7 +30,7 @@
 - [x] Substituir integralmente a SimPix pela SagacePay para novos depósitos e webhooks
 - [x] Aplicar recompensas de 7%, 10%, 15%, 20% e 25% por faixa de preço e exibir a taxa diária
 - [x] Permitir acesso administrativo auditado e somente leitura às contas dos usuários
-- [ ] Conceder bônus único de R$ 15 no cadastro e mostrar confirmação
-- [ ] Adicionar BYD Dolphin Mini ECO por R$ 50
-- [ ] Exigir R$ 30 em recompensas totais para solicitar saque
-- [ ] Criar roleta diária na aba Tarefa com prêmios em créditos
+- [x] Conceder bônus único de R$ 15 no cadastro e mostrar confirmação
+- [x] Adicionar BYD Dolphin Mini ECO por R$ 50
+- [x] Exigir R$ 30 em recompensas totais para solicitar saque
+- [x] Criar roleta diária na aba Tarefa com prêmios em créditos

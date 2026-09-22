@@ -1,6 +1,5 @@
 import { ArrowLeft, CheckCircle2, ClipboardCopy, ClipboardList, FileX2, FileMinus2, Plus, User, Ticket, Coins, MessageCircle, Send, Sparkles, Gift } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
-import QRCode from "qrcode";
 import { useServerFn } from "@tanstack/react-start";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
@@ -397,6 +396,7 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, rewardsTotal
         const result = await createCharge({ data: { amount: value, name, document } });
         if (!result.ok) setMessage(result.error === "PIX_SETUP_REQUIRED" ? "A recarga PIX está aguardando a ativação da SagacePay." : "Não foi possível gerar o PIX. Tente novamente.");
         else {
+          const { default: QRCode } = await import("qrcode");
           const image = await QRCode.toDataURL(result.qrCode, { width: 320, margin: 2 });
           setCharge({ id: result.chargeId, code: result.qrCode, image, expiresAt: result.expiresAt });
         }
