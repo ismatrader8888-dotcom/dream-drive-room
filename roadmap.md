@@ -34,6 +34,6 @@
 - [x] Adicionar BYD Dolphin Mini ECO por R$ 50
 - [x] Exigir R$ 30 em recompensas totais para solicitar saque
 - [x] Criar roleta diária na aba Tarefa com prêmios em créditos
-- [x] Aplicar promoção de 12% ao dia ao BYD Dolphin Mini ECO
+- [x] Aplicar promoção de 9% ao dia ao BYD Dolphin Mini ECO
 - [x] Notificações globais criadas pelo administrador, com popup e sininho por usuário
 - [x] Códigos resgatáveis criados pelo administrador e resgate único em Intercâmbio
