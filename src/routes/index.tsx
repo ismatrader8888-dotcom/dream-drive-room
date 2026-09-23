@@ -34,6 +34,7 @@ import bydEntry from "@/assets/byd-entry.png";
 import bydMid from "@/assets/byd-mid.png";
 import bydPremium from "@/assets/byd-premium.png";
 import bydTop from "@/assets/byd-top.png";
+import bydChargingStation from "@/assets/byd-charging-station.png";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -276,9 +277,9 @@ function useCountdown(target: number) {
   return `${days}d ${pad(Math.floor(diff / 3600000) % 24)}:${pad(Math.floor(diff / 60000) % 60)}:${pad(Math.floor(diff / 1000) % 60)}`;
 }
 
-type ImageKey = "entry" | "mid" | "premium" | "top";
+type ImageKey = "entry" | "mid" | "premium" | "top" | "charging";
 
-const vehicleImages: Record<ImageKey, string> = { entry: bydEntry, mid: bydMid, premium: bydPremium, top: bydTop };
+const vehicleImages: Record<ImageKey, string> = { entry: bydEntry, mid: bydMid, premium: bydPremium, top: bydTop, charging: bydChargingStation };
 
 type Vehicle = {
   id: string;
@@ -292,6 +293,7 @@ type Vehicle = {
   promotion?: string;
   cycle: string;
   imageKey: ImageKey;
+  category?: "vehicle" | "station";
 };
 
 const vehicles: Vehicle[] = [
@@ -307,6 +309,9 @@ const vehicles: Vehicle[] = [
   { id: "han-los-angeles", name: "BYD Han", region: "Los Angeles", daily: "R$ 64,00/dia", returnValue: "R$ 1.600,00", price: "R$ 800,00", priceAmount: 800, dailyRate: 8, cycle: "25 ciclos", imageKey: "premium" },
   { id: "seal-jerusalem", name: "BYD Seal", region: "Jerusalém", daily: "R$ 31,88/dia", returnValue: "R$ 796,88", price: "R$ 425,00", priceAmount: 425, dailyRate: 7.5, cycle: "25 ciclos", imageKey: "mid" },
   { id: "han-berlim", name: "BYD Han", region: "Berlim", daily: "R$ 73,60/dia", returnValue: "R$ 1.840,00", price: "R$ 920,00", priceAmount: 920, dailyRate: 8, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "byd-charging-station-2500", name: "Central de Recarga BYD 2.500", region: "Global", daily: "R$ 375,00/dia", returnValue: "R$ 11.250,00", price: "R$ 2.500,00", priceAmount: 2500, dailyRate: 15, cycle: "30 ciclos", imageKey: "charging", category: "station" },
+  { id: "byd-charging-station-5000", name: "Central de Recarga BYD 5.000", region: "Global", daily: "R$ 900,00/dia", returnValue: "R$ 27.000,00", price: "R$ 5.000,00", priceAmount: 5000, dailyRate: 18, cycle: "30 ciclos", imageKey: "charging", category: "station" },
+  { id: "byd-charging-station-8000", name: "Central de Recarga BYD 8.000", region: "Global", daily: "R$ 1.760,00/dia", returnValue: "R$ 52.800,00", price: "R$ 8.000,00", priceAmount: 8000, dailyRate: 22, cycle: "30 ciclos", imageKey: "charging", category: "station" },
 ];
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
@@ -330,7 +335,8 @@ function MarketplacePage({ onRent, renting }: { onRent: (vehicle: Vehicle) => vo
     else { setSort(key); setDesc(true); }
   };
 
-  let visible = region === "Todos" ? vehicles : vehicles.filter((vehicle) => vehicle.region === region);
+  const catalog = vehicles.filter((vehicle) => period === "Ciclo" ? vehicle.category === "station" : vehicle.category !== "station");
+  let visible = period === "Ciclo" || region === "Todos" ? catalog : catalog.filter((vehicle) => vehicle.region === region);
   if (maxPrice !== null) visible = visible.filter((vehicle) => toNumber(vehicle.price) <= maxPrice);
   if (sort !== "Padrão") {
     const value = (vehicle: Vehicle) => (sort === "Preço" ? toNumber(vehicle.price) : sort === "Recompensa" ? toNumber(vehicle.daily) : rateOf(vehicle));
@@ -365,9 +371,9 @@ function MarketplacePage({ onRent, renting }: { onRent: (vehicle: Vehicle) => vo
           </div>
         </div>
       )}
-      <div className="mt-3 flex flex-wrap gap-2 px-3">
+      {period === "Diário" && <div className="mt-3 flex flex-wrap gap-2 px-3">
         {regions.map((item) => <Button key={item} onClick={() => setRegion(item)} variant={region === item ? "default" : "secondary"} size="sm" className="rounded-full px-4 shadow-none">{item}</Button>)}
-      </div>
+      </div>}
       <div className="mt-3 space-y-3 px-2">
         {visible.length ? visible.map((vehicle) => <MarketVehicleCard key={vehicle.id} vehicle={vehicle} period={period} rented={renting && rented === vehicle.id} onRent={() => { setRented(vehicle.id); onRent(vehicle); }} />) : <div className="rounded-2xl bg-card p-8 text-center text-sm text-muted-foreground">Novos veículos para {region} chegam em breve.</div>}
       </div>
@@ -383,11 +389,11 @@ function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehic
           <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold">{vehicle.name}</h2><span className="rounded bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground">Operação</span></div>
           {vehicle.promotion && <p className="mt-2 inline-flex rounded bg-accent px-2 py-1 text-[11px] font-bold text-accent-foreground">{vehicle.promotion}</p>}
           <p className="mt-2 text-xs text-muted-foreground">Recompensa virtual <b className="text-foreground">{period === "Diário" ? vehicle.daily : vehicle.returnValue}</b></p>
-          <p className="mt-1 text-xs text-muted-foreground">Porcentagem diária <b className="text-primary">{vehicle.dailyRate}% a cada 24h</b></p>
+          <p className="mt-1 text-xs text-muted-foreground">Rendimento por ciclo <b className="text-primary">{vehicle.dailyRate}% a cada 24h</b></p>
           <p className="mt-1 text-xs text-muted-foreground">Retorno <b className="text-accent-foreground">{vehicle.returnValue}</b></p>
-          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground"><span className="rounded bg-muted px-2 py-1">{vehicle.region}</span><span className="rounded bg-muted px-2 py-1">Rende seg–sex</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
+          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">{vehicle.category !== "station" && <span className="rounded bg-muted px-2 py-1">{vehicle.region}</span>}<span className="rounded bg-muted px-2 py-1">A cada 24h</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
         </div>
-        <img src={vehicleImages[vehicle.imageKey]} alt={`${vehicle.name} disponível em ${vehicle.region}`} loading="lazy" width={992} height={672} className="h-28 w-full self-center object-contain" />
+        <img src={vehicleImages[vehicle.imageKey]} alt={vehicle.category === "station" ? vehicle.name : `${vehicle.name} disponível em ${vehicle.region}`} loading="lazy" width={vehicle.category === "station" ? 1024 : 992} height={vehicle.category === "station" ? 768 : 672} className="h-28 w-full self-center object-contain" />
       </div>
       <div className="flex items-center justify-between border-t border-border px-4 py-2"><b className="text-xl">{vehicle.price}</b><Button onClick={onRent} disabled={rented} className="h-10 rounded-full px-7 text-base shadow-none">{rented ? "Selecionado" : "Alugar"}</Button></div>
     </article>
@@ -403,7 +409,7 @@ function ResourcesPage({ owned, onBuy, onRenew, renewing }: { owned: OwnedVehicl
         {owned.map((vehicle, index) => (
           <span key={vehicle.plate} className="drive-marker" style={{ animationDelay: `${index * -3.5}s` }}>
             <span className="relative grid h-9 w-9 place-items-center rounded-full bg-primary text-primary-foreground shadow-card">
-              <CarFront className="h-5 w-5" />
+              {vehicle.imageKey === "charging" ? <Building2 className="h-5 w-5" /> : <CarFront className="h-5 w-5" />}
               <span className="pulse-ring absolute inset-0 rounded-full border border-primary" />
             </span>
           </span>
@@ -411,13 +417,13 @@ function ResourcesPage({ owned, onBuy, onRenew, renewing }: { owned: OwnedVehicl
       </div>
       <section className="px-4 pt-4">
         <div className="flex items-center justify-between gap-3">
-          <h1 className="text-xl font-bold">Meus veículos</h1>
+          <h1 className="text-xl font-bold">Meus recursos</h1>
           <Button variant="outline" className="h-10 rounded-full bg-card px-4 shadow-none">
             <span className="h-2 w-2 rounded-full bg-success" /> Gerando lucro <ChevronDown />
           </Button>
         </div>
         <div className="mt-3 flex gap-3">
-          <Button variant="outline" className="border-primary bg-transparent text-foreground shadow-none">Veículo</Button>
+          <Button variant="outline" className="border-primary bg-transparent text-foreground shadow-none">Veículos e centrais</Button>
         </div>
         {owned.length ? <div className="space-y-4">{owned.map((vehicle) => <VehicleCard key={vehicle.plate} vehicle={vehicle} onRenew={() => onRenew(vehicle)} renewing={renewing === vehicle.recordId} />)}</div> : <EmptyGarage onBuy={onBuy} />}
       </section>
@@ -433,8 +439,8 @@ function EmptyGarage({ onBuy }: { onBuy: () => void }) {
         <CarFront className="absolute left-5 top-9 h-14 w-14 text-primary" />
         <MapPin className="absolute right-4 top-0 h-9 w-9 text-accent-foreground" />
       </div>
-      <p className="text-sm text-muted-foreground">Você ainda não comprou veículos</p>
-      <Button variant="outline" onClick={onBuy} className="mt-5 h-12 rounded-full border-primary px-8 text-base shadow-none">Comprar veículos</Button>
+      <p className="text-sm text-muted-foreground">Você ainda não comprou veículos ou centrais</p>
+      <Button variant="outline" onClick={onBuy} className="mt-5 h-12 rounded-full border-primary px-8 text-base shadow-none">Comprar recursos</Button>
     </div>
   );
 }
