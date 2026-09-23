@@ -120,7 +120,7 @@ function Index() {
       returnValue: row.return_value,
       price: row.price,
       priceAmount: row.purchase_price ?? 0,
-      dailyRate: row.purchase_price ? Math.round((row.reward_per_cycle / row.purchase_price) * 100) : 0,
+      dailyRate: row.purchase_price ? Number(((row.reward_per_cycle / row.purchase_price) * 100).toFixed(1)) : 0,
       cycle: row.cycle,
       imageKey: row.image_key as ImageKey,
       plate: row.plate,
