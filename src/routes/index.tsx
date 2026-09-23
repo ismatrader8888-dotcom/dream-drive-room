@@ -309,9 +309,9 @@ const vehicles: Vehicle[] = [
   { id: "han-los-angeles", name: "BYD Han", region: "Los Angeles", daily: "R$ 64,00/dia", returnValue: "R$ 1.600,00", price: "R$ 800,00", priceAmount: 800, dailyRate: 8, cycle: "25 ciclos", imageKey: "premium" },
   { id: "seal-jerusalem", name: "BYD Seal", region: "Jerusalém", daily: "R$ 31,88/dia", returnValue: "R$ 796,88", price: "R$ 425,00", priceAmount: 425, dailyRate: 7.5, cycle: "25 ciclos", imageKey: "mid" },
   { id: "han-berlim", name: "BYD Han", region: "Berlim", daily: "R$ 73,60/dia", returnValue: "R$ 1.840,00", price: "R$ 920,00", priceAmount: 920, dailyRate: 8, cycle: "25 ciclos", imageKey: "premium" },
-  { id: "byd-charging-station-2500", name: "Central de Recarga BYD 2.500", region: "Global", daily: "R$ 375,00/dia", returnValue: "R$ 11.250,00", price: "R$ 2.500,00", priceAmount: 2500, dailyRate: 15, cycle: "30 ciclos", imageKey: "charging", category: "station" },
-  { id: "byd-charging-station-5000", name: "Central de Recarga BYD 5.000", region: "Global", daily: "R$ 900,00/dia", returnValue: "R$ 27.000,00", price: "R$ 5.000,00", priceAmount: 5000, dailyRate: 18, cycle: "30 ciclos", imageKey: "charging", category: "station" },
-  { id: "byd-charging-station-8000", name: "Central de Recarga BYD 8.000", region: "Global", daily: "R$ 1.760,00/dia", returnValue: "R$ 52.800,00", price: "R$ 8.000,00", priceAmount: 8000, dailyRate: 22, cycle: "30 ciclos", imageKey: "charging", category: "station" },
+  { id: "byd-charging-station-2500", name: "Central de Recarga BYD", region: "Global", daily: "R$ 375,00/dia", returnValue: "R$ 11.250,00", price: "R$ 2.500,00", priceAmount: 2500, dailyRate: 15, cycle: "30 ciclos", imageKey: "charging", category: "station" },
+  { id: "byd-charging-station-5000", name: "Central de Recarga BYD", region: "Global", daily: "R$ 900,00/dia", returnValue: "R$ 27.000,00", price: "R$ 5.000,00", priceAmount: 5000, dailyRate: 18, cycle: "30 ciclos", imageKey: "charging", category: "station" },
+  { id: "byd-charging-station-8000", name: "Central de Recarga BYD", region: "Global", daily: "R$ 1.760,00/dia", returnValue: "R$ 52.800,00", price: "R$ 8.000,00", priceAmount: 8000, dailyRate: 22, cycle: "30 ciclos", imageKey: "charging", category: "station" },
 ];
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];
