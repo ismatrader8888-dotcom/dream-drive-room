@@ -120,7 +120,7 @@ function Index() {
       returnValue: row.return_value,
       price: row.price,
       priceAmount: row.purchase_price ?? 0,
-      dailyRate: row.purchase_price ? Math.round((row.reward_per_cycle / row.purchase_price) * 100) : 0,
+      dailyRate: row.purchase_price ? Number(((row.reward_per_cycle / row.purchase_price) * 100).toFixed(1)) : 0,
       cycle: row.cycle,
       imageKey: row.image_key as ImageKey,
       plate: row.plate,
@@ -297,16 +297,16 @@ type Vehicle = {
 const vehicles: Vehicle[] = [
   { id: "dolphin-mini-eco-new-york-50", name: "BYD Dolphin Mini ECO", region: "New York", daily: "R$ 4,50/dia", returnValue: "R$ 112,50", price: "R$ 50,00", priceAmount: 50, dailyRate: 9, promotion: "Promoção por tempo limitado", cycle: "25 ciclos", imageKey: "entry" },
   { id: "dolphin-mini-new-york-90", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 6,30/dia", returnValue: "R$ 157,50", price: "R$ 90,00", priceAmount: 90, dailyRate: 7, cycle: "25 ciclos", imageKey: "entry" },
-  { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini Plus", region: "New York", daily: "R$ 25,00/dia", returnValue: "R$ 625,00", price: "R$ 250,00", priceAmount: 250, dailyRate: 10, cycle: "25 ciclos", imageKey: "entry" },
-  { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 300,00/dia", returnValue: "R$ 7.500,00", price: "R$ 1.500,00", priceAmount: 1500, dailyRate: 20, cycle: "25 ciclos", imageKey: "top" },
+  { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini Plus", region: "New York", daily: "R$ 18,25/dia", returnValue: "R$ 456,25", price: "R$ 250,00", priceAmount: 250, dailyRate: 7.3, cycle: "25 ciclos", imageKey: "entry" },
+  { id: "yangwang-u8-new-york", name: "Yangwang U8", region: "New York", daily: "R$ 165,00/dia", returnValue: "R$ 4.125,00", price: "R$ 1.500,00", priceAmount: 1500, dailyRate: 11, cycle: "25 ciclos", imageKey: "top" },
   { id: "dolphin-israel", name: "BYD Dolphin", region: "Israel", daily: "R$ 14,88/dia", returnValue: "R$ 371,88", price: "R$ 212,50", priceAmount: 212.5, dailyRate: 7, cycle: "25 ciclos", imageKey: "mid" },
-  { id: "han-alemanha", name: "BYD Han", region: "Alemanha", daily: "R$ 138,00/dia", returnValue: "R$ 3.450,00", price: "R$ 920,00", priceAmount: 920, dailyRate: 15, cycle: "25 ciclos", imageKey: "premium" },
-  { id: "han-ev-dubai", name: "BYD Han EV", region: "Dubai", daily: "R$ 230,00/dia", returnValue: "R$ 5.750,00", price: "R$ 1.150,00", priceAmount: 1150, dailyRate: 20, cycle: "25 ciclos", imageKey: "premium" },
-  { id: "seal-tokyo", name: "BYD Seal", region: "Tokyo", daily: "R$ 75,00/dia", returnValue: "R$ 1.875,00", price: "R$ 500,00", priceAmount: 500, dailyRate: 15, cycle: "25 ciclos", imageKey: "mid" },
+  { id: "han-alemanha", name: "BYD Han", region: "Alemanha", daily: "R$ 73,60/dia", returnValue: "R$ 1.840,00", price: "R$ 920,00", priceAmount: 920, dailyRate: 8, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "han-ev-dubai", name: "BYD Han EV", region: "Dubai", daily: "R$ 95,45/dia", returnValue: "R$ 2.386,25", price: "R$ 1.150,00", priceAmount: 1150, dailyRate: 8.3, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "seal-tokyo", name: "BYD Seal", region: "Tokyo", daily: "R$ 38,00/dia", returnValue: "R$ 950,00", price: "R$ 500,00", priceAmount: 500, dailyRate: 7.6, cycle: "25 ciclos", imageKey: "mid" },
   { id: "dolphin-paris", name: "BYD Dolphin", region: "Paris", daily: "R$ 28,75/dia", returnValue: "R$ 718,75", price: "R$ 287,50", priceAmount: 287.5, dailyRate: 10, cycle: "25 ciclos", imageKey: "mid" },
-  { id: "han-los-angeles", name: "BYD Han", region: "Los Angeles", daily: "R$ 120,00/dia", returnValue: "R$ 3.000,00", price: "R$ 800,00", priceAmount: 800, dailyRate: 15, cycle: "25 ciclos", imageKey: "premium" },
-  { id: "seal-jerusalem", name: "BYD Seal", region: "Jerusalém", daily: "R$ 42,50/dia", returnValue: "R$ 1.062,50", price: "R$ 425,00", priceAmount: 425, dailyRate: 10, cycle: "25 ciclos", imageKey: "mid" },
-  { id: "han-berlim", name: "BYD Han", region: "Berlim", daily: "R$ 138,00/dia", returnValue: "R$ 3.450,00", price: "R$ 920,00", priceAmount: 920, dailyRate: 15, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "han-los-angeles", name: "BYD Han", region: "Los Angeles", daily: "R$ 64,00/dia", returnValue: "R$ 1.600,00", price: "R$ 800,00", priceAmount: 800, dailyRate: 8, cycle: "25 ciclos", imageKey: "premium" },
+  { id: "seal-jerusalem", name: "BYD Seal", region: "Jerusalém", daily: "R$ 31,88/dia", returnValue: "R$ 796,88", price: "R$ 425,00", priceAmount: 425, dailyRate: 7.5, cycle: "25 ciclos", imageKey: "mid" },
+  { id: "han-berlim", name: "BYD Han", region: "Berlim", daily: "R$ 73,60/dia", returnValue: "R$ 1.840,00", price: "R$ 920,00", priceAmount: 920, dailyRate: 8, cycle: "25 ciclos", imageKey: "premium" },
 ];
 
 const regions = ["Todos", "Israel", "Alemanha", "New York", "London", "Dubai", "Tokyo", "Paris", "Los Angeles", "Jerusalém", "Berlim"];

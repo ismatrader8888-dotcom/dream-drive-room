@@ -38,3 +38,4 @@
 - [x] Notificações globais criadas pelo administrador, com popup e sininho por usuário
 - [x] Códigos resgatáveis criados pelo administrador e resgate único em Intercâmbio
 - [x] Liberar saque abaixo de R$ 30 somente para a conta solicitada
+- [x] Atualizar rendimentos específicos dos veículos por preço
