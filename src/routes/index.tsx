@@ -34,7 +34,7 @@ import bydEntry from "@/assets/byd-entry.png";
 import bydMid from "@/assets/byd-mid.png";
 import bydPremium from "@/assets/byd-premium.png";
 import bydTop from "@/assets/byd-top.png";
-import bydChargingStation from "@/assets/byd-charging-station.png";
+import bydChargingStation from "@/assets/byd-charging-station-transparent.png";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
