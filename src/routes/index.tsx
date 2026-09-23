@@ -388,7 +388,7 @@ function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehic
         <div>
           <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold">{vehicle.name}</h2><span className="rounded bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground">Operação</span></div>
           {vehicle.promotion && <p className="mt-2 inline-flex rounded bg-accent px-2 py-1 text-[11px] font-bold text-accent-foreground">{vehicle.promotion}</p>}
-          <p className="mt-2 text-xs text-muted-foreground">Recompensa virtual <b className="text-foreground">{period === "Diário" ? vehicle.daily : vehicle.returnValue}</b></p>
+          <p className="mt-2 text-xs text-muted-foreground">Recompensa por ciclo <b className="text-foreground">{vehicle.daily}</b></p>
           <p className="mt-1 text-xs text-muted-foreground">Rendimento por ciclo <b className="text-primary">{vehicle.dailyRate}% a cada 24h</b></p>
           <p className="mt-1 text-xs text-muted-foreground">Retorno <b className="text-accent-foreground">{vehicle.returnValue}</b></p>
           <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">{vehicle.category !== "station" && <span className="rounded bg-muted px-2 py-1">{vehicle.region}</span>}<span className="rounded bg-muted px-2 py-1">A cada 24h</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
