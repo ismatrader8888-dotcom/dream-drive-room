@@ -43,3 +43,5 @@
 - [x] Filtrar usuários no painel administrativo por e-mail e data de criação
 - [x] Contabilizar a tarefa de três indicações e creditar R$ 20 em Prêmios disponíveis uma única vez
 - [x] Creditar o bônus de cadastro de R$ 15 em Prêmios disponíveis
+
+- [ ] Exigir depósito confirmado e compra de veículo em cada um dos 3 convidados da tarefa de R$ 20
