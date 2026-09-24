@@ -32,13 +32,14 @@
 - [x] Permitir acesso administrativo auditado e somente leitura às contas dos usuários
 - [x] Conceder bônus único de R$ 15 no cadastro e mostrar confirmação
 - [x] Adicionar BYD Dolphin Mini ECO por R$ 50
-- [x] Exigir R$ 30 em recompensas totais para solicitar saque
+- [x] Exigir R$ 30 de saldo em Prêmios disponíveis para solicitar saque
 - [x] Criar roleta diária na aba Tarefa com prêmios em créditos
 - [x] Aplicar promoção de 9% ao dia ao BYD Dolphin Mini ECO
 - [x] Notificações globais criadas pelo administrador, com popup e sininho por usuário
 - [x] Códigos resgatáveis criados pelo administrador e resgate único em Intercâmbio
-- [x] Liberar saque abaixo de R$ 30 somente para a conta solicitada
+- [x] Substituir a exceção individual pela regra de R$ 30 em Prêmios disponíveis
 - [x] Atualizar rendimentos específicos dos veículos por preço
 - [x] Adicionar três centrais de recarga BYD com 30 ciclos na aba Ciclo
 - [x] Filtrar usuários no painel administrativo por e-mail e data de criação
 - [x] Contabilizar a tarefa de três indicações e creditar R$ 20 em Prêmios disponíveis uma única vez
+- [x] Creditar o bônus de cadastro de R$ 15 em Prêmios disponíveis
