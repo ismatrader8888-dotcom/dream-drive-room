@@ -127,6 +127,13 @@
       "when": 1790099400208,
       "tag": "0017_expose_my_withdrawal_eligibility",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "7",
+      "when": 1790213093370,
+      "tag": "0018_credit_vehicle_cycles_to_reward_balance",
+      "breakpoints": true
     }
   ]
 }

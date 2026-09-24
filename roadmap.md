@@ -20,7 +20,7 @@
 - [x] Creditar automaticamente a recompensa dos veículos ao concluir cada ciclo de horas
 - [x] Atualizar Recompensas de hoje, totais e progresso de contrato com dados reais
 - [x] Validar cálculos, segurança e telas administrativa/móvel
-- [x] Separar recompensas automáticas dos veículos como créditos virtuais não sacáveis
+- [x] Direcionar recompensas automáticas dos veículos a Prêmios disponíveis sacáveis
 - [x] Solicitar saque de prêmios com nome, chave PIX, valor e histórico de situação
 - [x] Permitir renovação paga do veículo após 25 ciclos
 - [x] Atualizar preços por modelo, região e recompensa virtual de 9% por ciclo
@@ -40,5 +40,3 @@
 - [x] Liberar saque abaixo de R$ 30 somente para a conta solicitada
 - [x] Atualizar rendimentos específicos dos veículos por preço
 - [x] Adicionar três centrais de recarga BYD com 30 ciclos na aba Ciclo
-
-- [ ] Creditar rendimentos futuros dos ciclos diretamente em Prêmios disponíveis
