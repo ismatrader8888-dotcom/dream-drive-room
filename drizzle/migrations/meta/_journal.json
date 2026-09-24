@@ -148,6 +148,13 @@
       "when": 1790213735161,
       "tag": "0020_include_profile_created_at_in_admin_dashboard",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1790215087777,
+      "tag": "0021_signup_bonus_to_rewards_and_withdrawal_balance_gate",
+      "breakpoints": true
     }
   ]
 }
