@@ -14,7 +14,7 @@
 - [x] Preservar o histórico de eventos do gateway anterior no banco
 - [x] Criar o endpoint público real da SagacePay na estrutura atual
 - [x] Validar código de convite somente no cadastro e impedir códigos inexistentes
-- [x] Creditar 5% no primeiro depósito do convidado e 15% recorrente ao dono do código
+- [x] Creditar 5% no primeiro depósito do convidado, 8% ao indicador direto e 3% ao indicador de nível 2, somente no primeiro depósito
 - [x] Exibir equipe, recompensas e auditoria de indicações no painel administrativo
 - [x] Permitir ao administrador alterar Prêmios disponíveis por usuário
 - [x] Creditar automaticamente a recompensa dos veículos ao concluir cada ciclo de horas

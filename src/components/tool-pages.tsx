@@ -134,7 +134,7 @@ function TeamPage({ onBack }: { onBack: () => void }) {
 }
 
 type ReferralMember = { id: string; displayName: string; status: "effective" | "invalid"; deposits: number; bonusEarned: number };
-type ReferralReward = { id: string; type: "referee_first_deposit" | "referrer_commission"; depositAmount: number; percentage: number; creditAmount: number; createdAt: string; memberName: string };
+type ReferralReward = { id: string; type: "referee_first_deposit" | "referrer_commission" | "second_level_commission"; depositAmount: number; percentage: number; creditAmount: number; createdAt: string; memberName: string };
 type ReferralDashboard = { totalMembers: number; effectiveMembers: number; totalDeposited: number; totalEarned: number; teamEarned: number; earnedToday: number; depositedToday: number; members: ReferralMember[]; rewards: ReferralReward[] };
 const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
@@ -262,8 +262,8 @@ function InviteRewardPage({ onBack }: { onBack: () => void }) {
   useEffect(() => { void supabase.rpc("get_my_referral_dashboard").then(({ data: result }) => setData(result as unknown as ReferralDashboard)); }, []);
   return (
     <Shell title="Recompensas por convite" onBack={onBack}>
-      <section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">Total em créditos do jogo</p><b className="mt-1 block text-3xl">{money(data?.totalEarned ?? 0)}</b><p className="mt-2 text-xs text-muted-foreground">5% no primeiro depósito feito com convite e 15% para quem convidou em cada depósito confirmado.</p></section>
-      {data?.rewards.length ? <div className="space-y-3 px-4">{data.rewards.map((reward) => <article key={reward.id} className="rounded-xl bg-card p-4 shadow-card"><div className="flex justify-between gap-3"><div><b>{reward.type === "referee_first_deposit" ? "Bônus de boas-vindas" : `Depósito de ${reward.memberName}`}</b><p className="mt-1 text-xs text-muted-foreground">{reward.percentage}% sobre {money(reward.depositAmount)} · {new Date(reward.createdAt).toLocaleDateString("pt-BR")}</p></div><b className="text-primary">+{money(reward.creditAmount)}</b></div></article>)}</div> : <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 text-muted-foreground"><FileMinus2 className="h-16 w-16 opacity-50" /><p className="text-sm">Nenhum bônus recebido ainda</p></div>}
+      <section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">Total em créditos do jogo</p><b className="mt-1 block text-3xl">{money(data?.totalEarned ?? 0)}</b><p className="mt-2 text-xs text-muted-foreground">No primeiro depósito: 5% para o convidado, 8% para o indicador direto e 3% para o indicador de nível 2.</p></section>
+      {data?.rewards.length ? <div className="space-y-3 px-4">{data.rewards.map((reward) => <article key={reward.id} className="rounded-xl bg-card p-4 shadow-card"><div className="flex justify-between gap-3"><div><b>{reward.type === "referee_first_deposit" ? "Bônus de boas-vindas" : reward.type === "second_level_commission" ? `Indicação de nível 2 · ${reward.memberName}` : `Indicação direta · ${reward.memberName}`}</b><p className="mt-1 text-xs text-muted-foreground">{reward.percentage}% sobre {money(reward.depositAmount)} · {new Date(reward.createdAt).toLocaleDateString("pt-BR")}</p></div><b className="text-primary">+{money(reward.creditAmount)}</b></div></article>)}</div> : <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 text-muted-foreground"><FileMinus2 className="h-16 w-16 opacity-50" /><p className="text-sm">Nenhum bônus recebido ainda</p></div>}
     </Shell>
   );
 }
