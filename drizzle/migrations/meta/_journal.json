@@ -155,6 +155,13 @@
       "when": 1790215087777,
       "tag": "0021_signup_bonus_to_rewards_and_withdrawal_balance_gate",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1790256626230,
+      "tag": "0022_qualify_invite_task_by_deposit_and_vehicle",
+      "breakpoints": true
     }
   ]
 }

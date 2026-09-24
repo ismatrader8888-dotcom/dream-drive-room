@@ -269,7 +269,7 @@ function InviteRewardPage({ onBack }: { onBack: () => void }) {
 }
 
 type WheelState = { canSpin: boolean; nextSpinAt: string | null; lastPrize: number | null };
-type InviteTaskState = { completed: number; totalInvited: number; goal: number; reward: number; rewarded: boolean };
+type InviteTaskState = { completed: number; totalInvited: number; qualifiedInvited: number; goal: number; reward: number; rewarded: boolean };
 const wheelPrizes = [1, 2, 5, 10, 20, 50];
 
 function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalanceChanged: () => void }) {
@@ -335,7 +335,7 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
           <section className="rounded-2xl border-l-4 border-primary bg-card p-4 shadow-card">
             <p className="text-sm text-muted-foreground">Prêmio da rodada</p>
             <div className="mt-3 grid grid-cols-2 divide-x divide-border text-sm">
-              <div><p className="text-muted-foreground">Meta</p><b>3 amigos</b></div>
+              <div><p className="text-muted-foreground">Meta</p><b>3 amigos qualificados</b></div>
               <div className="pl-4"><p className="text-muted-foreground">Prêmios disponíveis</p><b>+R$ 20,00</b></div>
             </div>
           </section>
@@ -344,19 +344,19 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
               <b>1. Progresso da tarefa</b>
               <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">{inviteTask?.rewarded ? "Concluída" : inviteProgress > 0 ? "Em andamento" : "Aguardando o primeiro convite"}</span>
             </div>
-            <div className="mt-4 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-muted"><User className="h-5 w-5" /></span><b className="text-lg">Convide 3 amigos</b></div>
+            <div className="mt-4 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-muted"><User className="h-5 w-5" /></span><b className="text-lg">Qualifique 3 amigos</b></div>
             <p className="mt-4 text-center"><b>{inviteProgress}</b><span className="text-muted-foreground">/ 3 Concluído</span></p>
             <div className="mt-3 flex justify-around">{[0, 1, 2].map((index) => <span key={index} className={`h-6 w-6 rounded-full border ${index < inviteProgress ? "border-primary bg-primary" : "border-border"}`} />)}</div>
-            <Button variant="secondary" className="mt-4 h-12 w-full rounded-xl" disabled>{inviteTask?.rewarded ? "R$ 20 creditados em Prêmios disponíveis" : `Faltam ${Math.max(0, 3 - inviteProgress)} convite(s) para receber R$ 20`}</Button>
+            <Button variant="secondary" className="mt-4 h-12 w-full rounded-xl" disabled>{inviteTask?.rewarded ? "R$ 20 creditados em Prêmios disponíveis" : `Faltam ${Math.max(0, 3 - inviteProgress)} amigo(s) qualificado(s) para receber R$ 20`}</Button>
           </section>
           <section className="rounded-2xl bg-card p-4 shadow-card">
             <b>2. Descrição da recompensa</b>
             <p className="mt-3 font-semibold">Como funciona esta tarefa</p>
-            <p className="mt-2 text-sm text-muted-foreground">Convide novos usuários através do seu link de convite e alcance a meta dentro do prazo para receber sua recompensa.</p>
+            <p className="mt-2 text-sm text-muted-foreground">Convide novos usuários através do seu link. Cada pessoa precisa fazer um depósito confirmado e comprar um veículo ou central.</p>
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
-              <li>O primeiro convite válido inicia a contagem.</li>
-              <li>Cada amigo deve completar o cadastro e ativar sua conta.</li>
-              <li>Ao atingir 3 convites, R$ 20 são creditados automaticamente em Prêmios disponíveis.</li>
+              <li>Somente o cadastro não aumenta o progresso.</li>
+              <li>Cada amigo precisa ter um depósito confirmado e uma compra em Meus recursos.</li>
+              <li>Ao qualificar 3 amigos, R$ 20 são creditados automaticamente em Prêmios disponíveis.</li>
             </ul>
           </section>
         </div>
