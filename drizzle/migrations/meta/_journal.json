@@ -134,6 +134,13 @@
       "when": 1790213093370,
       "tag": "0018_credit_vehicle_cycles_to_reward_balance",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1790213705550,
+      "tag": "0019_add_invite_task_reward",
+      "breakpoints": true
     }
   ]
 }
