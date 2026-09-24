@@ -239,6 +239,7 @@ export type Database = {
           email: string | null
           id: string
           invite_code: string
+          invite_task_rewarded_at: string | null
           level: number
           phone: string | null
           referred_by: string | null
@@ -253,6 +254,7 @@ export type Database = {
           email?: string | null
           id: string
           invite_code: string
+          invite_task_rewarded_at?: string | null
           level?: number
           phone?: string | null
           referred_by?: string | null
@@ -267,6 +269,7 @@ export type Database = {
           email?: string | null
           id?: string
           invite_code?: string
+          invite_task_rewarded_at?: string | null
           level?: number
           phone?: string | null
           referred_by?: string | null
@@ -780,6 +783,7 @@ export type Database = {
       consume_welcome_bonus_popup: { Args: never; Returns: boolean }
       get_admin_dashboard: { Args: never; Returns: Json }
       get_my_daily_wheel_state: { Args: never; Returns: Json }
+      get_my_invite_task_state: { Args: never; Returns: Json }
       get_my_referral_dashboard: { Args: never; Returns: Json }
       get_my_reward_summary: { Args: never; Returns: Json }
       get_my_withdrawal_eligibility: { Args: never; Returns: Json }

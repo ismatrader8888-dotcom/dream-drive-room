@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, BarChart3, CarFront, Eye, LogOut, RefreshCw, Users, WalletCards } from "lucide-react";
+import { ArrowLeft, BarChart3, CarFront, Eye, LogOut, RefreshCw, Search, Users, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { closeAdminSupportView, openAdminSupportView } from "@/lib/admin-support.functions";
 
-type Profile = { id: string; email: string | null; phone: string | null; balance: number; rewardBalance: number; vehicleRewardsToday: number; vehicleRewardsGenerated: number; vehicleRewardsPending: number; vehicleRewardsTransferred: number; inviteCode: string; referredBy: string | null; referrals: number; effectiveReferrals: number; referralBonus: number };
+type Profile = { id: string; email: string | null; phone: string | null; createdAt: string; balance: number; rewardBalance: number; vehicleRewardsToday: number; vehicleRewardsGenerated: number; vehicleRewardsPending: number; vehicleRewardsTransferred: number; inviteCode: string; referredBy: string | null; referrals: number; effectiveReferrals: number; referralBonus: number };
 type RequestRow = { id: string; userId: string; email: string | null; fullName?: string; amount: number; status: string; createdAt: string; pixKey?: string };
 type PixCharge = RequestRow & { payerName: string; magicId: string | null; creditedAt: string | null; refereeBonus: number; referrerBonus: number };
 type Purchase = { id: string; email: string | null; name: string; price: number | null; region: string; createdAt: string };
@@ -35,6 +35,9 @@ export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
   const [wallet, setWallet] = useState<"credits" | "rewards">("rewards");
   const [amount, setAmount] = useState("");
   const [reason, setReason] = useState("");
+  const [emailSearch, setEmailSearch] = useState("");
+  const [createdFrom, setCreatedFrom] = useState("");
+  const [createdTo, setCreatedTo] = useState("");
   const [supportView, setSupportView] = useState<SupportView | null>(null);
   const openSupport = useServerFn(openAdminSupportView);
   const closeSupport = useServerFn(closeAdminSupportView);
@@ -93,6 +96,14 @@ export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
 
   if (supportView) return <SupportAccount data={supportView} onClose={() => void leaveSupport()} />;
 
+  const filteredProfiles = (data?.profiles ?? []).filter((profile) => {
+    const emailMatches = (profile.email ?? "").toLocaleLowerCase("pt-BR").includes(emailSearch.trim().toLocaleLowerCase("pt-BR"));
+    const created = new Date(profile.createdAt);
+    const fromMatches = !createdFrom || created >= new Date(`${createdFrom}T00:00:00`);
+    const toMatches = !createdTo || created <= new Date(`${createdTo}T23:59:59.999`);
+    return emailMatches && fromMatches && toMatches;
+  });
+
   return (
     <div className="min-h-screen bg-background pb-10">
       <header className="flex h-20 items-center border-b border-border px-6 lg:px-10">
@@ -118,8 +129,15 @@ export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
         <nav className="mt-8 grid max-w-4xl grid-cols-4 lg:grid-cols-7 rounded-lg bg-muted p-1 text-sm">
           {([['users','Usuários'],['purchases','Compras'],['recharges','Recargas'],['referrals','Indicações'],['withdrawals','Saques'],['notifications','Notificações'],['codes','Códigos']] as const).map(([key, label]) => <button key={key} onClick={() => setTab(key)} className={`min-h-10 rounded-md px-1 ${tab === key ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground"}`}>{label}</button>)}
         </nav>
+        {tab === "users" && <section className="mt-6 grid gap-3 rounded-lg bg-card p-4 shadow-card lg:grid-cols-[minmax(280px,1fr)_190px_190px_auto]">
+          <label className="relative"><span className="sr-only">Pesquisar e-mail</span><Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground"/><input type="search" value={emailSearch} onChange={(event) => setEmailSearch(event.target.value)} placeholder="Pesquisar por e-mail" className="h-11 w-full rounded-md border border-border bg-background pl-10 pr-3 text-sm" /></label>
+          <label className="text-xs text-muted-foreground">Cadastro inicial<input type="date" value={createdFrom} onChange={(event) => setCreatedFrom(event.target.value)} className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground" /></label>
+          <label className="text-xs text-muted-foreground">Cadastro final<input type="date" value={createdTo} onChange={(event) => setCreatedTo(event.target.value)} className="mt-1 h-11 w-full rounded-md border border-border bg-background px-3 text-sm text-foreground" /></label>
+          <Button variant="outline" className="self-end" onClick={() => { setEmailSearch(""); setCreatedFrom(""); setCreatedTo(""); }}>Limpar filtros</Button>
+        </section>}
         <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {tab === "users" && data.profiles.map((profile) => <article key={profile.id} className="rounded-lg bg-card p-5 shadow-card"><b className="block truncate">{profile.email ?? profile.phone ?? "Sem identificação"}</b><div className="mt-3 grid grid-cols-2 gap-2 text-sm text-muted-foreground"><span>Créditos: <strong className="block text-foreground">{money(profile.balance)}</strong></span><span>Prêmios disponíveis: <strong className="block text-foreground">{money(profile.rewardBalance)}</strong></span><span>Recompensas de hoje: <strong className="block text-foreground">{money(profile.vehicleRewardsToday)}</strong></span><span>Recompensas totais: <strong className="block text-foreground">{money(profile.vehicleRewardsGenerated)}</strong></span><span>Em processamento: <strong className="block text-foreground">{money(profile.vehicleRewardsPending)}</strong></span><span>Creditado em prêmios: <strong className="block text-foreground">{money(profile.vehicleRewardsTransferred)}</strong></span><span>Indicados: <strong className="block text-foreground">{profile.effectiveReferrals} eficazes / {profile.referrals}</strong></span></div><p className="mt-3 text-xs text-muted-foreground">Código: {profile.inviteCode}{profile.referredBy ? ` · Convidado por ${profile.referredBy}` : ""}</p><div className="mt-4 grid grid-cols-2 gap-2"><Button variant="outline" disabled={busy === profile.id} onClick={() => void enterSupport(profile)}><Eye /> Entrar como usuário</Button><Button disabled={busy === profile.id} onClick={() => { setAdjusting(profile); setWallet("rewards"); }}>Alterar saldos</Button></div></article>)}
+          {tab === "users" && filteredProfiles.map((profile) => <article key={profile.id} className="rounded-lg bg-card p-5 shadow-card"><b className="block truncate">{profile.email ?? profile.phone ?? "Sem identificação"}</b><p className="mt-1 text-xs text-muted-foreground">Criada em {new Date(profile.createdAt).toLocaleDateString("pt-BR")}</p><div className="mt-3 grid grid-cols-2 gap-2 text-sm text-muted-foreground"><span>Créditos: <strong className="block text-foreground">{money(profile.balance)}</strong></span><span>Prêmios disponíveis: <strong className="block text-foreground">{money(profile.rewardBalance)}</strong></span><span>Recompensas de hoje: <strong className="block text-foreground">{money(profile.vehicleRewardsToday)}</strong></span><span>Recompensas totais: <strong className="block text-foreground">{money(profile.vehicleRewardsGenerated)}</strong></span><span>Em processamento: <strong className="block text-foreground">{money(profile.vehicleRewardsPending)}</strong></span><span>Creditado em prêmios: <strong className="block text-foreground">{money(profile.vehicleRewardsTransferred)}</strong></span><span>Indicados: <strong className="block text-foreground">{profile.effectiveReferrals} eficazes / {profile.referrals}</strong></span></div><p className="mt-3 text-xs text-muted-foreground">Código: {profile.inviteCode}{profile.referredBy ? ` · Convidado por ${profile.referredBy}` : ""}</p><div className="mt-4 grid grid-cols-2 gap-2"><Button variant="outline" disabled={busy === profile.id} onClick={() => void enterSupport(profile)}><Eye /> Entrar como usuário</Button><Button disabled={busy === profile.id} onClick={() => { setAdjusting(profile); setWallet("rewards"); }}>Alterar saldos</Button></div></article>)}
+          {tab === "users" && filteredProfiles.length === 0 && <p className="col-span-full py-12 text-center text-sm text-muted-foreground">Nenhuma conta encontrada com esses filtros.</p>}
           {tab === "purchases" && <><h2 className="font-bold">Mais comprados</h2>{data.popularVehicles.map((item) => <article key={item.name} className="flex justify-between rounded-lg bg-card p-4"><span>{item.name}</span><b>{item.purchases} compras</b></article>)}<h2 className="pt-3 font-bold">Histórico</h2>{data.purchasesList.map((item) => <article key={item.id} className="rounded-lg bg-card p-4 text-sm"><b>{item.name}</b><p className="text-muted-foreground">{item.email ?? "Usuário"} · {item.region}</p><p className="mt-1">{money(item.price ?? 0)}</p></article>)}</>}
           {tab === "recharges" && <PixCharges rows={data.pixCharges} />}
           {tab === "referrals" && <Referrals rows={data.referrals} />}
