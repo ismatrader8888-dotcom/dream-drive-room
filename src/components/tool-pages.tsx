@@ -269,11 +269,13 @@ function InviteRewardPage({ onBack }: { onBack: () => void }) {
 }
 
 type WheelState = { canSpin: boolean; nextSpinAt: string | null; lastPrize: number | null };
+type InviteTaskState = { completed: number; totalInvited: number; goal: number; reward: number; rewarded: boolean };
 const wheelPrizes = [1, 2, 5, 10, 20, 50];
 
 function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalanceChanged: () => void }) {
   const [tab, setTab] = useState("Tarefa pessoal");
   const [wheel, setWheel] = useState<WheelState | null>(null);
+  const [inviteTask, setInviteTask] = useState<InviteTaskState | null>(null);
   const [spinning, setSpinning] = useState(false);
   const [rotation, setRotation] = useState(0);
   const [prize, setPrize] = useState<number | null>(null);
@@ -284,6 +286,9 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
   };
   useEffect(() => {
     void loadWheel();
+    void supabase.rpc("get_my_invite_task_state").then(({ data }) => {
+      if (data) { setInviteTask(data as unknown as InviteTaskState); onBalanceChanged(); }
+    });
     const timer = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(timer);
   }, []);
@@ -306,6 +311,7 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
   const remaining = wheel?.nextSpinAt ? Math.max(0, new Date(wheel.nextSpinAt).getTime() - now) : 0;
   const readyToSpin = Boolean(wheel?.canSpin || (wheel?.nextSpinAt && remaining === 0));
   const countdown = `${String(Math.floor(remaining / 3600000)).padStart(2, "0")}:${String(Math.floor(remaining / 60000) % 60).padStart(2, "0")}:${String(Math.floor(remaining / 1000) % 60).padStart(2, "0")}`;
+  const inviteProgress = inviteTask?.completed ?? 0;
   return (
     <Shell title="Central de Tarefas" onBack={onBack}>
       <Tabs items={["Tarefa pessoal", "Tarefas da equipe"]} value={tab} onChange={setTab} />
@@ -329,19 +335,19 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
           <section className="rounded-2xl border-l-4 border-primary bg-card p-4 shadow-card">
             <p className="text-sm text-muted-foreground">Prêmio da rodada</p>
             <div className="mt-3 grid grid-cols-2 divide-x divide-border text-sm">
-              <div><p className="text-muted-foreground">Bola da Sorte</p><b>+3</b></div>
-              <div className="pl-4"><p className="text-muted-foreground">Saldo em dinheiro</p><b>+R$ 5,00</b></div>
+              <div><p className="text-muted-foreground">Meta</p><b>3 amigos</b></div>
+              <div className="pl-4"><p className="text-muted-foreground">Prêmios disponíveis</p><b>+R$ 20,00</b></div>
             </div>
           </section>
           <section className="rounded-2xl bg-card p-4 shadow-card">
             <div className="flex items-start justify-between gap-3">
               <b>1. Progresso da tarefa</b>
-              <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">● Aguardando o primeiro convite</span>
+              <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">{inviteTask?.rewarded ? "Concluída" : inviteProgress > 0 ? "Em andamento" : "Aguardando o primeiro convite"}</span>
             </div>
             <div className="mt-4 flex items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-full bg-muted"><User className="h-5 w-5" /></span><b className="text-lg">Convide 3 amigos</b></div>
-            <p className="mt-4 text-center"><b>0</b><span className="text-muted-foreground">/ 3 Concluído</span></p>
-            <div className="mt-3 flex justify-around">{[0, 1, 2].map((index) => <span key={index} className="h-6 w-6 rounded-full border border-border" />)}</div>
-            <Button variant="secondary" className="mt-4 h-12 w-full rounded-xl">Convide mais 3 para resgatar</Button>
+            <p className="mt-4 text-center"><b>{inviteProgress}</b><span className="text-muted-foreground">/ 3 Concluído</span></p>
+            <div className="mt-3 flex justify-around">{[0, 1, 2].map((index) => <span key={index} className={`h-6 w-6 rounded-full border ${index < inviteProgress ? "border-primary bg-primary" : "border-border"}`} />)}</div>
+            <Button variant="secondary" className="mt-4 h-12 w-full rounded-xl" disabled>{inviteTask?.rewarded ? "R$ 20 creditados em Prêmios disponíveis" : `Faltam ${Math.max(0, 3 - inviteProgress)} convite(s) para receber R$ 20`}</Button>
           </section>
           <section className="rounded-2xl bg-card p-4 shadow-card">
             <b>2. Descrição da recompensa</b>
@@ -350,7 +356,7 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
             <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-muted-foreground">
               <li>O primeiro convite válido inicia a contagem.</li>
               <li>Cada amigo deve completar o cadastro e ativar sua conta.</li>
-              <li>A recompensa é creditada automaticamente após a meta.</li>
+              <li>Ao atingir 3 convites, R$ 20 são creditados automaticamente em Prêmios disponíveis.</li>
             </ul>
           </section>
         </div>
