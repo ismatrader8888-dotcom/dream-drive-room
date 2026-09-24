@@ -40,3 +40,5 @@
 - [x] Liberar saque abaixo de R$ 30 somente para a conta solicitada
 - [x] Atualizar rendimentos específicos dos veículos por preço
 - [x] Adicionar três centrais de recarga BYD com 30 ciclos na aba Ciclo
+
+- [ ] Creditar rendimentos futuros dos ciclos diretamente em Prêmios disponíveis
