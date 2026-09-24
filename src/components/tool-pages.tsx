@@ -385,7 +385,7 @@ function OrdersPage({ onBack }: { onBack: () => void }) {
   );
 }
 
-function BalancePage({ title, onBack, mode, balance, rewardBalance, rewardsTotal, onBalanceChanged }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer"; balance: number; rewardBalance: number; rewardsTotal: number; onBalanceChanged: () => void }) {
+function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceChanged }: { title: string; onBack: () => void; mode: "recharge" | "withdraw" | "transfer"; balance: number; rewardBalance: number; onBalanceChanged: () => void }) {
   const createCharge = useServerFn(createPixCharge);
   const syncCharge = useServerFn(syncPixCharge);
   const [amount, setAmount] = useState("");
@@ -636,8 +636,8 @@ export function ToolPage({ view, onBack, balance = 0, rewardBalance = 0, rewards
     case "exchange": return <ExchangePage onBack={onBack} onBalanceChanged={onBalanceChanged} />;
     case "settings": return <SettingsPage onBack={onBack} />;
     case "support": return <SupportPage onBack={onBack} />;
-    case "recharge": return <BalancePage title="Recarga PIX" onBack={onBack} mode="recharge" balance={balance} rewardBalance={rewardBalance} rewardsTotal={rewards.total} onBalanceChanged={onBalanceChanged} />;
-    case "withdraw": return <BalancePage title="Sacar prêmios" onBack={onBack} mode="withdraw" balance={balance} rewardBalance={rewardBalance} rewardsTotal={rewards.total} onBalanceChanged={onBalanceChanged} />;
+    case "recharge": return <BalancePage title="Recarga PIX" onBack={onBack} mode="recharge" balance={balance} rewardBalance={rewardBalance} onBalanceChanged={onBalanceChanged} />;
+    case "withdraw": return <BalancePage title="Sacar prêmios" onBack={onBack} mode="withdraw" balance={balance} rewardBalance={rewardBalance} onBalanceChanged={onBalanceChanged} />;
     case "transfer": return <TransferRewardsPage onBack={onBack} rewards={rewards} onBalanceChanged={onBalanceChanged} />;
     case "incomeDetails": return <RewardDetailsPage title="Detalhes das recompensas" onBack={onBack} rewards={rewards} />;
     case "luckyDetails": return <RewardDetailsPage title="Histórico de prêmios" onBack={onBack} rewards={rewards} />;
