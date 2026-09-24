@@ -42,3 +42,5 @@
 - [x] Adicionar três centrais de recarga BYD com 30 ciclos na aba Ciclo
 - [x] Filtrar usuários no painel administrativo por e-mail e data de criação
 - [x] Contabilizar a tarefa de três indicações e creditar R$ 20 em Prêmios disponíveis uma única vez
+- [ ] Creditar o bônus de cadastro de R$ 15 em Prêmios disponíveis
+- [ ] Exigir R$ 30 de saldo em Prêmios disponíveis para solicitar saque
