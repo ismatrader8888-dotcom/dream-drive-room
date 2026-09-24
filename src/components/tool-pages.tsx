@@ -512,7 +512,7 @@ function DetailsPage({ title, onBack }: { title: string; onBack: () => void }) {
 
 function RewardHistory({ events }: { events: RewardEvent[] }) {
   if (!events.length) return <EmptyState label="Nenhuma recompensa concluída" />;
-  return <div className="space-y-3 px-4">{events.map((event) => <article key={event.id} className="flex items-center justify-between rounded-xl bg-card p-4 shadow-card"><div className="min-w-0"><b className="block truncate">{event.vehicleName}</b><p className="text-xs text-muted-foreground">Ciclo {event.cycle} · {new Date(event.earnedAt).toLocaleString("pt-BR")}</p></div><div className="text-right"><b className="text-primary">+{money(event.amount)}</b><p className="text-xs text-muted-foreground">{event.status === "transferred" ? "Creditado no jogo" : "Processando"}</p></div></article>)}</div>;
+  return <div className="space-y-3 px-4">{events.map((event) => <article key={event.id} className="flex items-center justify-between rounded-xl bg-card p-4 shadow-card"><div className="min-w-0"><b className="block truncate">{event.vehicleName}</b><p className="text-xs text-muted-foreground">Ciclo {event.cycle} · {new Date(event.earnedAt).toLocaleString("pt-BR")}</p></div><div className="text-right"><b className="text-primary">+{money(event.amount)}</b><p className="text-xs text-muted-foreground">{event.status === "transferred" ? "Em Prêmios disponíveis" : "Processando"}</p></div></article>)}</div>;
 }
 
 function RewardDetailsPage({ title, onBack, rewards }: { title: string; onBack: () => void; rewards: RewardSummary }) {
@@ -528,10 +528,10 @@ function TransferRewardsPage({ onBack, rewards, onBalanceChanged }: { onBack: ()
     setBusy(false);
     if (error) { setMessage("Não foi possível transferir agora."); return; }
     const amount = Number(data ?? 0);
-    setMessage(amount > 0 ? `${money(amount)} transferidos.` : "As recompensas dos veículos entram automaticamente nos créditos do jogo.");
+    setMessage(amount > 0 ? `${money(amount)} creditados em Prêmios disponíveis.` : "As recompensas dos veículos entram automaticamente em Prêmios disponíveis.");
     onBalanceChanged();
   };
-  return <Shell title="Recompensas dos veículos" onBack={onBack}><section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">Créditos virtuais acumulados</p><b className="mt-1 block text-3xl">{money(rewards.total)}</b><p className="mt-3 text-sm text-muted-foreground">Cada ciclo concluído entra automaticamente nos créditos</p><Button className="mt-5 h-12 w-full rounded-full" disabled={busy} onClick={() => void transfer()}>{busy ? "Atualizando..." : "Atualizar recompensas"}</Button>{message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}</section></Shell>;
+  return <Shell title="Recompensas dos veículos" onBack={onBack}><section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">Prêmios acumulados</p><b className="mt-1 block text-3xl">{money(rewards.total)}</b><p className="mt-3 text-sm text-muted-foreground">Cada ciclo concluído entra automaticamente em Prêmios disponíveis.</p><Button className="mt-5 h-12 w-full rounded-full" disabled={busy} onClick={() => void transfer()}>{busy ? "Atualizando..." : "Atualizar recompensas"}</Button>{message && <p className="mt-3 text-center text-sm text-muted-foreground">{message}</p>}</section></Shell>;
 }
 
 function TextPage({ title, onBack, paragraphs }: { title: string; onBack: () => void; paragraphs: string[] }) {
