@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const chargeSchema = z.object({
-  amount: z.number().min(1).max(5000),
+  amount: z.number().min(1).max(10000).refine((value) => Number.isInteger(Math.round(value * 100)) && Math.abs(value * 100 - Math.round(value * 100)) < 0.00001, "Valor inválido"),
   name: z.string().trim().min(5).max(120),
   document: z.string().transform((value) => value.replace(/\D/g, "")).refine((value) => value.length === 11, "CPF inválido"),
 });
@@ -20,6 +20,21 @@ type ProviderContent = {
 
 const SAGACEPAY_API_URL = "https://sagacepay.com/api";
 const SAGACEPAY_WEBHOOK_URL = "https://drivingyoudreamsss.online/api/public/sagacepay-webhook";
+
+function pixAmount(code: string): number | null {
+  let index = 0;
+  while (index + 4 <= code.length) {
+    const tag = code.slice(index, index + 2);
+    const length = Number(code.slice(index + 2, index + 4));
+    if (!Number.isInteger(length) || index + 4 + length > code.length) break;
+    if (tag === "54") {
+      const value = Number(code.slice(index + 4, index + 4 + length));
+      return Number.isFinite(value) ? value : null;
+    }
+    index += 4 + length;
+  }
+  return null;
+}
 
 function normalizeProviderStatus(status?: string) {
   switch (status?.toLowerCase()) {
@@ -80,7 +95,7 @@ export const createPixCharge = createServerFn({ method: "POST" })
       }),
     });
     const content = await response.json().catch(() => ({})) as ProviderContent & { message?: string };
-    if (!response.ok || !content.id || !content.pixCode) {
+    if (!response.ok || !content.id || !content.pixCode || typeof content.amount !== "number" || Math.abs(content.amount - data.amount) > 0.001 || (pixAmount(content.pixCode) !== null && Math.abs((pixAmount(content.pixCode) ?? 0) - data.amount) > 0.001)) {
       await context.supabase.from("pix_charges").update({ status: "FAILED", updated_at: new Date().toISOString() }).eq("id", charge.id);
       console.error("SagacePay charge creation failed", response.status, content.message ?? "unknown");
       return { ok: false as const, error: "PROVIDER_ERROR" };
