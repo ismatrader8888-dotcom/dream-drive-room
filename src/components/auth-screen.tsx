@@ -7,14 +7,14 @@ import { lovable } from "@/integrations/lovable/index";
 
 type Mode = "login" | "register";
 
-export function AuthScreen() {
+export function AuthScreen({ initialError = "" }: { initialError?: string }) {
   const [mode, setMode] = useState<Mode>("login");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [invite, setInvite] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(initialError);
   const [info, setInfo] = useState("");
 
   useEffect(() => {
@@ -47,6 +47,11 @@ export function AuthScreen() {
       } else {
         const { error: signInError } = await supabase.auth.signInWithPassword({ email, password });
         if (signInError) throw signInError;
+        const { data: active, error: statusError } = await supabase.rpc("is_account_active");
+        if (statusError || active !== true) {
+          await supabase.auth.signOut();
+          throw new Error("ACCOUNT_BLOCKED");
+        }
       }
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : "Não foi possível continuar.";
@@ -55,6 +60,8 @@ export function AuthScreen() {
           ? "E-mail ou senha incorretos."
           : message.includes("INVALID_INVITE_CODE")
             ? "Código de convite inválido. Corrija ou apague o código para continuar."
+          : message.includes("ACCOUNT_BLOCKED")
+            ? "Esta conta foi bloqueada por segurança."
           : message.includes("already registered")
             ? "Este e-mail já possui conta. Faça login."
             : message,
