@@ -47,4 +47,4 @@
 - [x] Exigir depósito confirmado e compra de veículo em cada um dos 3 convidados da tarefa de R$ 20
 
 - [x] Investigar alteração não autorizada de saldo da conta redteam.1790315207@proton.me, conter a vulnerabilidade, corrigir permissões e reconciliar o saldo com auditoria.
-- [ ] Auditar as 44 contas do incidente, preservar contas com depósito ou crédito administrativo e bloquear as demais
+- [x] Auditar as 44 contas do incidente, preservar contas com depósito ou crédito administrativo e bloquear as demais
