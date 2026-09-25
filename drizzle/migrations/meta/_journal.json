@@ -204,6 +204,13 @@
       "when": 1790363144853,
       "tag": "0028_pause_vehicle_cycles_on_weekends",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790363161060,
+      "tag": "0029_correct_weekend_anchor_for_vehicle_cycles",
+      "breakpoints": true
     }
   ]
 }
