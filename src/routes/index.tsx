@@ -408,7 +408,7 @@ function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehic
           <p className="mt-2 text-xs text-muted-foreground">Recompensa por ciclo <b className="text-foreground">{vehicle.daily}</b></p>
           <p className="mt-1 text-xs text-muted-foreground">Rendimento por ciclo <b className="text-primary">{vehicle.dailyRate}% por dia útil</b></p>
           <p className="mt-1 text-xs text-muted-foreground">Retorno <b className="text-accent-foreground">{vehicle.returnValue}</b></p>
-          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">{vehicle.category !== "station" && <span className="rounded bg-muted px-2 py-1">{vehicle.region}</span>}<span className="rounded bg-muted px-2 py-1">Seg–sex · sem lucro no fim de semana</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
+          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">{vehicle.category !== "station" && <span className="rounded bg-muted px-2 py-1">{vehicle.region}</span>}<span className="rounded bg-muted px-2 py-1">Seg–sex</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
         </div>
         <img src={vehicleImages[vehicle.imageKey]} alt={vehicle.category === "station" ? vehicle.name : `${vehicle.name} disponível em ${vehicle.region}`} loading="lazy" width={vehicle.category === "station" ? 1024 : 992} height={vehicle.category === "station" ? 768 : 672} className="h-28 w-full self-center object-contain" />
       </div>
