@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Parse Brazilian PIX amounts as decimal reais (dots are thousands separators, commas are cents), enforce the provider's R$ 10.000 ceiling on client and server, and reject mismatched provider responses; this prevents QR codes with a smaller value than the requested deposit.
