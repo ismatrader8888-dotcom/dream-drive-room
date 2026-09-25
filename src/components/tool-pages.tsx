@@ -457,8 +457,15 @@ function BalancePage({ title, onBack, mode, balance, rewardBalance, onBalanceCha
     return () => { window.clearInterval(poll); void supabase.removeChannel(channel); };
   }, [charge, onBalanceChanged, syncCharge]);
   const submit = async () => {
-    const value = Number(amount.replace(",", "."));
-    if (!Number.isFinite(value) || value <= 0) return;
+    const entered = amount.trim().replace(/\s/g, "");
+    const formatted = /^(?:\d{1,3}(?:\.\d{3})+|\d+)(?:,\d{1,2})?$/.test(entered)
+      ? entered.replace(/\./g, "").replace(",", ".")
+      : /^\d+\.\d{1,2}$/.test(entered) ? entered : "";
+    const value = Number(formatted);
+    if (!formatted || !Number.isFinite(value) || value <= 0 || (mode === "recharge" && (value < 1 || value > 10000))) {
+      setMessage(mode === "recharge" ? "Informe um valor entre R$ 1,00 e R$ 10.000,00 (ex.: 10.000 ou 10.000,00)." : "Informe um valor válido.");
+      return;
+    }
     setBusy(true); setMessage("");
     if (mode === "recharge") {
       try {
