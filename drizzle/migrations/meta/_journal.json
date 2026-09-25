@@ -183,6 +183,13 @@
       "when": 1790338849977,
       "tag": "0025_add_defense_in_depth_profile_balance_guard",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1790338932507,
+      "tag": "0026_restrict_anonymous_execution_of_account_functions",
+      "breakpoints": true
     }
   ]
 }
