@@ -234,6 +234,8 @@ export type Database = {
       profiles: {
         Row: {
           balance: number
+          blocked_at: string | null
+          blocked_reason: string | null
           created_at: string
           demo_balance: number
           email: string | null
@@ -249,6 +251,8 @@ export type Database = {
         }
         Insert: {
           balance?: number
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
           demo_balance?: number
           email?: string | null
@@ -264,6 +268,8 @@ export type Database = {
         }
         Update: {
           balance?: number
+          blocked_at?: string | null
+          blocked_reason?: string | null
           created_at?: string
           demo_balance?: number
           email?: string | null
@@ -794,6 +800,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_account_active: { Args: { _user_id?: string }; Returns: boolean }
       process_my_vehicle_rewards: { Args: never; Returns: number }
       process_vehicle_rewards_for: {
         Args: { _user_id: string }

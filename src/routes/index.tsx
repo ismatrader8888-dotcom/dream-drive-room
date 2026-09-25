@@ -91,6 +91,7 @@ function Index() {
   const [copied, setCopied] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
+  const [blocked, setBlocked] = useState(false);
   const [booting, setBooting] = useState(false);
   const [account, setAccount] = useState<Account | null>(null);
   const [insufficient, setInsufficient] = useState<Vehicle | null>(null);
@@ -135,17 +136,33 @@ function Index() {
   };
 
   useEffect(() => {
-    void supabase.auth.getSession().then(({ data }) => {
-      setUserId(data.session?.user.id ?? null);
+    const acceptSession = async (id?: string) => {
+      if (!id) {
+        setUserId(null);
+        setReady(true);
+        return;
+      }
+      const { data: active, error } = await supabase.rpc("is_account_active");
+      if (error || active !== true) {
+        setBlocked(true);
+        setUserId(null);
+        await supabase.auth.signOut();
+        setReady(true);
+        return;
+      }
+      setBlocked(false);
+      setUserId(id);
       setReady(true);
-    });
+    };
+    void supabase.auth.getSession().then(({ data }) => acceptSession(data.session?.user.id));
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, next) => {
-      setUserId(next?.user.id ?? null);
       if (event === "SIGNED_IN") {
         setBooting(true);
+        void acceptSession(next?.user.id);
         window.setTimeout(() => setBooting(false), 2400);
       }
       if (event === "SIGNED_OUT") {
+        setUserId(null);
         setOwned([]);
         setAccount(null);
         setRewards(emptyRewards);
@@ -207,7 +224,7 @@ function Index() {
   };
 
   if (!ready) return <BydSplash />;
-  if (!userId) return <AuthScreen />;
+  if (!userId) return <AuthScreen initialError={blocked ? "Esta conta foi bloqueada por segurança." : ""} />;
   if (booting) return <BydSplash />;
 
   const displayName = account?.phone || account?.email || "Minha conta";
