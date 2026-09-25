@@ -197,6 +197,13 @@
       "when": 1790339264081,
       "tag": "0027_block_incident_accounts_and_enforce_account_status",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790363144853,
+      "tag": "0028_pause_vehicle_cycles_on_weekends",
+      "breakpoints": true
     }
   ]
 }

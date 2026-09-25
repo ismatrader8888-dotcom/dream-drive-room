@@ -801,6 +801,10 @@ export type Database = {
         Returns: boolean
       }
       is_account_active: { Args: { _user_id?: string }; Returns: boolean }
+      next_vehicle_business_cycle: {
+        Args: { _anchor: string }
+        Returns: string
+      }
       process_my_vehicle_rewards: { Args: never; Returns: number }
       process_vehicle_rewards_for: {
         Args: { _user_id: string }
