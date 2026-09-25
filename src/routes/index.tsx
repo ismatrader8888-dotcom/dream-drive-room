@@ -406,9 +406,9 @@ function MarketVehicleCard({ vehicle, period, rented, onRent }: { vehicle: Vehic
           <div className="flex flex-wrap items-center gap-2"><h2 className="font-semibold">{vehicle.name}</h2><span className="rounded bg-primary px-2 py-1 text-[11px] font-semibold text-primary-foreground">Operação</span></div>
           {vehicle.promotion && <p className="mt-2 inline-flex rounded bg-accent px-2 py-1 text-[11px] font-bold text-accent-foreground">{vehicle.promotion}</p>}
           <p className="mt-2 text-xs text-muted-foreground">Recompensa por ciclo <b className="text-foreground">{vehicle.daily}</b></p>
-          <p className="mt-1 text-xs text-muted-foreground">Rendimento por ciclo <b className="text-primary">{vehicle.dailyRate}% a cada 24h</b></p>
+          <p className="mt-1 text-xs text-muted-foreground">Rendimento por ciclo <b className="text-primary">{vehicle.dailyRate}% por dia útil</b></p>
           <p className="mt-1 text-xs text-muted-foreground">Retorno <b className="text-accent-foreground">{vehicle.returnValue}</b></p>
-          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">{vehicle.category !== "station" && <span className="rounded bg-muted px-2 py-1">{vehicle.region}</span>}<span className="rounded bg-muted px-2 py-1">A cada 24h</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
+          <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-muted-foreground">{vehicle.category !== "station" && <span className="rounded bg-muted px-2 py-1">{vehicle.region}</span>}<span className="rounded bg-muted px-2 py-1">Seg–sex · sem lucro no fim de semana</span><span className="rounded bg-muted px-2 py-1">{vehicle.cycle}</span></div>
         </div>
         <img src={vehicleImages[vehicle.imageKey]} alt={vehicle.category === "station" ? vehicle.name : `${vehicle.name} disponível em ${vehicle.region}`} loading="lazy" width={vehicle.category === "station" ? 1024 : 992} height={vehicle.category === "station" ? 768 : 672} className="h-28 w-full self-center object-contain" />
       </div>
@@ -435,9 +435,7 @@ function ResourcesPage({ owned, onBuy, onRenew, renewing }: { owned: OwnedVehicl
       <section className="px-4 pt-4">
         <div className="flex items-center justify-between gap-3">
           <h1 className="text-xl font-bold">Meus recursos</h1>
-          <Button variant="outline" className="h-10 rounded-full bg-card px-4 shadow-none">
-            <span className="h-2 w-2 rounded-full bg-success" /> Gerando lucro <ChevronDown />
-          </Button>
+           <span className="inline-flex h-10 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm">Ciclos em dias úteis <ChevronDown className="h-4 w-4" /></span>
         </div>
         <div className="mt-3 flex gap-3">
           <Button variant="outline" className="border-primary bg-transparent text-foreground shadow-none">Veículos e centrais</Button>
@@ -471,9 +469,9 @@ function VehicleCard({ vehicle, onRenew, renewing }: { vehicle: OwnedVehicle; on
         <div><p className="text-xs text-muted-foreground">Progresso</p><p className="mt-1 font-medium">{vehicle.cyclesCompleted}/{vehicle.contractCycles} ciclos</p></div>
         <div><p className="text-xs text-muted-foreground">Quilometragem de hoje</p><p className="mt-1 font-medium">0.01KM</p></div>
         <div className="flex items-center justify-center"><img src={vehicleImages[vehicle.imageKey]} alt={vehicle.name} width={992} height={672} className="h-16 w-full object-contain" /></div>
-        <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>{vehicle.dailyRate}%</b><p className="text-xs text-muted-foreground">Por ciclo de 24h</p></div><div className="rounded-lg bg-muted p-2"><b>{vehicle.daily.replace("/dia", "")}</b><p className="text-xs text-muted-foreground">Recompensa</p></div></div>
+         <div className="grid grid-cols-2 gap-2"><div className="rounded-lg bg-muted p-2"><b>{vehicle.dailyRate}%</b><p className="text-xs text-muted-foreground">Por dia útil</p></div><div className="rounded-lg bg-muted p-2"><b>{vehicle.daily.replace("/dia", "")}</b><p className="text-xs text-muted-foreground">Recompensa</p></div></div>
       </div>
-      <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ {vehicle.nextRewardAt ? "Próxima recompensa em" : "Contrato concluído"}</span><b className="tabular-nums text-primary">{vehicle.nextRewardAt ? countdown : "Concluído"}</b></div><p className="mt-2 text-xs text-muted-foreground">Creditado em Prêmios disponíveis: {moneyValue(vehicle.transferredReward)}</p></div>
+       <div className="mt-4 rounded-xl bg-highlight p-3 text-sm"><div className="flex justify-between"><span>◷ {vehicle.nextRewardAt ? "Próxima recompensa em" : "Contrato concluído"}</span><b className="tabular-nums text-primary">{vehicle.nextRewardAt ? countdown : "Concluído"}</b></div><p className="mt-2 text-xs text-muted-foreground">Ciclos de segunda a sexta; sábados e domingos pausados.</p><p className="mt-2 text-xs text-muted-foreground">Creditado em Prêmios disponíveis: {moneyValue(vehicle.transferredReward)}</p></div>
       {!vehicle.nextRewardAt && <Button className="mt-3 h-11 w-full rounded-full" disabled={renewing} onClick={onRenew}>{renewing ? "Renovando..." : `Renovar contrato por ${vehicle.price}`}</Button>}
     </article>
   );

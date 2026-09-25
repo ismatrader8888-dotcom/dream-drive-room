@@ -197,6 +197,27 @@
       "when": 1790339264081,
       "tag": "0027_block_incident_accounts_and_enforce_account_status",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1790363144853,
+      "tag": "0028_pause_vehicle_cycles_on_weekends",
+      "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1790363161060,
+      "tag": "0029_correct_weekend_anchor_for_vehicle_cycles",
+      "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1790363200816,
+      "tag": "0030_schedule_new_vehicle_purchases_on_weekdays",
+      "breakpoints": true
     }
   ]
 }
