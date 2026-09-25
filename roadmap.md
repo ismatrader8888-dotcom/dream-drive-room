@@ -45,3 +45,5 @@
 - [x] Creditar o bônus de cadastro de R$ 15 em Prêmios disponíveis
 
 - [x] Exigir depósito confirmado e compra de veículo em cada um dos 3 convidados da tarefa de R$ 20
+
+- [ ] Investigar alteração não autorizada de saldo da conta redteam.1790315207@proton.me, conter a vulnerabilidade, corrigir permissões e reconciliar o saldo com auditoria.
