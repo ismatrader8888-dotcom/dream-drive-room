@@ -10,3 +10,4 @@
 <!-- LOVABLE:END -->
 
 - Parse Brazilian PIX amounts as decimal reais (dots are thousands separators, commas are cents), enforce the provider's R$ 10.000 ceiling on client and server, and reject mismatched provider responses; this prevents QR codes with a smaller value than the requested deposit.
+- Schedule vehicle and charging-station rewards on São Paulo weekdays at the purchase-time clock hour, skipping Saturdays and Sundays; this preserves 25/30 paid cycles and keeps existing rewards untouched.
