@@ -243,7 +243,7 @@ function Index() {
   ) : view === "resources" ? (
     <ResourcesPage owned={owned} onBuy={() => setView("home")} onRenew={renewVehicle} renewing={renewing} />
   ) : view === "news" ? (
-    <SimplePage icon={FileText} title="Notícias" copy="As novidades da sua frota aparecerão aqui." />
+    <NewsPage />
   ) : (
     <MarketplacePage onRent={rentVehicle} renting={renting} />
   );
@@ -511,7 +511,22 @@ function MembershipPage({ onBack, displayName, inviteCode }: { onBack: () => voi
 
 function Benefit({ icon: Icon, text }: { icon: ComponentType<{ className?: string }>; text: string }) { return <div className="flex flex-col items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-lg border border-border"><Icon className="h-5 w-5"/></span><span>{text}</span></div>; }
 function PageHeader({ title, onBack }: { title: string; onBack: () => void }) { return <header className="relative flex h-16 items-center justify-center"><Button variant="ghost" size="icon" onClick={onBack} aria-label="Voltar" className="absolute left-0"><ArrowLeft/></Button><h1 className="text-lg font-bold">{title}</h1></header>; }
-function SimplePage({ icon: Icon, title, copy }: { icon: ComponentType<{ className?: string }>; title: string; copy: string }) { return <div className="flex min-h-[80vh] flex-col items-center justify-center px-8 text-center"><span className="grid h-20 w-20 place-items-center rounded-full bg-primary text-primary-foreground"><Icon className="h-9 w-9"/></span><h1 className="mt-5 text-2xl font-bold">{title}</h1><p className="mt-2 text-muted-foreground">{copy}</p></div>; }
+function NewsPage() {
+  return <div className="min-h-screen bg-background px-5 pb-28">
+    <header className="border-b border-border py-5"><h1 className="text-xl font-bold">Notícias</h1></header>
+    <article className="py-7 text-sm leading-7">
+      <h2 className="text-xl font-bold leading-snug">🚨Aos nossos clientes, parceiros e ao público em geral:🚨</h2>
+      <p className="mt-6">Tomamos conhecimento da existência de uma plataforma ilegal que está plagiando a nossa marca e identidade visual, utilizando um nome e interface semelhantes com o objetivo de induzir usuários ao erro.</p>
+      <p className="mt-6">Esclarecemos expressamente que:</p>
+      <div className="mt-5 space-y-5 border-l-2 border-primary pl-4">
+        <p><strong>AUSÊNCIA DE VÍNCULO:</strong> Nossa empresa NÃO POSSUI QUALQUER LIGAÇÃO comercial, jurídica, institucional ou operacional com a BYD Corporation ou com a referida plataforma cópia.</p>
+        <p><strong>USO NÃO AUTORIZADO:</strong> Repudiamos veementemente a apropriação indevida do nosso nome, conceito e reputação por terceiros de má-fé.</p>
+      </div>
+      <h3 className="mt-8 text-lg font-bold">🛡️ MANTENHA-SE SEGURO</h3>
+      <p className="mt-4">Não realize transações, transferências de valores ou envio de dados pessoais em canais não oficiais. Certifique-se de que está navegando exclusivamente em nossos canais verificados</p>
+    </article>
+  </div>;
+}
 
 function BottomNav({ view, onNavigate }: { view: View; onNavigate: (view: View) => void }) {
   const items: Array<{ view: View; label: string; icon: ComponentType<{ className?: string }> }> = [{ view: "home", label: "Lar", icon: Home }, { view: "resources", label: "Recursos", icon: CarFront }, { view: "news", label: "Notícias", icon: FileText }, { view: "profile", label: "Minha", icon: Users }];
