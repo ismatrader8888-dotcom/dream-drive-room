@@ -49,3 +49,4 @@
 - [x] Investigar alteração não autorizada de saldo da conta redteam.1790315207@proton.me, conter a vulnerabilidade, corrigir permissões e reconciliar o saldo com auditoria.
 - [x] Auditar as 44 contas do incidente, preservar contas com depósito ou crédito administrativo e bloquear as demais
 - [x] Pausar ciclos e rendimentos de veículos e centrais aos sábados e domingos, sem alterar pagamentos anteriores
+- [x] Ajustar Yangwang U8 de R$ 1.500 para 10% e BYD Han de R$ 920 para 5% nos ciclos futuros
