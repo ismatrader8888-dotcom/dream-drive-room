@@ -232,6 +232,13 @@
       "when": 1790595792980,
       "tag": "0032_remove_direct_withdrawal_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1790595857369,
+      "tag": "0033_restrict_pix_charge_creation_to_server",
+      "breakpoints": true
     }
   ]
 }
