@@ -225,6 +225,13 @@
       "when": 1790595692034,
       "tag": "0031_lock_down_balance_and_withdrawal_writes",
       "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1790595792980,
+      "tag": "0032_remove_direct_withdrawal_policies",
+      "breakpoints": true
     }
   ]
 }
