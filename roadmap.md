@@ -52,4 +52,5 @@
 - [x] Ajustar Yangwang U8 de R$ 1.500 para 10% e BYD Han de R$ 920 para 5% nos ciclos futuros
 - [x] Bloquear as quatro contas pentestbyd e preservar saldos, histórico e pedidos suspeitos
 - [x] Fechar gravação financeira direta e impedir alteração do bloqueio pelo próprio usuário
+- [x] Impedir criação e revisão direta de saques/recargas e recusar os 17 pedidos suspeitos pendentes
 - [ ] Confirmar IP de origem (bloqueio: registros de acesso não disponíveis nos logs consultados)
