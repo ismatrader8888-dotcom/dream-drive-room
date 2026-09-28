@@ -11,3 +11,5 @@
 
 - Parse Brazilian PIX amounts as decimal reais (dots are thousands separators, commas are cents), enforce the provider's R$ 10.000 ceiling on client and server, and reject mismatched provider responses; this prevents QR codes with a smaller value than the requested deposit.
 - Schedule vehicle and charging-station rewards on São Paulo weekdays at the purchase-time clock hour, skipping Saturdays and Sundays; this preserves 25/30 paid cycles and keeps existing rewards untouched.
+- Keep financial tables read-only to browser roles and route withdrawal/recharge writes through vetted database functions; direct row writes bypass amount, eligibility, and approval checks.
+- Create and update PIX charge rows only inside the authenticated server flow using the privileged client after confirming an active profile; browser writes can forge provider references and amounts.
