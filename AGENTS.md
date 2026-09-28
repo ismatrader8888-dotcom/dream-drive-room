@@ -13,3 +13,4 @@
 - Schedule vehicle and charging-station rewards on São Paulo weekdays at the purchase-time clock hour, skipping Saturdays and Sundays; this preserves 25/30 paid cycles and keeps existing rewards untouched.
 - Keep financial tables read-only to browser roles and route withdrawal/recharge writes through vetted database functions; direct row writes bypass amount, eligibility, and approval checks.
 - Create and update PIX charge rows only inside the authenticated server flow using the privileged client after confirming an active profile; browser writes can forge provider references and amounts.
+- Generate password-recovery links only in an admin-authenticated server function after matching stored email and phone; the link grants account access and must never be generated or stored in the browser without role verification.

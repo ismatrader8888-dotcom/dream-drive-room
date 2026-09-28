@@ -41,6 +41,27 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_password_recovery_links: {
+        Row: {
+          admin_id: string
+          created_at: string
+          id: string
+          target_user_id: string
+        }
+        Insert: {
+          admin_id: string
+          created_at?: string
+          id?: string
+          target_user_id: string
+        }
+        Update: {
+          admin_id?: string
+          created_at?: string
+          id?: string
+          target_user_id?: string
+        }
+        Relationships: []
+      }
       admin_support_sessions: {
         Row: {
           admin_id: string

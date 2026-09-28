@@ -239,6 +239,13 @@
       "when": 1790595857369,
       "tag": "0033_restrict_pix_charge_creation_to_server",
       "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1790599034316,
+      "tag": "0034_audit_admin_password_recovery_links",
+      "breakpoints": true
     }
   ]
 }
