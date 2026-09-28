@@ -54,15 +54,16 @@ export const createPixCharge = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const apiKey = process.env["SAGACEPAY_API_KEY"];
     if (!apiKey) return { ok: false as const, error: "PIX_SETUP_REQUIRED" };
-
-    const { data: profile } = await context.supabase
+    const { data: profile, error: profileError } = await context.supabase
       .from("profiles")
-      .select("email, phone")
+      .select("email, phone, blocked_at")
       .eq("id", context.userId)
       .single();
+    if (profileError || !profile || profile.blocked_at) throw new Error("ACCOUNT_UNAVAILABLE");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const externalRef = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 300_000).toISOString();
-    const { data: charge, error: insertError } = await context.supabase.from("pix_charges").insert({
+    const { data: charge, error: insertError } = await supabaseAdmin.from("pix_charges").insert({
       user_id: context.userId,
       external_ref: externalRef,
       amount: data.amount,
@@ -96,11 +97,11 @@ export const createPixCharge = createServerFn({ method: "POST" })
     });
     const content = await response.json().catch(() => ({})) as ProviderContent & { message?: string };
     if (!response.ok || !content.id || !content.pixCode || typeof content.amount !== "number" || Math.abs(content.amount - data.amount) > 0.001 || (pixAmount(content.pixCode) !== null && Math.abs((pixAmount(content.pixCode) ?? 0) - data.amount) > 0.001)) {
-      await context.supabase.from("pix_charges").update({ status: "FAILED", updated_at: new Date().toISOString() }).eq("id", charge.id);
+      await supabaseAdmin.from("pix_charges").update({ status: "FAILED", updated_at: new Date().toISOString() }).eq("id", charge.id);
       console.error("SagacePay charge creation failed", response.status, content.message ?? "unknown");
       return { ok: false as const, error: "PROVIDER_ERROR" };
     }
-    const { error: updateError } = await context.supabase.from("pix_charges").update({
+    const { error: updateError } = await supabaseAdmin.from("pix_charges").update({
       provider_magic_id: content.id,
       qr_code: content.pixCode,
       status: "PENDING",
