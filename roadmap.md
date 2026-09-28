@@ -53,4 +53,5 @@
 - [x] Bloquear as quatro contas pentestbyd e preservar saldos, histórico e pedidos suspeitos
 - [x] Fechar gravação financeira direta e impedir alteração do bloqueio pelo próprio usuário
 - [x] Impedir criação e revisão direta de saques/recargas e recusar os 17 pedidos suspeitos pendentes
+- [x] Impedir que contas comuns criem ou alterem cobranças PIX falsas
 - [ ] Confirmar IP de origem (bloqueio: registros de acesso não disponíveis nos logs consultados)
