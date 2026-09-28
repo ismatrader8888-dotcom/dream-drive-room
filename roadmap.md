@@ -1,5 +1,7 @@
 # Roadmap
 
+- [x] Permitir ao administrador gerar um link temporário de redefinição após conferir e-mail e telefone, com registro da emissão
+
 - [x] Impedir aluguel sem saldo e encaminhar para recarga via PIX
 - [x] Debitar saldo e registrar compra de forma segura e transacional
 - [x] Persistir solicitações de recarga e saque

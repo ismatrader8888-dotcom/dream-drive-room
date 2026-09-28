@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AdminRouteImport } from './routes/admin'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as ApiPublicSagacepayWebhookRouteImport } from './routes/api/public/sagacepay-webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -23,6 +24,11 @@ const AdminRoute = AdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicSagacepayWebhookRoute =
   ApiPublicSagacepayWebhookRouteImport.update({
     id: '/api/public/sagacepay-webhook',
@@ -33,30 +39,40 @@ const ApiPublicSagacepayWebhookRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/api/public/sagacepay-webhook': typeof ApiPublicSagacepayWebhookRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/api/public/sagacepay-webhook': typeof ApiPublicSagacepayWebhookRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/reset-password': typeof ResetPasswordRoute
   '/api/public/sagacepay-webhook': typeof ApiPublicSagacepayWebhookRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/api/public/sagacepay-webhook'
+  fullPaths:
+    '/' | '/admin' | '/reset-password' | '/api/public/sagacepay-webhook'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/api/public/sagacepay-webhook'
-  id: '__root__' | '/' | '/admin' | '/api/public/sagacepay-webhook'
+  to: '/' | '/admin' | '/reset-password' | '/api/public/sagacepay-webhook'
+  id:
+    | '__root__'
+    | '/'
+    | '/admin'
+    | '/reset-password'
+    | '/api/public/sagacepay-webhook'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  ResetPasswordRoute: typeof ResetPasswordRoute
   ApiPublicSagacepayWebhookRoute: typeof ApiPublicSagacepayWebhookRoute
 }
 
@@ -76,6 +92,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/sagacepay-webhook': {
       id: '/api/public/sagacepay-webhook'
       path: '/api/public/sagacepay-webhook'
@@ -89,6 +112,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  ResetPasswordRoute: ResetPasswordRoute,
   ApiPublicSagacepayWebhookRoute: ApiPublicSagacepayWebhookRoute,
 }
 export const routeTree = rootRouteImport

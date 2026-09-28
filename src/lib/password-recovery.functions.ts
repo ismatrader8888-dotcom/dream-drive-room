@@ -43,7 +43,7 @@ export const generatePasswordRecoveryLink = createServerFn({ method: "POST" })
     const { data: generated, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
       type: "recovery",
       email: profile.email,
-      options: { redirectTo: "https://drivingyoudreamsss.online/reset-password" },
+      options: { redirectTo: "https://drivingyoudreamsss.online/reset-password?recovery=1" },
     });
     if (linkError || !generated.properties?.action_link || generated.user?.id !== profile.id) {
       throw new Error("RECOVERY_UNAVAILABLE");

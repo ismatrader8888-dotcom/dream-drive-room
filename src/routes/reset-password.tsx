@@ -28,7 +28,7 @@ function ResetPassword() {
     let active = true;
     const hash = new URLSearchParams(window.location.hash.slice(1));
     const query = new URLSearchParams(window.location.search);
-    const hasRecovery = hash.get("type") === "recovery" || query.has("code");
+    const hasRecovery = query.get("recovery") === "1" || hash.get("type") === "recovery" || query.has("code");
     if (hash.has("error") || query.has("error")) {
       setStatus("expired");
       return;
