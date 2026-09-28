@@ -615,7 +615,7 @@ function SupportPage({ onBack }: { onBack: () => void }) {
     <Shell title="Atendimento ao Cliente" onBack={onBack}>
       <section className="m-4 space-y-3 rounded-2xl bg-card p-5 shadow-card text-sm">
         <p className="text-muted-foreground">Nossa equipe responde de segunda a sábado, das 8h às 20h.</p>
-        <Button className="h-12 w-full rounded-full" onClick={() => window.open("https://wa.me/4917629776572", "_blank", "noopener,noreferrer")}>
+        <Button className="h-12 w-full rounded-full" onClick={() => window.open("https://wa.me/971565876043", "_blank", "noopener,noreferrer")}>
           <MessageCircle className="h-5 w-5" />
           WhatsApp
         </Button>
