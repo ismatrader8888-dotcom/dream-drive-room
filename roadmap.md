@@ -50,3 +50,6 @@
 - [x] Auditar as 44 contas do incidente, preservar contas com depósito ou crédito administrativo e bloquear as demais
 - [x] Pausar ciclos e rendimentos de veículos e centrais aos sábados e domingos, sem alterar pagamentos anteriores
 - [x] Ajustar Yangwang U8 de R$ 1.500 para 10% e BYD Han de R$ 920 para 5% nos ciclos futuros
+- [x] Bloquear as quatro contas pentestbyd e preservar saldos, histórico e pedidos suspeitos
+- [x] Fechar gravação financeira direta e impedir alteração do bloqueio pelo próprio usuário
+- [ ] Confirmar IP de origem (bloqueio: registros de acesso não disponíveis nos logs consultados)
