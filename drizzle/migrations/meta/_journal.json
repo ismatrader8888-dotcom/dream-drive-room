@@ -218,6 +218,13 @@
       "when": 1790363200816,
       "tag": "0030_schedule_new_vehicle_purchases_on_weekdays",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1790595692034,
+      "tag": "0031_lock_down_balance_and_withdrawal_writes",
+      "breakpoints": true
     }
   ]
 }
