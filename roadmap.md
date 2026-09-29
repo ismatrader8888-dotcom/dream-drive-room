@@ -57,4 +57,4 @@
 - [x] Impedir criação e revisão direta de saques/recargas e recusar os 17 pedidos suspeitos pendentes
 - [x] Impedir que contas comuns criem ou alterem cobranças PIX falsas
 - [ ] Confirmar IP de origem (bloqueio: registros de acesso não disponíveis nos logs consultados)
-- [x] Fixar a roleta diária em R$ 1 por giro, no crédito e na exibição
+- [x] Fixar a roleta diária em R$ 1 por giro, mantendo os demais valores ilustrativos visíveis e informando o prêmio real
