@@ -270,7 +270,7 @@ function InviteRewardPage({ onBack }: { onBack: () => void }) {
 
 type WheelState = { canSpin: boolean; nextSpinAt: string | null; lastPrize: number | null };
 type InviteTaskState = { completed: number; totalInvited: number; qualifiedInvited: number; goal: number; reward: number; rewarded: boolean };
-const wheelPrizes = [1, 2, 5, 10, 20, 50];
+const wheelPrizes = [1, 1, 1, 1, 1, 1];
 
 function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalanceChanged: () => void }) {
   const [tab, setTab] = useState("Tarefa pessoal");
@@ -299,8 +299,7 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
     const { data, error } = await supabase.rpc("spin_daily_wheel");
     if (error || !data) { setSpinning(false); await loadWheel(); return; }
     const result = data as unknown as { prize: number; nextSpinAt: string };
-    const selectedIndex = wheelPrizes.indexOf(Number(result.prize));
-    setRotation((current) => current + 1800 + (360 - selectedIndex * 60));
+    setRotation((current) => current + 1800);
     window.setTimeout(() => {
       setPrize(Number(result.prize));
       setWheel({ canSpin: false, nextSpinAt: result.nextSpinAt, lastPrize: Number(result.prize) });
@@ -323,14 +322,14 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
             <div className="relative mx-auto mt-5 h-64 w-64">
               <div className="absolute left-1/2 top-[-2px] z-10 h-0 w-0 -translate-x-1/2 border-x-[12px] border-t-[24px] border-x-transparent border-t-primary" />
               <div className="lucky-wheel-face relative h-full w-full rounded-full border-8 border-primary/30 shadow-card transition-transform duration-[3200ms] ease-[cubic-bezier(.12,.72,.12,1)]" style={{ transform: `rotate(${rotation}deg)` }}>
-                {wheelPrizes.map((value, index) => <b key={value} className="absolute left-1/2 top-1/2 text-sm text-foreground" style={{ transform: `translate(-50%, -50%) rotate(${index * 60}deg) translateY(-92px) rotate(${-index * 60}deg)` }}>R$ {value}</b>)}
+                {wheelPrizes.map((value, index) => <b key={index} className="absolute left-1/2 top-1/2 text-sm text-foreground" style={{ transform: `translate(-50%, -50%) rotate(${index * 60}deg) translateY(-92px) rotate(${-index * 60}deg)` }}>R$ {value}</b>)}
                 <span className="absolute left-1/2 top-1/2 grid h-16 w-16 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-background bg-primary text-primary-foreground"><Gift className="h-7 w-7" /></span>
               </div>
             </div>
             {prize && <p className="mt-4 animate-fade-in text-lg font-bold text-primary">Você ganhou {money(prize)} em Créditos!</p>}
             {!readyToSpin && !prize && <p className="mt-4 text-sm text-muted-foreground">Próxima rodada em <b className="tabular-nums text-foreground">{countdown}</b></p>}
             <Button className="mt-4 h-12 w-full rounded-full" disabled={!readyToSpin || spinning} onClick={() => void spin()}>{spinning ? "Girando..." : readyToSpin ? "Girar agora" : "Aguarde a próxima rodada"}</Button>
-            <p className="mt-3 text-xs text-muted-foreground">Prêmios possíveis em Créditos: R$ 1, R$ 2, R$ 5, R$ 10, R$ 20 e R$ 50.</p>
+            <p className="mt-3 text-xs text-muted-foreground">Prêmio em Créditos: R$ 1,00 por rodada.</p>
           </section>
           <section className="rounded-2xl border-l-4 border-primary bg-card p-4 shadow-card">
             <p className="text-sm text-muted-foreground">Prêmio da rodada</p>
