@@ -329,7 +329,7 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
             {prize && <p className="mt-4 animate-fade-in text-lg font-bold text-primary">Você ganhou {money(prize)} em Créditos!</p>}
             {!readyToSpin && !prize && <p className="mt-4 text-sm text-muted-foreground">Próxima rodada em <b className="tabular-nums text-foreground">{countdown}</b></p>}
             <Button className="mt-4 h-12 w-full rounded-full" disabled={!readyToSpin || spinning} onClick={() => void spin()}>{spinning ? "Girando..." : readyToSpin ? "Girar agora" : "Aguarde a próxima rodada"}</Button>
-            <p className="mt-3 text-xs text-muted-foreground">Os outros valores na roleta são ilustrativos. Cada giro concede sempre R$ 1,00 em Créditos.</p>
+            <p className="mt-3 text-xs text-muted-foreground">{"\n"}</p>
           </section>
           <section className="rounded-2xl border-l-4 border-primary bg-card p-4 shadow-card">
             <p className="text-sm text-muted-foreground">Prêmio da rodada</p>
