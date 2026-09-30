@@ -101,6 +101,7 @@ function Index() {
   const [rewards, setRewards] = useState<RewardSummary>(emptyRewards);
   const [showWelcomeBonus, setShowWelcomeBonus] = useState(false);
   const [eligibilityMessage, setEligibilityMessage] = useState("");
+  const [limitedOfferEligible, setLimitedOfferEligible] = useState(false);
 
   const loadAccount = async (id: string) => {
     const { data: profile } = await supabase.from("profiles").select("phone, invite_code, email, demo_balance, reward_balance").eq("id", id).maybeSingle();
@@ -188,6 +189,17 @@ function Index() {
     return () => window.clearInterval(timer);
   }, [userId]);
 
+  useEffect(() => {
+    if (!userId) { setLimitedOfferEligible(false); return; }
+    let active = true;
+    const checkOffer = async () => {
+      const { data, error } = await supabase.from("vehicle_catalog").select("id").eq("id", "song-plus-new-york-196-limited-referral").maybeSingle();
+      if (active) setLimitedOfferEligible(!error && Boolean(data));
+    };
+    void checkOffer();
+    return () => { active = false; };
+  }, [userId, owned.length]);
+
   const copyText = async (key: string, text: string) => {
     await navigator.clipboard?.writeText(text);
     setCopied(key);
@@ -203,6 +215,7 @@ function Index() {
     if (error) {
       if (error.message.includes("INSUFFICIENT_BALANCE")) setInsufficient(vehicle);
       else if (error.message.includes("VEHICLE_OWNERSHIP_REQUIRED")) setEligibilityMessage("Esta promoção é exclusiva para pessoas que já possuem pelo menos 1 veículo adquirido.");
+      else if (error.message.includes("LIMITED_OFFER_NOT_ELIGIBLE")) setEligibilityMessage("Esta oferta é exclusiva para convidados elegíveis que já adquiriram um veículo.");
       return;
     }
     await loadAccount(userId);
@@ -246,9 +259,9 @@ function Index() {
   ) : view === "resources" ? (
     <ResourcesPage owned={owned} onBuy={() => setView("home")} onRenew={renewVehicle} renewing={renewing} />
   ) : view === "news" ? (
-    <NewsPage hasVehicle={owned.length > 0} />
+    <NewsPage hasVehicle={owned.length > 0} limitedOfferEligible={limitedOfferEligible} />
   ) : (
-    <MarketplacePage onRent={rentVehicle} renting={renting} hasVehicle={owned.length > 0} />
+    <MarketplacePage onRent={rentVehicle} renting={renting} hasVehicle={owned.length > 0} limitedOfferEligible={limitedOfferEligible} />
   );
 
   return (
@@ -321,9 +334,11 @@ type Vehicle = {
   imageKey: ImageKey;
   category?: "vehicle" | "station";
   requiresOwnedVehicle?: boolean;
+  limitedOffer?: boolean;
 };
 
 const vehicles: Vehicle[] = [
+  { id: "song-plus-new-york-196-limited-referral", name: "BYD Song Plus Edição Limitada", region: "New York", daily: "R$ 588,00/dia", returnValue: "R$ 4.116,00", price: "R$ 196,00", priceAmount: 196, dailyRate: 300, promotion: "PROMOÇÃO LIMITADA", cycle: "7 ciclos", imageKey: "song-plus", limitedOffer: true },
   { id: "song-plus-new-york-170-exclusive", name: "BYD Song Plus", region: "New York", daily: "R$ 20,40/dia", returnValue: "R$ 612,00", price: "R$ 170,00", priceAmount: 170, dailyRate: 12, promotion: "PROMOÇÃO EXCLUSIVA", cycle: "30 ciclos", imageKey: "song-plus", requiresOwnedVehicle: true },
   { id: "dolphin-mini-eco-new-york-50", name: "BYD Dolphin Mini ECO", region: "New York", daily: "R$ 4,50/dia", returnValue: "R$ 112,50", price: "R$ 50,00", priceAmount: 50, dailyRate: 9, promotion: "Promoção por tempo limitado", cycle: "25 ciclos", imageKey: "entry" },
   { id: "dolphin-mini-new-york-90", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 6,30/dia", returnValue: "R$ 157,50", price: "R$ 90,00", priceAmount: 90, dailyRate: 7, cycle: "25 ciclos", imageKey: "entry" },
@@ -348,7 +363,7 @@ const toNumber = (value: string) => Number(value.replace(/[^\d,]/g, "").replace(
 const rateOf = (vehicle: Vehicle) => toNumber(vehicle.returnValue) / toNumber(vehicle.price);
 type SortKey = "Padrão" | "Preço" | "Progresso" | "Recompensa";
 
-function MarketplacePage({ onRent, renting, hasVehicle }: { onRent: (vehicle: Vehicle) => void; renting: boolean; hasVehicle: boolean }) {
+function MarketplacePage({ onRent, renting, hasVehicle, limitedOfferEligible }: { onRent: (vehicle: Vehicle) => void; renting: boolean; hasVehicle: boolean; limitedOfferEligible: boolean }) {
   const [region, setRegion] = useState("Todos");
   const [period, setPeriod] = useState<"Diário" | "Ciclo">("Diário");
   const [rented, setRented] = useState<string | null>(null);
@@ -363,7 +378,7 @@ function MarketplacePage({ onRent, renting, hasVehicle }: { onRent: (vehicle: Ve
     else { setSort(key); setDesc(true); }
   };
 
-  const catalog = vehicles.filter((vehicle) => (period === "Ciclo" ? vehicle.category === "station" : vehicle.category !== "station") && (!vehicle.requiresOwnedVehicle || hasVehicle));
+  const catalog = vehicles.filter((vehicle) => (period === "Ciclo" ? vehicle.category === "station" : vehicle.category !== "station") && (!vehicle.requiresOwnedVehicle || hasVehicle) && (!vehicle.limitedOffer || limitedOfferEligible));
   let visible = period === "Ciclo" || region === "Todos" ? catalog : catalog.filter((vehicle) => vehicle.region === region);
   if (maxPrice !== null) visible = visible.filter((vehicle) => toNumber(vehicle.price) <= maxPrice);
   if (sort !== "Padrão") {
@@ -522,9 +537,17 @@ function MembershipPage({ onBack, displayName, inviteCode }: { onBack: () => voi
 
 function Benefit({ icon: Icon, text }: { icon: ComponentType<{ className?: string }>; text: string }) { return <div className="flex flex-col items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-lg border border-border"><Icon className="h-5 w-5"/></span><span>{text}</span></div>; }
 function PageHeader({ title, onBack }: { title: string; onBack: () => void }) { return <header className="relative flex h-16 items-center justify-center"><Button variant="ghost" size="icon" onClick={onBack} aria-label="Voltar" className="absolute left-0"><ArrowLeft/></Button><h1 className="text-lg font-bold">{title}</h1></header>; }
-function NewsPage({ hasVehicle }: { hasVehicle: boolean }) {
+function NewsPage({ hasVehicle, limitedOfferEligible }: { hasVehicle: boolean; limitedOfferEligible: boolean }) {
   return <div className="min-h-screen bg-background px-5 pb-28">
     <header className="border-b border-border py-5"><h1 className="text-xl font-bold">Notícias</h1></header>
+    {limitedOfferEligible && <article className="border-b border-border py-7">
+      <span className="inline-flex rounded bg-accent px-2 py-1 text-xs font-bold text-accent-foreground">PROMOÇÃO LIMITADA</span>
+      <h2 className="mt-3 text-xl font-bold">BYD Song Plus Edição Limitada por R$ 196,00</h2>
+      <div className="mt-4 grid grid-cols-[1fr_140px] items-center gap-3">
+        <div className="text-sm leading-6 text-muted-foreground"><p>Oferta exclusiva para convidados elegíveis que já compraram um veículo.</p><p className="mt-2 font-semibold text-foreground">300% por dia útil · R$ 588,00 por ciclo · 7 ciclos</p></div>
+        <img src={bydSongPlus} alt="BYD Song Plus da promoção limitada" loading="lazy" width={1024} height={768} className="h-28 w-full object-contain" />
+      </div>
+    </article>}
     {hasVehicle && <article className="border-b border-border py-7">
       <span className="inline-flex rounded bg-accent px-2 py-1 text-xs font-bold text-accent-foreground">PROMOÇÃO EXCLUSIVA</span>
       <h2 className="mt-3 text-xl font-bold">BYD Song Plus por R$ 170,00</h2>
