@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Mostrar datas e horários na visão de suporte e permitir relatório PDF individual completo com indicações e depósitos eficazes
+- [x] Mostrar datas e horários na visão de suporte e permitir relatório PDF individual completo com indicações e depósitos eficazes
 
 - [x] Permitir ao administrador gerar um link temporário de redefinição após conferir e-mail e telefone, com registro da emissão
 
