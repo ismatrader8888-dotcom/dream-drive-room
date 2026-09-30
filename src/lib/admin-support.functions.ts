@@ -80,11 +80,21 @@ export const getAdminAccountReport = createServerFn({ method: "POST" })
     ]);
 
     const invitedIds = referrals.map((r) => r.referred_user_id);
-    const invitedProfiles = invitedIds.length ? await allRows((from, to) => supabaseAdmin.from("profiles")
-      .select("id,email,created_at").in("id", invitedIds).order("created_at").range(from, to)) : [];
-    const invitedDeposits = invitedIds.length ? await allRows((from, to) => supabaseAdmin.from("pix_charges")
-      .select("id,user_id,amount,status,created_at,credited_at").in("user_id", invitedIds)
-      .eq("status", "CONFIRMED").order("created_at", { ascending: false }).range(from, to)) : [];
+    // Keep filters short enough for URL limits when a member has hundreds of invites.
+    const invitedProfiles: Array<{ id: string; email: string | null; created_at: string }> = [];
+    const invitedDeposits: Array<{ id: string; user_id: string; amount: number; status: string; created_at: string; credited_at: string | null }> = [];
+    for (let start = 0; start < invitedIds.length; start += 75) {
+      const ids = invitedIds.slice(start, start + 75);
+      const [profilesPage, depositsPage] = await Promise.all([
+        allRows((from, to) => supabaseAdmin.from("profiles")
+          .select("id,email,created_at").in("id", ids).order("created_at").range(from, to)),
+        allRows((from, to) => supabaseAdmin.from("pix_charges")
+          .select("id,user_id,amount,status,created_at,credited_at").in("user_id", ids)
+          .eq("status", "CONFIRMED").order("created_at", { ascending: false }).range(from, to)),
+      ]);
+      invitedProfiles.push(...profilesPage);
+      invitedDeposits.push(...depositsPage);
+    }
 
     return { profile, vehicles, pixCharges, withdrawals, transactions, referrals, invitedProfiles, invitedDeposits, generatedAt: new Date().toISOString() };
   });
