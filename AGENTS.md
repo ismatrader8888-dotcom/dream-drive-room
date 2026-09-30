@@ -14,3 +14,4 @@
 - Keep financial tables read-only to browser roles and route withdrawal/recharge writes through vetted database functions; direct row writes bypass amount, eligibility, and approval checks.
 - Create and update PIX charge rows only inside the authenticated server flow using the privileged client after confirming an active profile; browser writes can forge provider references and amounts.
 - Generate password-recovery links only in an admin-authenticated server function after matching stored email and phone; the link grants account access and must never be generated or stored in the browser without role verification.
+- Generate individual account reports from an admin-verified server read, then render the PDF locally; this prevents unrestricted access to other users' financial history.

@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { ArrowLeft, BarChart3, CarFront, Check, Copy, Eye, KeyRound, LogOut, RefreshCw, Search, Users, WalletCards } from "lucide-react";
+import { ArrowLeft, BarChart3, CarFront, Check, Copy, Download, Eye, KeyRound, LogOut, RefreshCw, Search, Users, WalletCards } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { closeAdminSupportView, openAdminSupportView } from "@/lib/admin-support.functions";
+import { closeAdminSupportView, getAdminAccountReport, openAdminSupportView } from "@/lib/admin-support.functions";
 import { generatePasswordRecoveryLink } from "@/lib/password-recovery.functions";
 
 type Profile = { id: string; email: string | null; phone: string | null; createdAt: string; balance: number; rewardBalance: number; vehicleRewardsToday: number; vehicleRewardsGenerated: number; vehicleRewardsPending: number; vehicleRewardsTransferred: number; inviteCode: string; referredBy: string | null; referrals: number; effectiveReferrals: number; referralBonus: number };
@@ -26,6 +26,7 @@ type SupportView = {
 };
 
 const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
+const dateTime = (value: string | null | undefined) => value ? new Intl.DateTimeFormat("pt-BR", { timeZone: "America/Sao_Paulo", dateStyle: "short", timeStyle: "medium" }).format(new Date(value)) : "Não registrado";
 
 export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
   const [data, setData] = useState<Dashboard | null>(null);
@@ -40,6 +41,8 @@ export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
   const [createdFrom, setCreatedFrom] = useState("");
   const [createdTo, setCreatedTo] = useState("");
   const [supportView, setSupportView] = useState<SupportView | null>(null);
+  const [reportBusy, setReportBusy] = useState(false);
+  const [reportError, setReportError] = useState("");
   const [recovering, setRecovering] = useState<Profile | null>(null);
   const [recoveryEmail, setRecoveryEmail] = useState("");
   const [recoveryPhone, setRecoveryPhone] = useState("");
@@ -48,6 +51,7 @@ export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
   const [copiedRecovery, setCopiedRecovery] = useState(false);
   const openSupport = useServerFn(openAdminSupportView);
   const closeSupport = useServerFn(closeAdminSupportView);
+  const getReport = useServerFn(getAdminAccountReport);
   const generateRecovery = useServerFn(generatePasswordRecoveryLink);
 
   const load = useCallback(async () => {
@@ -102,6 +106,19 @@ export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
     try { await closeSupport({ data: { sessionId } }); } catch { setError("A conta foi fechada, mas o encerramento não pôde ser registrado."); }
   };
 
+  const downloadReport = async () => {
+    if (!supportView || reportBusy) return;
+    setReportBusy(true);
+    setReportError("");
+    try {
+      const report = await getReport({ data: { targetUserId: supportView.profile.id } });
+      const { downloadAccountReport } = await import("@/lib/account-report");
+      await downloadAccountReport(report);
+    } catch {
+      setReportError("Não foi possível gerar o relatório. Tente novamente.");
+    } finally { setReportBusy(false); }
+  };
+
   const openRecovery = (profile: Profile) => {
     setRecovering(profile);
     setRecoveryEmail("");
@@ -125,7 +142,7 @@ export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
     } finally { setBusy(null); }
   };
 
-  if (supportView) return <SupportAccount data={supportView} onClose={() => void leaveSupport()} />;
+  if (supportView) return <SupportAccount data={supportView} onClose={() => void leaveSupport()} onDownload={() => void downloadReport()} reportBusy={reportBusy} reportError={reportError} />;
 
   const filteredProfiles = (data?.profiles ?? []).filter((profile) => {
     const emailMatches = (profile.email ?? "").toLocaleLowerCase("pt-BR").includes(emailSearch.trim().toLocaleLowerCase("pt-BR"));
@@ -183,22 +200,23 @@ export function AdminPanel({ onSignOut }: { onSignOut: () => void }) {
   );
 }
 
-function SupportAccount({ data, onClose }: { data: SupportView; onClose: () => void }) {
+function SupportAccount({ data, onClose, onDownload, reportBusy, reportError }: { data: SupportView; onClose: () => void; onDownload: () => void; reportBusy: boolean; reportError: string }) {
   const identity = data.profile.email ?? data.profile.phone ?? "Usuário";
   return <div className="min-h-screen bg-background pb-10">
-    <header className="sticky top-0 z-10 flex min-h-20 items-center gap-4 border-b border-primary/30 bg-background px-6 lg:px-10"><Button variant="outline" size="icon" onClick={onClose} aria-label="Sair do modo de suporte"><ArrowLeft /></Button><div className="min-w-0"><h1 className="truncate text-xl font-bold">Conta de {identity}</h1><p className="text-sm text-primary">Modo de suporte · somente leitura · acesso registrado</p></div></header>
+    <header className="sticky top-0 z-10 flex min-h-20 flex-wrap items-center gap-4 border-b border-primary/30 bg-background px-6 py-3 lg:px-10"><Button variant="outline" size="icon" onClick={onClose} aria-label="Sair do modo de suporte"><ArrowLeft /></Button><div className="min-w-0 flex-1"><h1 className="truncate text-xl font-bold">Conta de {identity}</h1><p className="text-sm text-primary">Modo de suporte · somente leitura · acesso registrado</p></div><Button variant="outline" onClick={onDownload} disabled={reportBusy}><Download /> {reportBusy ? "Gerando PDF..." : "Baixar relatório PDF"}</Button></header>
     <main className="mx-auto max-w-[1440px] space-y-8 p-6 lg:p-10">
+      {reportError && <p role="alert" className="text-sm text-destructive">{reportError}</p>}
       <section className="grid grid-cols-2 gap-4 lg:grid-cols-4"><Metric icon={WalletCards} label="Créditos" value={money(data.profile.balance)} /><Metric icon={WalletCards} label="Prêmios disponíveis" value={money(data.profile.rewardBalance)} /><Metric icon={CarFront} label="Veículos" value={String(data.vehicles.length)} /><Metric icon={Users} label="Indicados" value={String(data.referrals.length)} /></section>
-      <SupportSection title="Dados da conta"><SupportRow label="E-mail" value={data.profile.email ?? "Não informado"} /><SupportRow label="Telefone" value={data.profile.phone ?? "Não informado"} /><SupportRow label="Código de convite" value={data.profile.inviteCode} /><SupportRow label="Nível" value={String(data.profile.level)} /></SupportSection>
-      <SupportSection title="Veículos">{data.vehicles.length ? data.vehicles.map((item) => <article key={item.id} className="border-b border-border py-3 last:border-0"><div className="flex justify-between gap-3"><b>{item.name}</b><span>{item.cyclesCompleted}/{item.contractCycles} ciclos</span></div><p className="text-sm text-muted-foreground">{item.region} · {item.plate} · {money(item.rewardPerCycle)} por ciclo</p></article>) : <EmptySupport />}</SupportSection>
-      <div className="grid gap-8 lg:grid-cols-2"><SupportSection title="Depósitos PIX">{data.pixCharges.length ? data.pixCharges.map((item) => <SupportRow key={item.id} label={`${money(item.amount)} · ${item.payerName}`} value={item.status} />) : <EmptySupport />}</SupportSection><SupportSection title="Saques">{data.withdrawals.length ? data.withdrawals.map((item) => <SupportRow key={item.id} label={`${money(item.amount)} · ${item.fullName}`} value={item.status} />) : <EmptySupport />}</SupportSection></div>
-      <div className="grid gap-8 lg:grid-cols-2"><SupportSection title="Movimentações recentes">{data.transactions.length ? data.transactions.map((item) => <SupportRow key={item.id} label={item.description} value={`${item.amount >= 0 ? "+" : ""}${money(item.amount)}`} />) : <EmptySupport />}</SupportSection><SupportSection title="Indicações">{data.referrals.length ? data.referrals.map((item) => <SupportRow key={item.id} label={item.memberEmail ?? "Usuário"} value={item.effectiveAt ? `${item.deposits} depósito(s)` : "Aguardando depósito"} />) : <EmptySupport />}</SupportSection></div>
+      <SupportSection title="Dados da conta"><SupportRow label="E-mail" value={data.profile.email ?? "Não informado"} /><SupportRow label="Telefone" value={data.profile.phone ?? "Não informado"} /><SupportRow label="Criada em" value={dateTime(data.profile.createdAt)} /><SupportRow label="Código de convite" value={data.profile.inviteCode} /><SupportRow label="Nível" value={String(data.profile.level)} /></SupportSection>
+      <SupportSection title="Veículos">{data.vehicles.length ? data.vehicles.map((item) => <article key={item.id} className="border-b border-border py-3 last:border-0"><div className="flex justify-between gap-3"><b>{item.name}</b><span>{item.cyclesCompleted}/{item.contractCycles} ciclos</span></div><p className="text-sm text-muted-foreground">{item.region} · {item.plate} · {money(item.rewardPerCycle)} por ciclo</p><p className="mt-1 text-xs text-muted-foreground">Compra: {dateTime(item.purchasedAt)} · Próxima recompensa: {dateTime(item.nextRewardAt)} · Conclusão: {dateTime(item.completedAt)}</p></article>) : <EmptySupport />}</SupportSection>
+      <div className="grid gap-8 lg:grid-cols-2"><SupportSection title="Depósitos PIX">{data.pixCharges.length ? data.pixCharges.map((item) => <SupportRow key={item.id} label={`${money(item.amount)} · ${item.payerName}`} value={item.status} detail={`Criado: ${dateTime(item.createdAt)} · Confirmado: ${dateTime(item.creditedAt)}`} />) : <EmptySupport />}</SupportSection><SupportSection title="Saques">{data.withdrawals.length ? data.withdrawals.map((item) => <SupportRow key={item.id} label={`${money(item.amount)} · ${item.fullName}`} value={item.status} detail={`Solicitado: ${dateTime(item.createdAt)} · Revisado: ${dateTime(item.reviewedAt)}`} />) : <EmptySupport />}</SupportSection></div>
+      <div className="grid gap-8 lg:grid-cols-2"><SupportSection title="Movimentações recentes">{data.transactions.length ? data.transactions.map((item) => <SupportRow key={item.id} label={item.description} value={`${item.amount >= 0 ? "+" : ""}${money(item.amount)}`} detail={dateTime(item.createdAt)} />) : <EmptySupport />}</SupportSection><SupportSection title="Indicações">{data.referrals.length ? data.referrals.map((item) => <SupportRow key={item.id} label={item.memberEmail ?? "Usuário"} value={item.effectiveAt ? `${item.deposits} depósito(s) · ${money(item.totalDeposited)}` : "Aguardando depósito"} detail={`Convite: ${dateTime(item.createdAt)} · Eficaz: ${dateTime(item.effectiveAt)}`} />) : <EmptySupport />}</SupportSection></div>
     </main>
   </div>;
 }
 
 function SupportSection({ title, children }: { title: string; children: React.ReactNode }) { return <section><h2 className="mb-3 text-lg font-bold">{title}</h2><div className="rounded-lg bg-card p-5 shadow-card">{children}</div></section>; }
-function SupportRow({ label, value }: { label: string; value: string }) { return <div className="flex items-start justify-between gap-4 border-b border-border py-3 first:pt-0 last:border-0 last:pb-0"><span className="text-sm text-muted-foreground">{label}</span><b className="max-w-[55%] break-words text-right text-sm">{value}</b></div>; }
+function SupportRow({ label, value, detail }: { label: string; value: string; detail?: string }) { return <div className="border-b border-border py-3 first:pt-0 last:border-0 last:pb-0"><div className="flex items-start justify-between gap-4"><span className="min-w-0 break-words text-sm text-muted-foreground">{label}</span><b className="max-w-[55%] break-words text-right text-sm">{value}</b></div>{detail && <p className="mt-1 text-xs text-muted-foreground">{detail}</p>}</div>; }
 function EmptySupport() { return <p className="text-sm text-muted-foreground">Nenhum registro.</p>; }
 
 function Metric({ icon: Icon, label, value }: { icon: typeof Users; label: string; value: string }) { return <article className="rounded-lg bg-card p-4 shadow-card"><Icon className="h-5 w-5 text-primary"/><p className="mt-3 text-xs text-muted-foreground">{label}</p><b className="mt-1 block text-lg">{value}</b></article>; }
