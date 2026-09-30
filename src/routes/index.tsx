@@ -35,6 +35,7 @@ import bydMid from "@/assets/byd-mid.png";
 import bydPremium from "@/assets/byd-premium.png";
 import bydTop from "@/assets/byd-top.png";
 import bydChargingStation from "@/assets/byd-charging-station-transparent.png";
+import bydSongPlus from "@/assets/byd-song-plus.png";
 import bydLogo from "@/assets/byd-logo.png";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -99,6 +100,7 @@ function Index() {
   const [renewing, setRenewing] = useState<string | null>(null);
   const [rewards, setRewards] = useState<RewardSummary>(emptyRewards);
   const [showWelcomeBonus, setShowWelcomeBonus] = useState(false);
+  const [eligibilityMessage, setEligibilityMessage] = useState("");
 
   const loadAccount = async (id: string) => {
     const { data: profile } = await supabase.from("profiles").select("phone, invite_code, email, demo_balance, reward_balance").eq("id", id).maybeSingle();
@@ -200,6 +202,7 @@ function Index() {
     setRenting(false);
     if (error) {
       if (error.message.includes("INSUFFICIENT_BALANCE")) setInsufficient(vehicle);
+      else if (error.message.includes("VEHICLE_OWNERSHIP_REQUIRED")) setEligibilityMessage("Esta promoção é exclusiva para pessoas que já possuem pelo menos 1 veículo adquirido.");
       return;
     }
     await loadAccount(userId);
@@ -243,9 +246,9 @@ function Index() {
   ) : view === "resources" ? (
     <ResourcesPage owned={owned} onBuy={() => setView("home")} onRenew={renewVehicle} renewing={renewing} />
   ) : view === "news" ? (
-    <NewsPage />
+    <NewsPage hasVehicle={owned.length > 0} />
   ) : (
-    <MarketplacePage onRent={rentVehicle} renting={renting} />
+    <MarketplacePage onRent={rentVehicle} renting={renting} hasVehicle={owned.length > 0} />
   );
 
   return (
@@ -258,6 +261,12 @@ function Index() {
           <DialogContent className="max-w-[calc(100%-2rem)] rounded-xl">
             <DialogHeader><DialogTitle>Créditos insuficientes</DialogTitle><DialogDescription>Você precisa de {insufficient?.price} em créditos do jogo para ativar este veículo. Faça uma recarga PIX para continuar.</DialogDescription></DialogHeader>
             <DialogFooter><Button variant="outline" onClick={() => setInsufficient(null)}>Agora não</Button><Button onClick={() => { setInsufficient(null); setView("recharge"); }}>Ir para recarga PIX</Button></DialogFooter>
+          </DialogContent>
+        </Dialog>
+        <Dialog open={Boolean(eligibilityMessage)} onOpenChange={(open) => { if (!open) setEligibilityMessage(""); }}>
+          <DialogContent className="max-w-[calc(100%-2rem)] rounded-xl">
+            <DialogHeader><DialogTitle>Promoção exclusiva</DialogTitle><DialogDescription>{eligibilityMessage}</DialogDescription></DialogHeader>
+            <DialogFooter><Button onClick={() => setEligibilityMessage("")}>Entendi</Button></DialogFooter>
           </DialogContent>
         </Dialog>
         <Dialog open={showWelcomeBonus} onOpenChange={setShowWelcomeBonus}>
@@ -294,9 +303,9 @@ function useCountdown(target: number) {
   return `${days}d ${pad(Math.floor(diff / 3600000) % 24)}:${pad(Math.floor(diff / 60000) % 60)}:${pad(Math.floor(diff / 1000) % 60)}`;
 }
 
-type ImageKey = "entry" | "mid" | "premium" | "top" | "charging";
+type ImageKey = "entry" | "mid" | "premium" | "top" | "charging" | "song-plus";
 
-const vehicleImages: Record<ImageKey, string> = { entry: bydEntry, mid: bydMid, premium: bydPremium, top: bydTop, charging: bydChargingStation };
+const vehicleImages: Record<ImageKey, string> = { entry: bydEntry, mid: bydMid, premium: bydPremium, top: bydTop, charging: bydChargingStation, "song-plus": bydSongPlus };
 
 type Vehicle = {
   id: string;
@@ -311,9 +320,11 @@ type Vehicle = {
   cycle: string;
   imageKey: ImageKey;
   category?: "vehicle" | "station";
+  requiresOwnedVehicle?: boolean;
 };
 
 const vehicles: Vehicle[] = [
+  { id: "song-plus-new-york-170-exclusive", name: "BYD Song Plus", region: "New York", daily: "R$ 20,40/dia", returnValue: "R$ 612,00", price: "R$ 170,00", priceAmount: 170, dailyRate: 12, promotion: "PROMOÇÃO EXCLUSIVA", cycle: "30 ciclos", imageKey: "song-plus", requiresOwnedVehicle: true },
   { id: "dolphin-mini-eco-new-york-50", name: "BYD Dolphin Mini ECO", region: "New York", daily: "R$ 4,50/dia", returnValue: "R$ 112,50", price: "R$ 50,00", priceAmount: 50, dailyRate: 9, promotion: "Promoção por tempo limitado", cycle: "25 ciclos", imageKey: "entry" },
   { id: "dolphin-mini-new-york-90", name: "BYD Dolphin Mini", region: "New York", daily: "R$ 6,30/dia", returnValue: "R$ 157,50", price: "R$ 90,00", priceAmount: 90, dailyRate: 7, cycle: "25 ciclos", imageKey: "entry" },
   { id: "dolphin-mini-new-york", name: "BYD Dolphin Mini Plus", region: "New York", daily: "R$ 18,25/dia", returnValue: "R$ 456,25", price: "R$ 250,00", priceAmount: 250, dailyRate: 7.3, cycle: "25 ciclos", imageKey: "entry" },
@@ -337,7 +348,7 @@ const toNumber = (value: string) => Number(value.replace(/[^\d,]/g, "").replace(
 const rateOf = (vehicle: Vehicle) => toNumber(vehicle.returnValue) / toNumber(vehicle.price);
 type SortKey = "Padrão" | "Preço" | "Progresso" | "Recompensa";
 
-function MarketplacePage({ onRent, renting }: { onRent: (vehicle: Vehicle) => void; renting: boolean }) {
+function MarketplacePage({ onRent, renting, hasVehicle }: { onRent: (vehicle: Vehicle) => void; renting: boolean; hasVehicle: boolean }) {
   const [region, setRegion] = useState("Todos");
   const [period, setPeriod] = useState<"Diário" | "Ciclo">("Diário");
   const [rented, setRented] = useState<string | null>(null);
@@ -352,7 +363,7 @@ function MarketplacePage({ onRent, renting }: { onRent: (vehicle: Vehicle) => vo
     else { setSort(key); setDesc(true); }
   };
 
-  const catalog = vehicles.filter((vehicle) => period === "Ciclo" ? vehicle.category === "station" : vehicle.category !== "station");
+  const catalog = vehicles.filter((vehicle) => (period === "Ciclo" ? vehicle.category === "station" : vehicle.category !== "station") && (!vehicle.requiresOwnedVehicle || hasVehicle));
   let visible = period === "Ciclo" || region === "Todos" ? catalog : catalog.filter((vehicle) => vehicle.region === region);
   if (maxPrice !== null) visible = visible.filter((vehicle) => toNumber(vehicle.price) <= maxPrice);
   if (sort !== "Padrão") {
@@ -511,9 +522,17 @@ function MembershipPage({ onBack, displayName, inviteCode }: { onBack: () => voi
 
 function Benefit({ icon: Icon, text }: { icon: ComponentType<{ className?: string }>; text: string }) { return <div className="flex flex-col items-center gap-3"><span className="grid h-10 w-10 place-items-center rounded-lg border border-border"><Icon className="h-5 w-5"/></span><span>{text}</span></div>; }
 function PageHeader({ title, onBack }: { title: string; onBack: () => void }) { return <header className="relative flex h-16 items-center justify-center"><Button variant="ghost" size="icon" onClick={onBack} aria-label="Voltar" className="absolute left-0"><ArrowLeft/></Button><h1 className="text-lg font-bold">{title}</h1></header>; }
-function NewsPage() {
+function NewsPage({ hasVehicle }: { hasVehicle: boolean }) {
   return <div className="min-h-screen bg-background px-5 pb-28">
     <header className="border-b border-border py-5"><h1 className="text-xl font-bold">Notícias</h1></header>
+    {hasVehicle && <article className="border-b border-border py-7">
+      <span className="inline-flex rounded bg-accent px-2 py-1 text-xs font-bold text-accent-foreground">PROMOÇÃO EXCLUSIVA</span>
+      <h2 className="mt-3 text-xl font-bold">BYD Song Plus por R$ 170,00</h2>
+      <div className="mt-4 grid grid-cols-[1fr_140px] items-center gap-3">
+        <div className="text-sm leading-6 text-muted-foreground"><p>Oferta disponível somente para clientes que já possuem ao menos 1 veículo adquirido.</p><p className="mt-2 font-semibold text-foreground">12% por dia útil · R$ 20,40 por ciclo · 30 ciclos</p></div>
+        <img src={bydSongPlus} alt="BYD Song Plus da promoção exclusiva" loading="lazy" width={1024} height={768} className="h-28 w-full object-contain" />
+      </div>
+    </article>}
     <article className="py-7 text-sm leading-7">
       <h2 className="text-xl font-bold leading-snug">🚨Aos nossos clientes, parceiros e ao público em geral:🚨</h2>
       <p className="mt-6">Tomamos conhecimento da existência de uma plataforma ilegal que está plagiando a nossa marca e identidade visual, utilizando um nome e interface semelhantes com o objetivo de induzir usuários ao erro.</p>
