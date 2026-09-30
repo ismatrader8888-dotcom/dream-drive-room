@@ -646,6 +646,7 @@ export type Database = {
           daily_amount: number
           id: string
           image_key: string
+          min_owned_vehicles: number
           name: string
           price: number
           region: string
@@ -658,6 +659,7 @@ export type Database = {
           daily_amount: number
           id: string
           image_key: string
+          min_owned_vehicles?: number
           name: string
           price: number
           region: string
@@ -670,6 +672,7 @@ export type Database = {
           daily_amount?: number
           id?: string
           image_key?: string
+          min_owned_vehicles?: number
           name?: string
           price?: number
           region?: string
