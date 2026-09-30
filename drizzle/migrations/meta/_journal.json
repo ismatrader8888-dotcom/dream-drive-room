@@ -253,6 +253,13 @@
       "when": 1790703827309,
       "tag": "0035_fix_daily_wheel_prize_at_one_real",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1790793380070,
+      "tag": "0036_add_vehicle_purchase_eligibility",
+      "breakpoints": true
     }
   ]
 }

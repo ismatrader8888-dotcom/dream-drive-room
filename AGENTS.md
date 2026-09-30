@@ -15,3 +15,4 @@
 - Create and update PIX charge rows only inside the authenticated server flow using the privileged client after confirming an active profile; browser writes can forge provider references and amounts.
 - Generate password-recovery links only in an admin-authenticated server function after matching stored email and phone; the link grants account access and must never be generated or stored in the browser without role verification.
 - Generate individual account reports from an admin-verified server read, then render the PDF locally; this prevents unrestricted access to other users' financial history.
+- Enforce catalog eligibility in the purchase database function as well as the interface; hidden offers must not be purchasable by bypassing the screen.

@@ -60,3 +60,4 @@
 - [x] Impedir que contas comuns criem ou alterem cobranças PIX falsas
 - [ ] Confirmar IP de origem (bloqueio: registros de acesso não disponíveis nos logs consultados)
 - [x] Fixar a roleta diária em R$ 1 por giro, mantendo os demais valores ilustrativos visíveis e informando o prêmio real
+- [x] Lançar BYD Song Plus de R$ 170 com 12% por 30 ciclos, exclusivo para contas com veículo adquirido
