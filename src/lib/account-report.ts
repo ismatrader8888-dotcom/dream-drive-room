@@ -92,6 +92,12 @@ export async function downloadAccountReport(data: Report) {
     }
     y += 2;
   }
+  const invitedDepositTotalCents = data.invitedDeposits.reduce((total, charge) => total + Math.round(Number(charge.amount) * 100), 0);
+  if (y > height - 35) newPage();
+  y += 4;
+  doc.setTextColor(0, 110, 140);
+  line(`Total de depósitos confirmados das pessoas convidadas: ${money(invitedDepositTotalCents / 100)}`, 12, 3);
+  doc.setTextColor(30, 40, 55);
   footer();
   doc.save(`relatorio-usuario-${data.profile.id}.pdf`);
 }
