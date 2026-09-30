@@ -16,3 +16,4 @@
 - Generate password-recovery links only in an admin-authenticated server function after matching stored email and phone; the link grants account access and must never be generated or stored in the browser without role verification.
 - Generate individual account reports from an admin-verified server read, then render the PDF locally; this prevents unrestricted access to other users' financial history.
 - Enforce catalog eligibility in the purchase database function as well as the interface; hidden offers must not be purchasable by bypassing the screen.
+- Check referral-limited catalog eligibility through the RLS-filtered catalog and enforce it again in purchase and renewal functions; an interface filter alone exposes restricted offers.
