@@ -260,6 +260,13 @@
       "when": 1790793380070,
       "tag": "0036_add_vehicle_purchase_eligibility",
       "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1790796177476,
+      "tag": "0037_limit_vehicle_offer_to_eligible_direct_referrals",
+      "breakpoints": true
     }
   ]
 }

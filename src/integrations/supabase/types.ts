@@ -644,6 +644,7 @@ export type Database = {
           created_at: string
           cycle_days: number
           daily_amount: number
+          eligible_referrer_id: string | null
           id: string
           image_key: string
           min_owned_vehicles: number
@@ -657,6 +658,7 @@ export type Database = {
           created_at?: string
           cycle_days?: number
           daily_amount: number
+          eligible_referrer_id?: string | null
           id: string
           image_key: string
           min_owned_vehicles?: number
@@ -670,6 +672,7 @@ export type Database = {
           created_at?: string
           cycle_days?: number
           daily_amount?: number
+          eligible_referrer_id?: string | null
           id?: string
           image_key?: string
           min_owned_vehicles?: number
@@ -825,6 +828,10 @@ export type Database = {
         Returns: boolean
       }
       is_account_active: { Args: { _user_id?: string }; Returns: boolean }
+      is_limited_offer_eligible: {
+        Args: { _catalog_id: string }
+        Returns: boolean
+      }
       next_vehicle_business_cycle: {
         Args: { _anchor: string }
         Returns: string
