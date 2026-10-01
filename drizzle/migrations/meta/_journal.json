@@ -267,6 +267,13 @@
       "when": 1790796177476,
       "tag": "0037_limit_vehicle_offer_to_eligible_direct_referrals",
       "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1790896554448,
+      "tag": "0038_suspend_referral_benefits_for_selected_account",
+      "breakpoints": true
     }
   ]
 }
