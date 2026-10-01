@@ -251,7 +251,9 @@ function Index() {
 
   const page = isTool ? (
     <ToolPage view={view as ToolView} onBack={() => setView("profile")} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} onBalanceChanged={() => { if (userId) void loadAccount(userId); void loadRewards(); }} />
-  ) : view === "invite" && !referralDisabled ? (
+  ) : view === "invite" && referralDisabled ? (
+    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} referralDisabled={referralDisabled} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} userId={userId} />
+  ) : view === "invite" ? (
     <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "membership" ? (
     <MembershipPage onBack={() => setView("profile")} displayName={displayName} inviteCode={referralDisabled ? "" : inviteCode} />
