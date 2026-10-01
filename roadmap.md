@@ -62,3 +62,4 @@
 - [x] Fixar a roleta diária em R$ 1 por giro, mantendo os demais valores ilustrativos visíveis e informando o prêmio real
 - [x] Lançar BYD Song Plus de R$ 170 com 12% por 30 ciclos, exclusivo para contas com veículo adquirido
 - [x] Oferecer BYD de R$ 196 com 300% por ciclo em 7 ciclos úteis apenas a convidados de lyvinteoficial@gmail.com que já compraram veículo
+- [ ] Suspender contagem, visualização e recompensas de indicações para lyvinteoficial@gmail.com, preservando auditoria e direitos dos convidados
