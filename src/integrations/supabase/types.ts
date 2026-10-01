@@ -265,6 +265,7 @@ export type Database = {
           invite_task_rewarded_at: string | null
           level: number
           phone: string | null
+          referral_program_disabled_at: string | null
           referred_by: string | null
           reward_balance: number
           signup_bonus_granted_at: string | null
@@ -282,6 +283,7 @@ export type Database = {
           invite_task_rewarded_at?: string | null
           level?: number
           phone?: string | null
+          referral_program_disabled_at?: string | null
           referred_by?: string | null
           reward_balance?: number
           signup_bonus_granted_at?: string | null
@@ -299,6 +301,7 @@ export type Database = {
           invite_task_rewarded_at?: string | null
           level?: number
           phone?: string | null
+          referral_program_disabled_at?: string | null
           referred_by?: string | null
           reward_balance?: number
           signup_bonus_granted_at?: string | null

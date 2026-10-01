@@ -17,3 +17,4 @@
 - Generate individual account reports from an admin-verified server read, then render the PDF locally; this prevents unrestricted access to other users' financial history.
 - Enforce catalog eligibility in the purchase database function as well as the interface; hidden offers must not be purchasable by bypassing the screen.
 - Check referral-limited catalog eligibility through the RLS-filtered catalog and enforce it again in purchase and renewal functions; an interface filter alone exposes restricted offers.
+- Keep referral relationships for audit and invitee entitlements, but enforce account-level referral suspensions in database rewards, task grants, read access, and UI; hiding a screen alone cannot stop commission credits.

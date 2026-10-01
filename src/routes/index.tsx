@@ -83,7 +83,7 @@ const tools: Array<{ label: string; icon: ComponentType<{ className?: string }>;
   { label: "Configurações", icon: Settings, view: "settings" },
 ];
 
-type Account = { phone: string | null; invite_code: string; email: string | null; demo_balance: number; reward_balance: number };
+type Account = { phone: string | null; invite_code: string; email: string | null; demo_balance: number; reward_balance: number; referral_program_disabled_at: string | null };
 const emptyRewards: RewardSummary = { available: 0, today: 0, total: 0, pending: 0, transferred: 0, cyclesCompleted: 0, cyclesTotal: 0, events: [] };
 
 function Index() {
@@ -104,7 +104,7 @@ function Index() {
   const [limitedOfferEligible, setLimitedOfferEligible] = useState(false);
 
   const loadAccount = async (id: string) => {
-    const { data: profile } = await supabase.from("profiles").select("phone, invite_code, email, demo_balance, reward_balance").eq("id", id).maybeSingle();
+    const { data: profile } = await supabase.from("profiles").select("phone, invite_code, email, demo_balance, reward_balance, referral_program_disabled_at").eq("id", id).maybeSingle();
     if (profile) setAccount(profile as Account);
   };
 
@@ -245,17 +245,20 @@ function Index() {
 
   const displayName = account?.phone || account?.email || "Minha conta";
   const inviteCode = account?.invite_code ?? "--------";
+  const referralDisabled = Boolean(account?.referral_program_disabled_at);
 
   const isTool = toolViews.includes(view as ToolView);
 
   const page = isTool ? (
     <ToolPage view={view as ToolView} onBack={() => setView("profile")} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} onBalanceChanged={() => { if (userId) void loadAccount(userId); void loadRewards(); }} />
+  ) : view === "invite" && referralDisabled ? (
+    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} referralDisabled={referralDisabled} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} userId={userId} />
   ) : view === "invite" ? (
     <InvitePage onBack={() => setView("profile")} copyText={copyText} copied={copied} displayName={displayName} inviteCode={inviteCode} />
   ) : view === "membership" ? (
-    <MembershipPage onBack={() => setView("profile")} displayName={displayName} inviteCode={inviteCode} />
+    <MembershipPage onBack={() => setView("profile")} displayName={displayName} inviteCode={referralDisabled ? "" : inviteCode} />
   ) : view === "profile" ? (
-    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} userId={userId} />
+    <ProfilePage onNavigate={setView} displayName={displayName} inviteCode={inviteCode} referralDisabled={referralDisabled} balance={account?.demo_balance ?? 0} rewardBalance={account?.reward_balance ?? 0} rewards={rewards} userId={userId} />
   ) : view === "resources" ? (
     <ResourcesPage owned={owned} onBuy={() => setView("home")} onRenew={renewVehicle} renewing={renewing} />
   ) : view === "news" ? (
@@ -505,12 +508,12 @@ function VehicleCard({ vehicle, onRenew, renewing }: { vehicle: OwnedVehicle; on
 
 const moneyValue = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
-function ProfilePage({ onNavigate, displayName, inviteCode, balance, rewardBalance, rewards, userId }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; balance: number; rewardBalance: number; rewards: RewardSummary; userId: string }) {
+function ProfilePage({ onNavigate, displayName, inviteCode, referralDisabled, balance, rewardBalance, rewards, userId }: { onNavigate: (view: View) => void; displayName: string; inviteCode: string; referralDisabled: boolean; balance: number; rewardBalance: number; rewards: RewardSummary; userId: string }) {
   return (
     <div className="min-h-screen bg-highlight pb-24 pt-4">
       <header className="flex items-center gap-4 px-5">
         <img src={bydLogo} alt="BYD Driving" width={816} height={816} className="h-16 w-16 rounded-full bg-card object-contain p-1 shadow-card" />
-        <div className="min-w-0 flex-1"><h1 className="truncate text-xl font-bold">{displayName}</h1><p className="mt-1 text-sm text-muted-foreground"><span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">LV1</span> &nbsp;{inviteCode}</p></div>
+        <div className="min-w-0 flex-1"><h1 className="truncate text-xl font-bold">{displayName}</h1><p className="mt-1 text-sm text-muted-foreground"><span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">LV1</span>{!referralDisabled && <> &nbsp;{inviteCode}</>}</p></div>
         <NotificationCenter userId={userId} autoPopup={false} />
       </header>
       <section className="mx-4 mt-5 overflow-hidden rounded-2xl bg-card shadow-card">
@@ -519,7 +522,7 @@ function ProfilePage({ onNavigate, displayName, inviteCode, balance, rewardBalan
       </section>
       <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Recompensas</h2><button type="button" onClick={() => onNavigate("incomeDetails")} className="text-sm text-muted-foreground">Detalhes &gt;</button></div><Row label="Prêmios disponíveis" value={moneyValue(rewardBalance)}/><Row label="Recompensas de hoje" value={moneyValue(rewards.today)}/><Row label="Recompensas totais" value={moneyValue(rewards.total)}/><Button variant="outline" onClick={() => onNavigate("withdraw")} className="mt-3 h-12 w-full rounded-full border-primary text-base shadow-none">Sacar prêmios</Button></section>
       <section className="mx-4 mt-4 rounded-2xl bg-card p-4 shadow-card"><div className="flex justify-between"><h2 className="text-lg font-bold">Progresso de contrato</h2><span className="text-sm text-muted-foreground"><CircleHelp className="mr-1 inline h-4 w-4"/>{rewards.cyclesCompleted}/{rewards.cyclesTotal} ciclos</span></div><div className="mt-5 grid grid-cols-3 items-center text-center text-xs"><div><b className="text-lg">{moneyValue(rewards.total)}</b><p>Gerado</p></div><div><b className="text-lg">{moneyValue(rewards.today)}</b><p className="text-muted-foreground">Hoje</p></div><div><b className="text-lg">{moneyValue(rewards.transferred)}</b><p className="text-muted-foreground">Em Prêmios disponíveis</p></div></div><Button variant="outline" onClick={() => onNavigate("transfer")} className="mt-4 h-11 w-full rounded-full border-primary text-muted-foreground shadow-none">Ver recompensas</Button></section>
-      <section className="mx-4 mt-4 grid grid-cols-4 gap-x-3 gap-y-5 rounded-2xl bg-card p-4 shadow-card">{tools.map(({ label, icon: Icon, view, badge }) => <button type="button" key={label} onClick={() => view && onNavigate(view)} className="relative flex min-w-0 flex-col items-center gap-2 text-center text-xs text-muted-foreground"><span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></span>{badge && <span className="absolute right-1 top-0 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">{badge}</span>}<span>{label}</span></button>)}</section>
+      <section className="mx-4 mt-4 grid grid-cols-4 gap-x-3 gap-y-5 rounded-2xl bg-card p-4 shadow-card">{tools.filter(({ view }) => !referralDisabled || !["invite", "team", "inviteReward"].includes(view ?? "")).map(({ label, icon: Icon, view, badge }) => <button type="button" key={label} onClick={() => view && onNavigate(view)} className="relative flex min-w-0 flex-col items-center gap-2 text-center text-xs text-muted-foreground"><span className="grid h-11 w-11 place-items-center rounded-full bg-primary text-primary-foreground"><Icon className="h-5 w-5" /></span>{badge && <span className="absolute right-1 top-0 rounded-full bg-destructive px-1.5 text-[10px] text-destructive-foreground">{badge}</span>}<span>{label}</span></button>)}</section>
     </div>
   );
 }

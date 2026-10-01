@@ -119,6 +119,7 @@ function TeamPage({ onBack }: { onBack: () => void }) {
   const members = (data?.members ?? []).filter((member) => member.status === (tab === "Eficiente" ? "effective" : "invalid"));
   return (
     <Shell title="Minha Equipe" onBack={onBack}>
+      {data?.disabled && <p className="m-4 text-center text-sm text-muted-foreground">Indicações desativadas nesta conta.</p>}
       <section className="m-4 grid grid-cols-2 gap-4 rounded-2xl bg-card p-5 text-center shadow-card">
         <div><p className="text-sm text-muted-foreground">Créditos da equipe</p><b className="mt-2 block text-xl">{money(data?.teamEarned ?? 0)}</b></div>
         <div><p className="text-sm text-muted-foreground">Membros eficazes</p><b className="mt-2 block text-xl">{data?.effectiveMembers ?? 0} / {data?.totalMembers ?? 0}</b></div>
@@ -135,7 +136,7 @@ function TeamPage({ onBack }: { onBack: () => void }) {
 
 type ReferralMember = { id: string; displayName: string; status: "effective" | "invalid"; deposits: number; bonusEarned: number };
 type ReferralReward = { id: string; type: "referee_first_deposit" | "referrer_commission" | "second_level_commission"; depositAmount: number; percentage: number; creditAmount: number; createdAt: string; memberName: string };
-type ReferralDashboard = { totalMembers: number; effectiveMembers: number; totalDeposited: number; totalEarned: number; teamEarned: number; earnedToday: number; depositedToday: number; members: ReferralMember[]; rewards: ReferralReward[] };
+type ReferralDashboard = { totalMembers: number; effectiveMembers: number; totalDeposited: number; totalEarned: number; teamEarned: number; earnedToday: number; depositedToday: number; members: ReferralMember[]; rewards: ReferralReward[]; disabled?: boolean };
 const money = (value: number) => value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" });
 
 function ContractPage({ onBack }: { onBack: () => void }) {
@@ -262,6 +263,7 @@ function InviteRewardPage({ onBack }: { onBack: () => void }) {
   useEffect(() => { void supabase.rpc("get_my_referral_dashboard").then(({ data: result }) => setData(result as unknown as ReferralDashboard)); }, []);
   return (
     <Shell title="Recompensas por convite" onBack={onBack}>
+      {data?.disabled && <p className="m-4 text-center text-sm text-muted-foreground">Indicações desativadas nesta conta.</p>}
       <section className="m-4 rounded-2xl bg-card p-5 shadow-card"><p className="text-sm text-muted-foreground">Total em créditos do jogo</p><b className="mt-1 block text-3xl">{money(data?.totalEarned ?? 0)}</b><p className="mt-2 text-xs text-muted-foreground">No primeiro depósito: 5% para o convidado, 8% para o indicador direto e 3% para o indicador de nível 2.</p></section>
       {data?.rewards.length ? <div className="space-y-3 px-4">{data.rewards.map((reward) => <article key={reward.id} className="rounded-xl bg-card p-4 shadow-card"><div className="flex justify-between gap-3"><div><b>{reward.type === "referee_first_deposit" ? "Bônus de boas-vindas" : reward.type === "second_level_commission" ? `Indicação de nível 2 · ${reward.memberName}` : `Indicação direta · ${reward.memberName}`}</b><p className="mt-1 text-xs text-muted-foreground">{reward.percentage}% sobre {money(reward.depositAmount)} · {new Date(reward.createdAt).toLocaleDateString("pt-BR")}</p></div><b className="text-primary">+{money(reward.creditAmount)}</b></div></article>)}</div> : <div className="flex min-h-[45vh] flex-col items-center justify-center gap-3 text-muted-foreground"><FileMinus2 className="h-16 w-16 opacity-50" /><p className="text-sm">Nenhum bônus recebido ainda</p></div>}
     </Shell>
@@ -269,7 +271,7 @@ function InviteRewardPage({ onBack }: { onBack: () => void }) {
 }
 
 type WheelState = { canSpin: boolean; nextSpinAt: string | null; lastPrize: number | null };
-type InviteTaskState = { completed: number; totalInvited: number; qualifiedInvited: number; goal: number; reward: number; rewarded: boolean };
+type InviteTaskState = { completed: number; totalInvited: number; qualifiedInvited: number; goal: number; reward: number; rewarded: boolean; disabled?: boolean };
 const wheelPrizes = [1, 2, 5, 10, 20, 50];
 
 function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalanceChanged: () => void }) {
@@ -331,14 +333,14 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
             <Button className="mt-4 h-12 w-full rounded-full" disabled={!readyToSpin || spinning} onClick={() => void spin()}>{spinning ? "Girando..." : readyToSpin ? "Girar agora" : "Aguarde a próxima rodada"}</Button>
             <p className="mt-3 text-xs text-muted-foreground">{"\n"}</p>
           </section>
-          <section className="rounded-2xl border-l-4 border-primary bg-card p-4 shadow-card">
+          {!inviteTask?.disabled && <section className="rounded-2xl border-l-4 border-primary bg-card p-4 shadow-card">
             <p className="text-sm text-muted-foreground">Prêmio da rodada</p>
             <div className="mt-3 grid grid-cols-2 divide-x divide-border text-sm">
               <div><p className="text-muted-foreground">Meta</p><b>3 amigos qualificados</b></div>
               <div className="pl-4"><p className="text-muted-foreground">Prêmios disponíveis</p><b>+R$ 20,00</b></div>
             </div>
-          </section>
-          <section className="rounded-2xl bg-card p-4 shadow-card">
+          </section>}
+          {inviteTask?.disabled ? <p className="py-6 text-center text-sm text-muted-foreground">Indicações desativadas nesta conta.</p> : <section className="rounded-2xl bg-card p-4 shadow-card">
             <div className="flex items-start justify-between gap-3">
               <b>1. Progresso da tarefa</b>
               <span className="rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">{inviteTask?.rewarded ? "Concluída" : inviteProgress > 0 ? "Em andamento" : "Aguardando o primeiro convite"}</span>
@@ -347,8 +349,8 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
             <p className="mt-4 text-center"><b>{inviteProgress}</b><span className="text-muted-foreground">/ 3 Concluído</span></p>
             <div className="mt-3 flex justify-around">{[0, 1, 2].map((index) => <span key={index} className={`h-6 w-6 rounded-full border ${index < inviteProgress ? "border-primary bg-primary" : "border-border"}`} />)}</div>
             <Button variant="secondary" className="mt-4 h-12 w-full rounded-xl" disabled>{inviteTask?.rewarded ? "R$ 20 creditados em Prêmios disponíveis" : `Faltam ${Math.max(0, 3 - inviteProgress)} amigo(s) qualificado(s) para receber R$ 20`}</Button>
-          </section>
-          <section className="rounded-2xl bg-card p-4 shadow-card">
+          </section>}
+          {!inviteTask?.disabled && <section className="rounded-2xl bg-card p-4 shadow-card">
             <b>2. Descrição da recompensa</b>
             <p className="mt-3 font-semibold">Como funciona esta tarefa</p>
             <p className="mt-2 text-sm text-muted-foreground">Convide novos usuários através do seu link. Cada pessoa precisa fazer um depósito confirmado e comprar um veículo ou central.</p>
@@ -357,7 +359,7 @@ function TasksPage({ onBack, onBalanceChanged }: { onBack: () => void; onBalance
               <li>Cada amigo precisa ter um depósito confirmado e uma compra em Meus recursos.</li>
               <li>Ao qualificar 3 amigos, R$ 20 são creditados automaticamente em Prêmios disponíveis.</li>
             </ul>
-          </section>
+          </section>}
         </div>
       ) : (
         <section className="mx-4 flex min-h-[220px] flex-col items-center justify-center gap-3 rounded-2xl bg-card p-6 text-muted-foreground shadow-card">
