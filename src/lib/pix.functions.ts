@@ -19,7 +19,7 @@ type ProviderContent = {
 };
 
 const SAGACEPAY_API_URL = "https://sagacepay.com/api";
-const SAGACEPAY_WEBHOOK_URL = "https://drivingyoudreamsss.online/api/public/sagacepay-webhook";
+const SAGACEPAY_WEBHOOK_URL = "https://drivingyourdream.online/api/public/sagacepay-webhook";
 
 function pixAmount(code: string): number | null {
   let index = 0;
